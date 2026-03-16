@@ -1,8 +1,16 @@
 @import "tailwindcss";
+@import "mapbox-gl/dist/mapbox-gl.css";
 
 :root {
-  --background: #0a0a0f;
-  --foreground: #ffffff;
+  --background: #ffffff;
+  --foreground: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --card: #ffffff;
+  --accent: #22c55e;
+  --accent-hover: #16a34a;
+  --surface: #f8f9fa;
+  --surface-alt: #f1f3f5;
 }
 
 @theme inline {
@@ -16,22 +24,34 @@ body {
   color: var(--foreground);
 }
 
-/* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — light theme */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0f;
+  background: #f8f9fa;
 }
 ::-webkit-scrollbar-thumb {
-  background: #22c55e30;
+  background: #d1d5db;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #22c55e60;
+  background: #9ca3af;
+}
+
+/* Mapbox overrides */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+}
+.mapboxgl-popup-close-button {
+  font-size: 18px;
+  padding: 4px 8px;
+  color: #6b7280;
 }
