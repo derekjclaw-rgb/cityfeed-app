@@ -2,15 +2,15 @@
 @import "mapbox-gl/dist/mapbox-gl.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
+  --background: #e6e6dd;
+  --foreground: #2b2b2b;
+  --muted: #888888;
+  --border: #d4d4c9;
   --card: #ffffff;
-  --accent: #22c55e;
-  --accent-hover: #16a34a;
-  --surface: #f8f9fa;
-  --surface-alt: #f1f3f5;
+  --accent: #e6964d;
+  --accent-hover: #d4793a;
+  --surface: #e6e6dd;
+  --surface-alt: #ddddd4;
 }
 
 @theme inline {
@@ -33,14 +33,14 @@ html {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f8f9fa;
+  background: #e6e6dd;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #c4c4bb;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #a0a098;
 }
 
 /* Mapbox overrides */
@@ -53,5 +53,5 @@ html {
 .mapboxgl-popup-close-button {
   font-size: 18px;
   padding: 4px 8px;
-  color: #6b7280;
+  color: #888;
 }

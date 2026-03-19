@@ -2,6 +2,7 @@
 
 /**
  * Create Listing Page — host form to add a new ad placement
+ * Updated: new color palette, new categories
  */
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -12,14 +13,17 @@ import {
 import { createClient } from '@/lib/supabase/client'
 
 const CATEGORIES = [
-  { value: 'billboard', label: 'Billboard' },
-  { value: 'digital_screen', label: 'Digital Screen' },
-  { value: 'window', label: 'Window Wrap' },
-  { value: 'storefront', label: 'Storefront Banner' },
-  { value: 'vehicle_wrap', label: 'Vehicle Wrap' },
-  { value: 'event_space', label: 'Event Space' },
-  { value: 'transit', label: 'Transit Shelter' },
-  { value: 'other', label: 'Other' },
+  { value: 'digital_billboards', label: 'Digital Billboards' },
+  { value: 'static_billboards', label: 'Static Billboards' },
+  { value: 'transit', label: 'Transit' },
+  { value: 'outdoor_static', label: 'Outdoor Static' },
+  { value: 'outdoor_digital', label: 'Outdoor Digital' },
+  { value: 'display_on_premise', label: 'Display On-Premise' },
+  { value: 'event_based', label: 'Event-Based' },
+  { value: 'human_based', label: 'Human-Based' },
+  { value: 'experiential', label: 'Experiential' },
+  { value: 'street_furniture', label: 'Street Furniture' },
+  { value: 'unique', label: 'Unique' },
 ]
 
 interface FormData {
@@ -54,12 +58,12 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+      <label className="block text-sm font-medium mb-1.5" style={{ color: '#555' }}>
         {label}
-        {required && <span className="text-red-400 ml-1">*</span>}
+        {required && <span className="ml-1" style={{ color: '#dc2626' }}>*</span>}
       </label>
       {children}
-      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+      {hint && <p className="text-xs mt-1" style={{ color: '#aaa' }}>{hint}</p>}
     </div>
   )
 }
@@ -75,7 +79,7 @@ export default function CreateListingPage() {
   const [form, setForm] = useState<FormData>({
     title: '',
     description: '',
-    category: 'billboard',
+    category: 'digital_billboards',
     address: '',
     city: '',
     state: '',
@@ -107,7 +111,12 @@ export default function CreateListingPage() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  const inputClass = 'w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100 transition-colors'
+  const inputClass = 'w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors'
+  const inputStyle = {
+    backgroundColor: '#f4f4f0',
+    border: '1px solid #d4d4c9',
+    color: '#2b2b2b',
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -145,35 +154,43 @@ export default function CreateListingPage() {
     }
   }
 
+  const cardStyle = {
+    backgroundColor: '#fff',
+    border: '1px solid #d4d4c9',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+  }
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
-        <Loader2 className="w-6 h-6 animate-spin text-[#22c55e]" />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
       </div>
     )
   }
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 px-6">
+      <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-[#22c55e]" />
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(230,150,77,0.12)', border: '1px solid rgba(230,150,77,0.3)' }}>
+            <CheckCircle className="w-8 h-8" style={{ color: '#e6964d' }} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Listing submitted!</h2>
-          <p className="text-gray-500 text-sm mb-8">
+          <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Listing submitted!</h2>
+          <p className="text-sm mb-8" style={{ color: '#888' }}>
             Your listing is under review. We&apos;ll notify you once it&apos;s approved and live on the marketplace.
           </p>
           <div className="flex gap-3 justify-center">
             <Link
               href="/dashboard/listings"
-              className="bg-[#22c55e] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#16a34a] transition-colors text-sm"
+              className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors text-sm"
+              style={{ backgroundColor: '#e6964d', color: '#fff' }}
             >
               View my listings
             </Link>
             <button
-              onClick={() => { setSuccess(false); setForm({ title: '', description: '', category: 'billboard', address: '', city: '', state: '', zip: '', dimensions: '', daily_impressions: '', daily_traffic: '', production_time: '3-5 business days', price_per_day: '', min_days: '7', max_days: '90', buy_now_enabled: false, content_restrictions: '' }) }}
-              className="bg-white border border-gray-200 text-gray-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+              onClick={() => { setSuccess(false); setForm({ title: '', description: '', category: 'digital_billboards', address: '', city: '', state: '', zip: '', dimensions: '', daily_impressions: '', daily_traffic: '', production_time: '3-5 business days', price_per_day: '', min_days: '7', max_days: '90', buy_now_enabled: false, content_restrictions: '' }) }}
+              className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors text-sm"
+              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
             >
               Add another
             </button>
@@ -184,19 +201,19 @@ export default function CreateListingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 pb-20">
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#e6e6dd' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
         {/* Breadcrumb */}
-        <Link href="/dashboard/listings" className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-8 transition-colors">
+        <Link href="/dashboard/listings" className="flex items-center gap-2 text-sm mb-8 transition-opacity hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
           My Listings
         </Link>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">List your space</h1>
-        <p className="text-gray-500 text-sm mb-8">Fill out the details below. Your listing will be reviewed before going live.</p>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>List your space</h1>
+        <p className="text-sm mb-8" style={{ color: '#888' }}>Fill out the details below. Your listing will be reviewed before going live.</p>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm flex items-center gap-2 mb-6">
+          <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2 mb-6" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
           </div>
@@ -204,8 +221,8 @@ export default function CreateListingPage() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Section: Basic Info */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-5">
-            <h2 className="font-semibold text-gray-900">Basic information</h2>
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Basic information</h2>
 
             <FormField label="Listing title" required>
               <input
@@ -214,6 +231,7 @@ export default function CreateListingPage() {
                 onChange={e => set('title', e.target.value)}
                 placeholder="e.g. Downtown Storefront Banner — Main St"
                 className={inputClass}
+                style={inputStyle}
                 required
               />
             </FormField>
@@ -225,6 +243,7 @@ export default function CreateListingPage() {
                 placeholder="Describe your space, visibility, audience, and unique selling points..."
                 rows={4}
                 className={`${inputClass} resize-none`}
+                style={inputStyle}
                 required
               />
             </FormField>
@@ -234,6 +253,7 @@ export default function CreateListingPage() {
                 value={form.category}
                 onChange={e => set('category', e.target.value)}
                 className={`${inputClass} cursor-pointer`}
+                style={inputStyle}
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -243,8 +263,8 @@ export default function CreateListingPage() {
           </div>
 
           {/* Section: Location */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-5">
-            <h2 className="font-semibold text-gray-900">Location</h2>
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Location</h2>
 
             <FormField label="Street address" required>
               <input
@@ -253,6 +273,7 @@ export default function CreateListingPage() {
                 onChange={e => set('address', e.target.value)}
                 placeholder="123 Main Street"
                 className={inputClass}
+                style={inputStyle}
                 required
               />
             </FormField>
@@ -265,6 +286,7 @@ export default function CreateListingPage() {
                   onChange={e => set('city', e.target.value)}
                   placeholder="Las Vegas"
                   className={inputClass}
+                  style={inputStyle}
                   required
                 />
               </FormField>
@@ -276,6 +298,7 @@ export default function CreateListingPage() {
                   placeholder="NV"
                   maxLength={2}
                   className={inputClass}
+                  style={inputStyle}
                   required
                 />
               </FormField>
@@ -289,31 +312,33 @@ export default function CreateListingPage() {
                 placeholder="89109"
                 maxLength={10}
                 className={inputClass}
+                style={inputStyle}
               />
             </FormField>
           </div>
 
           {/* Section: Photos */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="font-semibold text-gray-900 mb-4">Photos</h2>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-green-300 transition-colors">
-              <ImagePlus className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 mb-2">Drag photos here or click to upload</p>
-              <p className="text-xs text-gray-400">Up to 10 photos · JPG, PNG, WEBP · Max 10MB each</p>
+          <div className="rounded-2xl p-6" style={cardStyle}>
+            <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Photos</h2>
+            <div className="border-2 border-dashed rounded-xl p-8 text-center transition-colors hover:opacity-80" style={{ borderColor: '#d4d4c9' }}>
+              <ImagePlus className="w-8 h-8 mx-auto mb-3" style={{ color: '#ccc' }} />
+              <p className="text-sm mb-2" style={{ color: '#888' }}>Drag photos here or click to upload</p>
+              <p className="text-xs" style={{ color: '#aaa' }}>Up to 10 photos · JPG, PNG, WEBP · Max 10MB each</p>
               <button
                 type="button"
-                className="mt-4 inline-flex items-center gap-2 bg-gray-50 border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors hover:opacity-80"
+                style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#555' }}
               >
                 <Upload className="w-4 h-4" />
                 Choose files
               </button>
-              <p className="text-xs text-gray-400 mt-2">(Photo upload coming soon)</p>
+              <p className="text-xs mt-2" style={{ color: '#aaa' }}>(Photo upload coming soon)</p>
             </div>
           </div>
 
           {/* Section: Ad specs */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-5">
-            <h2 className="font-semibold text-gray-900">Ad specs & performance</h2>
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Ad specs & performance</h2>
 
             <FormField label="Dimensions" hint="e.g. 14ft × 48ft or 1920×1080px">
               <input
@@ -322,6 +347,7 @@ export default function CreateListingPage() {
                 onChange={e => set('dimensions', e.target.value)}
                 placeholder="14ft × 48ft"
                 className={inputClass}
+                style={inputStyle}
               />
             </FormField>
 
@@ -334,6 +360,7 @@ export default function CreateListingPage() {
                   placeholder="15000"
                   min="0"
                   className={inputClass}
+                  style={inputStyle}
                 />
               </FormField>
               <FormField label="Daily traffic" hint="Vehicles or pedestrians">
@@ -344,6 +371,7 @@ export default function CreateListingPage() {
                   placeholder="8000"
                   min="0"
                   className={inputClass}
+                  style={inputStyle}
                 />
               </FormField>
             </div>
@@ -355,17 +383,18 @@ export default function CreateListingPage() {
                 onChange={e => set('production_time', e.target.value)}
                 placeholder="3-5 business days"
                 className={inputClass}
+                style={inputStyle}
               />
             </FormField>
           </div>
 
           {/* Section: Pricing */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-5">
-            <h2 className="font-semibold text-gray-900">Pricing & availability</h2>
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Pricing & availability</h2>
 
             <FormField label="Price per day (USD)" required>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#888' }}>$</span>
                 <input
                   type="number"
                   value={form.price_per_day}
@@ -374,6 +403,7 @@ export default function CreateListingPage() {
                   min="1"
                   step="0.01"
                   className={`${inputClass} pl-8`}
+                  style={inputStyle}
                   required
                 />
               </div>
@@ -387,6 +417,7 @@ export default function CreateListingPage() {
                   onChange={e => set('min_days', e.target.value)}
                   min="1"
                   className={inputClass}
+                  style={inputStyle}
                 />
               </FormField>
               <FormField label="Max. days">
@@ -396,6 +427,7 @@ export default function CreateListingPage() {
                   onChange={e => set('max_days', e.target.value)}
                   min="1"
                   className={inputClass}
+                  style={inputStyle}
                 />
               </FormField>
             </div>
@@ -404,20 +436,21 @@ export default function CreateListingPage() {
               <button
                 type="button"
                 onClick={() => set('buy_now_enabled', !form.buy_now_enabled)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${form.buy_now_enabled ? 'bg-[#22c55e]' : 'bg-gray-200'}`}
+                className="relative w-11 h-6 rounded-full transition-colors"
+                style={{ backgroundColor: form.buy_now_enabled ? '#e6964d' : '#d4d4c9' }}
               >
                 <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.buy_now_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
               <div>
-                <div className="text-sm font-medium text-gray-700">Enable Buy Now</div>
-                <div className="text-xs text-gray-400">Allow instant booking without approval</div>
+                <div className="text-sm font-medium" style={{ color: '#555' }}>Enable Buy Now</div>
+                <div className="text-xs" style={{ color: '#aaa' }}>Allow instant booking without approval</div>
               </div>
             </div>
           </div>
 
           {/* Section: Content restrictions */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="font-semibold text-gray-900 mb-4">Content restrictions</h2>
+          <div className="rounded-2xl p-6" style={cardStyle}>
+            <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Content restrictions</h2>
             <FormField label="What content will you NOT accept?" hint="e.g. No adult content, tobacco, competing brands">
               <textarea
                 value={form.content_restrictions}
@@ -425,6 +458,7 @@ export default function CreateListingPage() {
                 placeholder="List any content types or brands you will not display..."
                 rows={3}
                 className={`${inputClass} resize-none`}
+                style={inputStyle}
               />
             </FormField>
           </div>
@@ -433,7 +467,8 @@ export default function CreateListingPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#22c55e] text-white font-semibold py-4 rounded-xl hover:bg-[#16a34a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-green-200 text-base"
+            className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
+            style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             {loading ? 'Submitting...' : 'Submit listing for review'}

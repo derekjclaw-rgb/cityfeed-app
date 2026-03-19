@@ -2,12 +2,13 @@
 
 /**
  * Navbar — shared navigation across all pages
- * Light theme, responsive with mobile hamburger menu
+ * City Feed logo + updated links including About + How It Works
  */
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { MapPin, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function Navbar() {
@@ -24,20 +25,24 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
+    { href: '/about', label: 'About' },
+    { href: '/how-it-works', label: 'How It Works' },
     { href: '/dashboard/create-listing', label: 'List Your Space' },
   ]
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/60">
-      <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+    <nav className="fixed top-0 w-full z-50" style={{ backgroundColor: 'rgba(230,230,221,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #d4d4c9' }}>
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#22c55e] flex items-center justify-center">
-            <MapPin className="w-4.5 h-4.5 text-white" />
-          </div>
-          <span className="font-bold text-lg tracking-tight text-gray-900">
-            City Feed
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="City Feed"
+            width={120}
+            height={86}
+            style={{ height: '38px', width: 'auto' }}
+            priority
+          />
         </Link>
 
         {/* Desktop links */}
@@ -46,11 +51,10 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors ${
-                pathname === link.href
-                  ? 'text-[#22c55e]'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className="text-sm font-medium transition-colors"
+              style={{
+                color: pathname === link.href ? '#e6964d' : '#555',
+              }}
             >
               {link.label}
             </Link>
@@ -63,11 +67,15 @@ export default function Navbar() {
             <>
               <Link
                 href="/dashboard/listings"
-                className="text-sm text-gray-500 hover:text-gray-900 font-medium transition-colors"
+                className="text-sm font-medium transition-colors"
+                style={{ color: '#555' }}
               >
                 Dashboard
               </Link>
-              <div className="w-8 h-8 rounded-full bg-[#22c55e]/10 flex items-center justify-center text-[#22c55e] text-xs font-bold">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d' }}
+              >
                 {user.email?.charAt(0).toUpperCase() ?? 'U'}
               </div>
             </>
@@ -75,15 +83,17 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="text-sm text-gray-500 hover:text-gray-900 font-medium transition-colors"
+                className="text-sm font-medium transition-colors"
+                style={{ color: '#555' }}
               >
-                Sign in
+                Login
               </Link>
               <Link
                 href="/signup"
-                className="text-sm bg-[#22c55e] text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#16a34a] transition-colors"
+                className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: '#e6964d', color: '#fff' }}
               >
-                Get started
+                Sign Up
               </Link>
             </>
           )}
@@ -91,7 +101,8 @@ export default function Navbar() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden text-gray-600"
+          className="md:hidden"
+          style={{ color: '#2b2b2b' }}
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -100,23 +111,25 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-6 pb-4 space-y-3">
+        <div className="md:hidden px-6 pb-4 space-y-3" style={{ backgroundColor: '#e6e6dd', borderTop: '1px solid #d4d4c9' }}>
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+              className="block py-2 text-sm font-medium"
+              style={{ color: '#555' }}
             >
               {link.label}
             </Link>
           ))}
-          <hr className="border-gray-100" />
+          <hr style={{ borderColor: '#d4d4c9' }} />
           {user ? (
             <Link
               href="/dashboard/listings"
               onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm font-medium text-gray-600"
+              className="block py-2 text-sm font-medium"
+              style={{ color: '#555' }}
             >
               Dashboard
             </Link>
@@ -125,16 +138,18 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-gray-600"
+                className="block py-2 text-sm font-medium"
+                style={{ color: '#555' }}
               >
-                Sign in
+                Login
               </Link>
               <Link
                 href="/signup"
                 onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm bg-[#22c55e] text-white font-semibold px-4 rounded-lg text-center"
+                className="block py-2 text-sm font-semibold px-4 rounded-lg text-center"
+                style={{ backgroundColor: '#e6964d', color: '#fff' }}
               >
-                Get started
+                Sign Up
               </Link>
             </>
           )}

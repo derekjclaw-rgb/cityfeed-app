@@ -1,57 +1,158 @@
-import Link from 'next/link'
-import { MapPin, Users, CheckCircle, ArrowRight, Zap, Shield, TrendingUp } from 'lucide-react'
+'use client'
 
-/**
- * City Feed Landing Page — Light theme, professional, clean
- */
-export default function HomePage() {
+import { useState, useMemo } from 'react'
+import Link from 'next/link'
+import { MapPin, Search, Star, ArrowRight, Calendar } from 'lucide-react'
+
+// ─── Mock listing data (shared with marketplace) ──────────────────────────────
+interface Listing {
+  id: string
+  title: string
+  category: string
+  city: string
+  state: string
+  price_per_day: number
+  rating: number
+  review_count: number
+  image_placeholder: string
+  tags: string[]
+}
+
+export const HOMEPAGE_LISTINGS: Listing[] = [
+  { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'Digital Billboards', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'] },
+  { id: '2', title: 'Coffee Shop Window Wrap — Arts District', category: 'Outdoor Static', city: 'Los Angeles', state: 'CA', price_per_day: 85, rating: 4.7, review_count: 11, image_placeholder: 'from-amber-100 to-amber-200', tags: ['Street-level', 'High foot traffic'] },
+  { id: '3', title: 'Food Truck Fleet Wraps — 5 Vehicles', category: 'Human-Based', city: 'Austin', state: 'TX', price_per_day: 200, rating: 4.8, review_count: 17, image_placeholder: 'from-orange-100 to-orange-200', tags: ['Mobile', 'Event-ready'] },
+  { id: '4', title: 'Indoor Digital Screen — Union Square Mall', category: 'Display On-Premise', city: 'San Francisco', state: 'CA', price_per_day: 320, rating: 4.6, review_count: 8, image_placeholder: 'from-blue-100 to-blue-200', tags: ['Indoor', '4K display', 'Loop ads'] },
+  { id: '5', title: 'Parking Lot Billboard — 15k Daily Impressions', category: 'Static Billboards', city: 'Chicago', state: 'IL', price_per_day: 380, rating: 4.9, review_count: 31, image_placeholder: 'from-red-100 to-red-200', tags: ['Verified traffic', 'Highway adjacent'] },
+  { id: '6', title: 'Boutique Storefront Banner — SoHo Block', category: 'Outdoor Static', city: 'New York', state: 'NY', price_per_day: 150, rating: 4.5, review_count: 14, image_placeholder: 'from-pink-100 to-pink-200', tags: ['Fashion district', 'Pedestrian'] },
+  { id: '7', title: 'Bus Stop Shelter — Metro Line 12', category: 'Transit', city: 'Seattle', state: 'WA', price_per_day: 120, rating: 4.7, review_count: 6, image_placeholder: 'from-teal-100 to-teal-200', tags: ['Transit', 'High volume'] },
+  { id: '8', title: 'Rooftop LED Screen — Midtown East', category: 'Outdoor Digital', city: 'New York', state: 'NY', price_per_day: 680, rating: 5.0, review_count: 4, image_placeholder: 'from-indigo-100 to-indigo-200', tags: ['Premium', 'Times Square adjacent'] },
+  { id: '9', title: 'Community Event Space Wall — East Village', category: 'Experiential', city: 'New York', state: 'NY', price_per_day: 95, rating: 4.4, review_count: 9, image_placeholder: 'from-yellow-100 to-yellow-200', tags: ['Mural-style', 'Cultural'] },
+]
+
+const CATEGORIES = [
+  'All Types',
+  'Digital Billboards',
+  'Static Billboards',
+  'Transit',
+  'Outdoor Static',
+  'Outdoor Digital',
+  'Display On-Premise',
+  'Event-Based',
+  'Human-Based',
+  'Experiential',
+  'Street Furniture',
+  'Unique',
+]
+
+// ─── Listing Card ──────────────────────────────────────────────────────────────
+function ListingCard({ listing }: { listing: Listing }) {
   return (
-    <div className="bg-white text-gray-900">
-      {/* Hero */}
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full mb-8">
-            <Zap className="w-3 h-3" />
-            The future of local advertising
+    <Link href={`/marketplace/${listing.id}`} className="block group">
+      <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-0.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+        {/* Image placeholder */}
+        <div className={`h-44 bg-gradient-to-br ${listing.image_placeholder} relative`}>
+          <div className="absolute top-3 left-3">
+            <span className="bg-white/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-full font-medium shadow-sm" style={{ color: '#555' }}>
+              {listing.category}
+            </span>
+          </div>
+          <div className="absolute bottom-3 right-3">
+            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#e6964d' }}>
+              ${listing.price_per_day}/day
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-5">
+          <h3 className="font-semibold leading-snug mb-2 line-clamp-2 text-sm transition-colors group-hover:text-[#e6964d]" style={{ color: '#2b2b2b' }}>
+            {listing.title}
+          </h3>
+
+          <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#888' }}>
+            <MapPin className="w-3 h-3" />
+            {listing.city}, {listing.state}
           </div>
 
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05] text-gray-900">
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {listing.tags.slice(0, 2).map(tag => (
+              <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Rating */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating}</span>
+              <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>
+            </div>
+            <span className="text-xs font-medium" style={{ color: '#e6964d' }}>View details →</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
+export default function HomePage() {
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('All Types')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
+  const filtered = useMemo(() => {
+    return HOMEPAGE_LISTINGS.filter(l => {
+      const matchesSearch =
+        !search ||
+        l.title.toLowerCase().includes(search.toLowerCase()) ||
+        l.city.toLowerCase().includes(search.toLowerCase())
+      const matchesCategory = selectedCategory === 'All Types' || l.category === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [search, selectedCategory])
+
+  return (
+    <div style={{ backgroundColor: '#e6e6dd' }}>
+      {/* Hero */}
+      <section className="pt-32 pb-16 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-[1.05]" style={{ color: '#2b2b2b' }}>
             Advertise on{' '}
-            <span className="text-[#22c55e]">your terms</span>
+            <span style={{ color: '#e6964d' }}>your terms</span>
           </h1>
-          <p className="text-xl md:text-2xl text-gray-500 mb-12 max-w-2xl mx-auto leading-relaxed">
-            The peer-to-peer marketplace for local advertising. Book real-world ad placements in minutes — billboards, storefronts, digital screens, and more.
+          <p className="text-xl md:text-2xl mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
+            Real world marketplace for local advertising. Book real-world ad placements in minutes: digital screens, billboards, storefronts, and more.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               href="/marketplace"
-              className="group inline-flex items-center gap-2 bg-[#22c55e] text-white font-semibold px-8 py-4 rounded-xl text-lg hover:bg-[#16a34a] transition-all hover:scale-105 shadow-lg shadow-green-200"
+              className="group inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all hover:scale-105 shadow-lg"
+              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
             >
               Find Ad Space
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/signup?role=host"
-              className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-xl text-lg hover:bg-gray-50 hover:border-gray-300 transition-all hover:scale-105 shadow-sm"
+              className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all hover:scale-105"
+              style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
               List Your Space
             </Link>
           </div>
-
-          {/* Social proof */}
-          <p className="mt-10 text-sm text-gray-400">
-            Trusted by brands and local businesses across the US
-          </p>
         </div>
       </section>
 
       {/* Stats Bar */}
-      <section className="border-y border-gray-100 py-12 bg-white">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <section className="py-10 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
             { value: '2,400+', label: 'Active placements' },
             { value: '180+', label: 'Cities covered' },
@@ -59,152 +160,146 @@ export default function HomePage() {
             { value: '48hr', label: 'Avg. booking time' },
           ].map((stat) => (
             <div key={stat.label}>
-              <div className="text-3xl font-bold text-[#22c55e] mb-1">{stat.value}</div>
-              <div className="text-sm text-gray-500">{stat.label}</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: '#e6964d' }}>{stat.value}</div>
+              <div className="text-sm" style={{ color: '#888' }}>{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-24 px-6 bg-gray-50">
+      {/* Search + Filter */}
+      <section className="py-10 px-6" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Dead simple to use</h2>
-            <p className="text-gray-500 text-lg">From search to live in three steps</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: '01',
-                icon: MapPin,
-                title: 'Find your spot',
-                desc: 'Browse thousands of verified ad placements by location, format, and budget. See traffic data, photos, and real specs.',
-              },
-              {
-                step: '02',
-                icon: CheckCircle,
-                title: 'Book instantly',
-                desc: 'Select your dates, upload your creative, and pay securely through Stripe. No haggling, no phone calls.',
-              },
-              {
-                step: '03',
-                icon: TrendingUp,
-                title: 'Go live',
-                desc: 'Your host posts the ad and submits proof of posting. You see it happen. Track your campaign from your dashboard.',
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="relative p-8 rounded-2xl bg-white border border-gray-100 shadow-sm hover:border-green-200 hover:shadow-md transition-all group"
+          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
+            {/* Search row */}
+            <div className="flex flex-col md:flex-row gap-3 mb-4">
+              {/* Search input */}
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
+                <input
+                  type="text"
+                  placeholder="Search by city or location..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none transition-colors"
+                  style={{
+                    backgroundColor: '#f4f4f0',
+                    border: '1px solid #d4d4c9',
+                    color: '#2b2b2b',
+                  }}
+                />
+              </div>
+
+              {/* Category dropdown */}
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
+                style={{
+                  backgroundColor: '#f4f4f0',
+                  border: '1px solid #d4d4c9',
+                  color: '#2b2b2b',
+                  minWidth: '200px',
+                }}
               >
-                <div className="text-6xl font-black text-gray-100 absolute top-6 right-6 leading-none select-none">
-                  {item.step}
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date row */}
+            <div className="flex flex-col sm:flex-row gap-3 items-end">
+              <div className="flex gap-3 flex-1">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Start date (optional)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
+                      style={{
+                        backgroundColor: '#f4f4f0',
+                        border: '1px solid #d4d4c9',
+                        color: '#2b2b2b',
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center mb-5">
-                  <item.icon className="w-5 h-5 text-[#22c55e]" />
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>End date (optional)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
+                      style={{
+                        backgroundColor: '#f4f4f0',
+                        border: '1px solid #d4d4c9',
+                        color: '#2b2b2b',
+                      }}
+                    />
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-3 text-gray-900">{item.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
               </div>
-            ))}
+              <button
+                className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 2px 8px rgba(230,150,77,0.3)' }}
+              >
+                <Search className="w-4 h-4" />
+                Search
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* For Hosts */}
-      <section id="for-hosts" className="py-24 px-6 bg-white">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-1.5 rounded-full mb-6">
-              <Users className="w-3 h-3" />
-              For hosts
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight text-gray-900">
-              Turn empty walls into passive income
+      {/* Placements Grid */}
+      <section className="pb-20 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
+              {filtered.length > 0
+                ? `${filtered.length} placements available`
+                : 'No placements found'}
             </h2>
-            <p className="text-gray-500 mb-8 leading-relaxed">
-              Own a storefront, parking lot, vehicle fleet, or event space? List it on City Feed and start earning from advertisers looking for exactly what you have.
-            </p>
-            <ul className="space-y-4">
-              {[
-                'Free to list — no upfront costs',
-                'You set the price and availability',
-                'Stripe payouts directly to your account',
-                'Verified advertisers only',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm text-gray-600">
-                  <CheckCircle className="w-4 h-4 text-[#22c55e] flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/signup?role=host"
-              className="mt-10 inline-flex items-center gap-2 bg-[#22c55e] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#16a34a] transition-colors shadow-lg shadow-green-200"
-            >
-              Start listing today
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
 
-          {/* Visual placeholder */}
-          <div className="relative">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 flex items-center justify-center">
+          {filtered.length > 0 ? (
+            <>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                {filtered.map(listing => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
               <div className="text-center">
-                <div className="text-7xl font-black text-green-200 mb-4">$$$</div>
-                <div className="text-gray-400 text-sm">Your space, earning for you</div>
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80 transition-opacity"
+                  style={{ color: '#e6964d' }}
+                >
+                  View all placements →
+                </Link>
               </div>
+            </>
+          ) : (
+            <div className="text-center py-16">
+              <div className="text-4xl mb-4">🗺️</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
+              <p className="text-sm mb-6" style={{ color: '#888' }}>Try a different search or category</p>
+              <button
+                onClick={() => { setSearch(''); setSelectedCategory('All Types') }}
+                className="text-sm font-medium hover:opacity-80 transition-opacity"
+                style={{ color: '#e6964d' }}
+              >
+                Clear filters
+              </button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Bar */}
-      <section className="py-16 px-6 bg-gray-50 border-t border-gray-100">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8 text-center">
-          {[
-            { icon: Shield, title: 'Secure payments', desc: 'Stripe-powered escrow. Funds release only after proof of posting.' },
-            { icon: CheckCircle, title: 'Verified hosts', desc: 'Every listing goes through manual review before going live.' },
-            { icon: Zap, title: 'Instant booking', desc: 'No back-and-forth. Book a placement in under 5 minutes.' },
-          ].map((item) => (
-            <div key={item.title} className="flex flex-col items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-                <item.icon className="w-6 h-6 text-[#22c55e]" />
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1 text-gray-900">{item.title}</h3>
-                <p className="text-gray-500 text-sm">{item.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA Banner */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
-            Ready to get your brand{' '}
-            <span className="text-[#22c55e]">out there?</span>
-          </h2>
-          <p className="text-gray-500 mb-10 text-lg">
-            Join thousands of advertisers and hosts already on City Feed.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/signup"
-              className="bg-[#22c55e] text-white font-semibold px-8 py-4 rounded-xl text-lg hover:bg-[#16a34a] transition-colors shadow-lg shadow-green-200"
-            >
-              Create free account
-            </Link>
-            <Link
-              href="/marketplace"
-              className="bg-white border border-gray-200 text-gray-700 font-semibold px-8 py-4 rounded-xl text-lg hover:bg-gray-50 transition-colors shadow-sm"
-            >
-              Browse placements
-            </Link>
-          </div>
+          )}
         </div>
       </section>
     </div>

@@ -1,48 +1,48 @@
 import Link from 'next/link'
-import { MapPin } from 'lucide-react'
+import Image from 'next/image'
 
 /**
- * Footer — shared site-wide footer
+ * Footer — shared site-wide footer, updated colors
  */
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 border-t border-gray-200">
+    <footer style={{ backgroundColor: '#ddddd4', borderTop: '1px solid #c8c8be' }}>
       <div className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-lg bg-[#22c55e] flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-bold text-gray-900">City Feed</span>
+            <div className="mb-4">
+              <Image
+                src="/logo.png"
+                alt="City Feed"
+                width={100}
+                height={71}
+                style={{ height: '32px', width: 'auto' }}
+              />
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              The peer-to-peer marketplace for local advertising. Connect brands with real-world ad spaces.
+            <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
+              Real world marketplace for local advertising. Connect brands with real-world ad spaces.
             </p>
           </div>
 
           {/* Company */}
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm mb-4">Company</h4>
+            <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>Company</h4>
             <ul className="space-y-2.5">
-              {['About', 'How It Works', 'Blog', 'Careers'].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                    {item}
-                  </Link>
-                </li>
-              ))}
+              <li><Link href="/about" className="text-sm transition-colors" style={{ color: '#888' }}>About</Link></li>
+              <li><Link href="/how-it-works" className="text-sm transition-colors" style={{ color: '#888' }}>How It Works</Link></li>
+              <li><Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>Blog</Link></li>
+              <li><Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>Careers</Link></li>
             </ul>
           </div>
 
           {/* For You */}
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm mb-4">For You</h4>
+            <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>For You</h4>
             <ul className="space-y-2.5">
               {['For Hosts', 'For Advertisers', 'Pricing', 'Help Center'].map((item) => (
                 <li key={item}>
-                  <Link href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                  <Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>
                     {item}
                   </Link>
                 </li>
@@ -52,11 +52,11 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-semibold text-gray-900 text-sm mb-4">Legal</h4>
+            <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>Legal</h4>
             <ul className="space-y-2.5">
               {['Terms of Service', 'Privacy Policy', 'Cookie Policy'].map((item) => (
                 <li key={item}>
-                  <Link href="#" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                  <Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>
                     {item}
                   </Link>
                 </li>
@@ -66,20 +66,16 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p className="text-xs text-gray-400">
+        <div className="mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style={{ borderTop: '1px solid #c8c8be' }}>
+          <p className="text-xs" style={{ color: '#aaa' }}>
             © {new Date().getFullYear()} City Feed, Inc. All rights reserved.
           </p>
           <div className="flex gap-5">
-            <Link href="#" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Privacy
-            </Link>
-            <Link href="#" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Terms
-            </Link>
-            <Link href="#" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              Contact
-            </Link>
+            {['Privacy', 'Terms', 'Contact'].map((item) => (
+              <Link key={item} href="#" className="text-xs transition-colors" style={{ color: '#aaa' }}>
+                {item}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

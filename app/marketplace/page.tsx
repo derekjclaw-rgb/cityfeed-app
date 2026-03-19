@@ -2,7 +2,7 @@
 
 /**
  * Marketplace page — browse listing cards with search + category filter
- * Light theme, Zillow-style grid/map toggle
+ * Updated: new color palette, new categories
  */
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
@@ -27,43 +27,52 @@ interface Listing {
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
 export const MOCK_LISTINGS: Listing[] = [
-  { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'billboard', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'], lat: 36.1699, lng: -115.1398, daily_impressions: 45000 },
-  { id: '2', title: 'Coffee Shop Window Wrap — Arts District', category: 'window', city: 'Los Angeles', state: 'CA', price_per_day: 85, rating: 4.7, review_count: 11, image_placeholder: 'from-emerald-100 to-emerald-200', tags: ['Street-level', 'High foot traffic'], lat: 34.0522, lng: -118.2437, daily_impressions: 3200 },
-  { id: '3', title: 'Food Truck Fleet Wraps — 5 Vehicles', category: 'vehicle_wrap', city: 'Austin', state: 'TX', price_per_day: 200, rating: 4.8, review_count: 17, image_placeholder: 'from-orange-100 to-orange-200', tags: ['Mobile', 'Event-ready'], lat: 30.2672, lng: -97.7431, daily_impressions: 12000 },
-  { id: '4', title: 'Indoor Digital Screen — Union Square Mall', category: 'digital_screen', city: 'San Francisco', state: 'CA', price_per_day: 320, rating: 4.6, review_count: 8, image_placeholder: 'from-blue-100 to-blue-200', tags: ['Indoor', '4K display', 'Loop ads'], lat: 37.7749, lng: -122.4194, daily_impressions: 28000 },
-  { id: '5', title: 'Parking Lot Billboard — 15k Daily Impressions', category: 'billboard', city: 'Chicago', state: 'IL', price_per_day: 380, rating: 4.9, review_count: 31, image_placeholder: 'from-red-100 to-red-200', tags: ['Verified traffic', 'Highway adjacent'], lat: 41.8781, lng: -87.6298, daily_impressions: 15000 },
-  { id: '6', title: 'Boutique Storefront Banner — SoHo Block', category: 'storefront', city: 'New York', state: 'NY', price_per_day: 150, rating: 4.5, review_count: 14, image_placeholder: 'from-pink-100 to-pink-200', tags: ['Fashion district', 'Pedestrian'], lat: 40.7128, lng: -74.0060, daily_impressions: 8000 },
-  { id: '7', title: 'Bus Stop Shelter — Metro Line 12', category: 'transit', city: 'Seattle', state: 'WA', price_per_day: 120, rating: 4.7, review_count: 6, image_placeholder: 'from-teal-100 to-teal-200', tags: ['Transit', 'High volume'], lat: 47.6062, lng: -122.3321, daily_impressions: 9500 },
-  { id: '8', title: 'Rooftop LED Screen — Midtown East', category: 'digital_screen', city: 'New York', state: 'NY', price_per_day: 680, rating: 5.0, review_count: 4, image_placeholder: 'from-indigo-100 to-indigo-200', tags: ['Premium', 'Times Square adjacent'], lat: 40.7549, lng: -73.9840, daily_impressions: 60000 },
-  { id: '9', title: 'Community Event Space Wall — East Village', category: 'event_space', city: 'New York', state: 'NY', price_per_day: 95, rating: 4.4, review_count: 9, image_placeholder: 'from-yellow-100 to-yellow-200', tags: ['Mural-style', 'Cultural'], lat: 40.7282, lng: -73.9857, daily_impressions: 5000 },
+  { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'Digital Billboards', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'], lat: 36.1699, lng: -115.1398, daily_impressions: 45000 },
+  { id: '2', title: 'Coffee Shop Window Wrap — Arts District', category: 'Outdoor Static', city: 'Los Angeles', state: 'CA', price_per_day: 85, rating: 4.7, review_count: 11, image_placeholder: 'from-amber-100 to-amber-200', tags: ['Street-level', 'High foot traffic'], lat: 34.0522, lng: -118.2437, daily_impressions: 3200 },
+  { id: '3', title: 'Food Truck Fleet Wraps — 5 Vehicles', category: 'Human-Based', city: 'Austin', state: 'TX', price_per_day: 200, rating: 4.8, review_count: 17, image_placeholder: 'from-orange-100 to-orange-200', tags: ['Mobile', 'Event-ready'], lat: 30.2672, lng: -97.7431, daily_impressions: 12000 },
+  { id: '4', title: 'Indoor Digital Screen — Union Square Mall', category: 'Display On-Premise', city: 'San Francisco', state: 'CA', price_per_day: 320, rating: 4.6, review_count: 8, image_placeholder: 'from-blue-100 to-blue-200', tags: ['Indoor', '4K display', 'Loop ads'], lat: 37.7749, lng: -122.4194, daily_impressions: 28000 },
+  { id: '5', title: 'Parking Lot Billboard — 15k Daily Impressions', category: 'Static Billboards', city: 'Chicago', state: 'IL', price_per_day: 380, rating: 4.9, review_count: 31, image_placeholder: 'from-red-100 to-red-200', tags: ['Verified traffic', 'Highway adjacent'], lat: 41.8781, lng: -87.6298, daily_impressions: 15000 },
+  { id: '6', title: 'Boutique Storefront Banner — SoHo Block', category: 'Outdoor Static', city: 'New York', state: 'NY', price_per_day: 150, rating: 4.5, review_count: 14, image_placeholder: 'from-pink-100 to-pink-200', tags: ['Fashion district', 'Pedestrian'], lat: 40.7128, lng: -74.0060, daily_impressions: 8000 },
+  { id: '7', title: 'Bus Stop Shelter — Metro Line 12', category: 'Transit', city: 'Seattle', state: 'WA', price_per_day: 120, rating: 4.7, review_count: 6, image_placeholder: 'from-teal-100 to-teal-200', tags: ['Transit', 'High volume'], lat: 47.6062, lng: -122.3321, daily_impressions: 9500 },
+  { id: '8', title: 'Rooftop LED Screen — Midtown East', category: 'Outdoor Digital', city: 'New York', state: 'NY', price_per_day: 680, rating: 5.0, review_count: 4, image_placeholder: 'from-indigo-100 to-indigo-200', tags: ['Premium', 'Times Square adjacent'], lat: 40.7549, lng: -73.9840, daily_impressions: 60000 },
+  { id: '9', title: 'Community Event Space Wall — East Village', category: 'Experiential', city: 'New York', state: 'NY', price_per_day: 95, rating: 4.4, review_count: 9, image_placeholder: 'from-yellow-100 to-yellow-200', tags: ['Mural-style', 'Cultural'], lat: 40.7282, lng: -73.9857, daily_impressions: 5000 },
 ]
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const CATEGORIES = [
   { value: 'all', label: 'All types' },
-  { value: 'billboard', label: 'Billboard' },
-  { value: 'digital_screen', label: 'Digital Screen' },
-  { value: 'window', label: 'Window' },
-  { value: 'storefront', label: 'Storefront' },
-  { value: 'vehicle_wrap', label: 'Vehicle Wrap' },
-  { value: 'event_space', label: 'Event Space' },
-  { value: 'transit', label: 'Transit' },
+  { value: 'Digital Billboards', label: 'Digital Billboards' },
+  { value: 'Static Billboards', label: 'Static Billboards' },
+  { value: 'Transit', label: 'Transit' },
+  { value: 'Outdoor Static', label: 'Outdoor Static' },
+  { value: 'Outdoor Digital', label: 'Outdoor Digital' },
+  { value: 'Display On-Premise', label: 'Display On-Premise' },
+  { value: 'Event-Based', label: 'Event-Based' },
+  { value: 'Human-Based', label: 'Human-Based' },
+  { value: 'Experiential', label: 'Experiential' },
+  { value: 'Street Furniture', label: 'Street Furniture' },
+  { value: 'Unique', label: 'Unique' },
 ]
 
 // ─── Listing Card ──────────────────────────────────────────────────────────────
 function ListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
   return (
     <Link href={`/marketplace/${listing.id}`} className="block">
-      <div className={`group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:border-green-200 hover:shadow-md transition-all ${compact ? '' : 'hover:-translate-y-1'}`}>
+      <div
+        className={`group bg-white rounded-2xl overflow-hidden transition-all ${compact ? '' : 'hover:-translate-y-1'}`}
+        style={{ border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', ...(compact ? {} : {}) }}
+        onMouseEnter={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
+        onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+      >
         {/* Image placeholder */}
         <div className={`${compact ? 'h-32' : 'h-44'} bg-gradient-to-br ${listing.image_placeholder} relative`}>
           <div className="absolute top-3 left-3">
-            <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs px-2.5 py-1 rounded-full font-medium shadow-sm">
-              {CATEGORIES.find(c => c.value === listing.category)?.label ?? listing.category}
+            <span className="bg-white/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-full font-medium shadow-sm" style={{ color: '#555' }}>
+              {listing.category}
             </span>
           </div>
           <div className="absolute bottom-3 right-3">
-            <span className="bg-[#22c55e] text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#e6964d' }}>
               ${listing.price_per_day}/day
             </span>
           </div>
@@ -71,11 +80,11 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
 
         {/* Content */}
         <div className={`${compact ? 'p-3' : 'p-5'}`}>
-          <h3 className={`font-semibold text-gray-900 leading-snug mb-2 line-clamp-2 group-hover:text-[#22c55e] transition-colors ${compact ? 'text-xs' : 'text-sm'}`}>
+          <h3 className={`font-semibold leading-snug mb-2 line-clamp-2 transition-colors ${compact ? 'text-xs' : 'text-sm'}`} style={{ color: '#2b2b2b' }}>
             {listing.title}
           </h3>
 
-          <div className="flex items-center gap-1.5 text-gray-400 text-xs mb-3">
+          <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#888' }}>
             <MapPin className="w-3 h-3" />
             {listing.city}, {listing.state}
           </div>
@@ -83,7 +92,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
           {!compact && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {listing.tags.slice(0, 2).map(tag => (
-                <span key={tag} className="bg-gray-50 text-gray-500 text-xs px-2 py-0.5 rounded-full border border-gray-100">
+                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
                   {tag}
                 </span>
               ))}
@@ -93,12 +102,12 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
           {/* Rating + CTA */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-[#22c55e] fill-[#22c55e]" />
-              <span className="text-gray-900 text-xs font-semibold">{listing.rating}</span>
-              {!compact && <span className="text-gray-400 text-xs">({listing.review_count})</span>}
+              <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating}</span>
+              {!compact && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
             </div>
             {!compact && (
-              <span className="text-xs text-[#22c55e] font-medium">View details →</span>
+              <span className="text-xs font-medium" style={{ color: '#e6964d' }}>View details →</span>
             )}
           </div>
         </div>
@@ -141,7 +150,7 @@ function MapView({ listings }: { listings: Listing[] }) {
           el.className = 'mapbox-marker'
           el.innerHTML = `
             <div style="
-              background: #22c55e;
+              background: #e6964d;
               color: white;
               font-size: 11px;
               font-weight: 700;
@@ -149,7 +158,7 @@ function MapView({ listings }: { listings: Listing[] }) {
               border-radius: 20px;
               white-space: nowrap;
               cursor: pointer;
-              box-shadow: 0 2px 8px rgba(34,197,94,0.4);
+              box-shadow: 0 2px 8px rgba(230,150,77,0.4);
               border: 2px solid white;
               font-family: system-ui, sans-serif;
             ">$${listing.price_per_day}</div>
@@ -177,29 +186,31 @@ function MapView({ listings }: { listings: Listing[] }) {
 
       {/* Popup overlay */}
       {selectedListing && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-10">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
           <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
           <div className="p-4">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">
+              <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>
                 {selectedListing.title}
               </h3>
               <button
                 onClick={() => setSelectedListing(null)}
-                className="text-gray-400 hover:text-gray-600 flex-shrink-0 mt-0.5"
+                className="flex-shrink-0 mt-0.5 hover:opacity-70 transition-opacity"
+                style={{ color: '#888' }}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex items-center gap-1.5 text-gray-400 text-xs mt-1 mb-3">
+            <div className="flex items-center gap-1.5 text-xs mt-1 mb-3" style={{ color: '#888' }}>
               <MapPin className="w-3 h-3" />
               {selectedListing.city}, {selectedListing.state}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#22c55e] font-bold text-sm">${selectedListing.price_per_day}/day</span>
+              <span className="font-bold text-sm" style={{ color: '#e6964d' }}>${selectedListing.price_per_day}/day</span>
               <Link
                 href={`/marketplace/${selectedListing.id}`}
-                className="bg-[#22c55e] text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-[#16a34a] transition-colors"
+                className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-colors"
+                style={{ backgroundColor: '#e6964d' }}
               >
                 View listing →
               </Link>
@@ -236,12 +247,12 @@ export default function MarketplacePage() {
   }, [search, selectedCategory, sortBy])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#e6e6dd' }}>
       <div className="pt-16 max-w-7xl mx-auto px-6 pb-20">
         {/* Header */}
         <div className="py-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Browse ad placements</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Browse ad placements</h1>
+          <p style={{ color: '#888' }}>
             {MOCK_LISTINGS.length} listings across the US
           </p>
         </div>
@@ -250,16 +261,22 @@ export default function MarketplacePage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           {/* Search input */}
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
             <input
               type="text"
               placeholder="Search by location, type..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-10 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100 transition-colors text-sm shadow-sm"
+              className="w-full rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none transition-colors"
+              style={{
+                backgroundColor: '#fff',
+                border: '1px solid #d4d4c9',
+                color: '#2b2b2b',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+              }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity" style={{ color: '#888' }}>
                 <X className="w-4 h-4" />
               </button>
             )}
@@ -267,11 +284,17 @@ export default function MarketplacePage() {
 
           {/* Sort */}
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-gray-400" />
+            <SlidersHorizontal className="w-4 h-4" style={{ color: '#888' }} />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 text-sm focus:outline-none focus:border-[#22c55e] cursor-pointer shadow-sm"
+              className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
+              style={{
+                backgroundColor: '#fff',
+                border: '1px solid #d4d4c9',
+                color: '#555',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+              }}
             >
               <option value="rating">Top rated</option>
               <option value="price_asc">Price: Low to high</option>
@@ -280,21 +303,19 @@ export default function MarketplacePage() {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <button
               onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                viewMode === 'grid' ? 'bg-[#22c55e] text-white' : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+              style={viewMode === 'grid' ? { backgroundColor: '#e6964d', color: '#fff' } : { color: '#888' }}
             >
               <LayoutGrid className="w-4 h-4" />
               <span className="hidden sm:inline">Grid</span>
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-                viewMode === 'map' ? 'bg-[#22c55e] text-white' : 'text-gray-500 hover:text-gray-900'
-              }`}
+              className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+              style={viewMode === 'map' ? { backgroundColor: '#e6964d', color: '#fff' } : { color: '#888' }}
             >
               <Map className="w-4 h-4" />
               <span className="hidden sm:inline">Map</span>
@@ -308,11 +329,12 @@ export default function MarketplacePage() {
             <button
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
+              style={
                 selectedCategory === cat.value
-                  ? 'bg-[#22c55e] text-white shadow-sm'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:text-gray-900'
-              }`}
+                  ? { backgroundColor: '#e6964d', color: '#fff' }
+                  : { backgroundColor: '#fff', color: '#555', border: '1px solid #d4d4c9' }
+              }
             >
               {cat.label}
             </button>
@@ -320,7 +342,7 @@ export default function MarketplacePage() {
         </div>
 
         {/* Results count */}
-        <div className="text-sm text-gray-400 mb-6">
+        <div className="text-sm mb-6" style={{ color: '#888' }}>
           {filtered.length} result{filtered.length !== 1 ? 's' : ''}
           {selectedCategory !== 'all' && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}
           {search && ` for "${search}"`}
@@ -337,18 +359,19 @@ export default function MarketplacePage() {
           ) : (
             <div className="text-center py-24">
               <div className="text-4xl mb-4">🗺️</div>
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">No listings found</h3>
-              <p className="text-gray-400 text-sm">Try a different search or category</p>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
+              <p className="text-sm" style={{ color: '#888' }}>Try a different search or category</p>
               <button
                 onClick={() => { setSearch(''); setSelectedCategory('all') }}
-                className="mt-6 text-[#22c55e] text-sm hover:text-[#16a34a] transition-colors"
+                className="mt-6 text-sm hover:opacity-80 transition-opacity"
+                style={{ color: '#e6964d' }}
               >
                 Clear filters
               </button>
             </div>
           )
         ) : (
-          /* Map view — Zillow-style side-by-side */
+          /* Map view */
           <div className="flex gap-5 h-[680px]">
             {/* Left: scrollable list */}
             <div className="w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
@@ -357,7 +380,7 @@ export default function MarketplacePage() {
               ))}
             </div>
             {/* Right: map */}
-            <div className="flex-1 rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
               <MapView listings={filtered} />
             </div>
           </div>

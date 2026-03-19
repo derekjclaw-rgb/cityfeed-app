@@ -12,11 +12,11 @@ const geist = Geist({
 export const metadata: Metadata = {
   title: 'City Feed — The marketplace for local advertising',
   description:
-    'Peer-to-peer marketplace for local and OOH advertising placements. Find or list billboards, storefronts, digital screens, vehicle wraps, and more.',
+    'Real world marketplace for local advertising. Book real-world ad placements in minutes: digital screens, billboards, storefronts, and more.',
   openGraph: {
     title: 'City Feed',
     description:
-      'Advertise on your terms. The peer-to-peer marketplace for local advertising.',
+      'Advertise on your terms. The real world marketplace for local advertising.',
     type: 'website',
   },
 }
@@ -29,7 +29,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geist.variable} font-sans antialiased bg-white text-gray-900`}
+        className={`${geist.variable} font-sans antialiased`}
+        style={{ backgroundColor: '#e6e6dd', color: '#2b2b2b' }}
       >
         <Navbar />
         <main className="min-h-screen">{children}</main>

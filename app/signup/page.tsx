@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Signup page — email/password with role selection (light theme)
+ * Signup page — email/password with role selection, new color palette
  */
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
@@ -50,20 +50,27 @@ function SignupForm() {
     }
   }
 
+  const inputStyle = {
+    backgroundColor: '#f4f4f0',
+    border: '1px solid #d4d4c9',
+    color: '#2b2b2b',
+  }
+
   if (success) {
     return (
       <div className="text-center">
-        <div className="w-16 h-16 rounded-full bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-6">
-          <Check className="w-8 h-8 text-[#22c55e]" />
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(230,150,77,0.12)', border: '1px solid rgba(230,150,77,0.3)' }}>
+          <Check className="w-8 h-8" style={{ color: '#e6964d' }} />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">Check your email</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          We sent a confirmation link to <strong className="text-gray-700">{email}</strong>.
+        <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Check your email</h2>
+        <p className="text-sm mb-6" style={{ color: '#888' }}>
+          We sent a confirmation link to <strong style={{ color: '#555' }}>{email}</strong>.
           Click it to activate your account.
         </p>
         <Link
           href="/login"
-          className="text-[#22c55e] hover:text-[#16a34a] font-medium text-sm transition-colors"
+          className="font-medium text-sm transition-opacity hover:opacity-80"
+          style={{ color: '#e6964d' }}
         >
           Back to sign in
         </Link>
@@ -73,8 +80,8 @@ function SignupForm() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Create your account</h1>
-      <p className="text-gray-500 text-sm mb-8">Free forever. No credit card required.</p>
+      <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Create your account</h1>
+      <p className="text-sm mb-8" style={{ color: '#888' }}>Free forever. No credit card required.</p>
 
       {/* Role selector */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -86,13 +93,14 @@ function SignupForm() {
             key={option.value}
             type="button"
             onClick={() => setRole(option.value)}
-            className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+            className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all"
+            style={
               role === option.value
-                ? 'border-[#22c55e] bg-green-50 text-gray-900'
-                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
-            }`}
+                ? { border: '1px solid #e6964d', backgroundColor: 'rgba(230,150,77,0.08)', color: '#2b2b2b' }
+                : { border: '1px solid #d4d4c9', backgroundColor: '#fff', color: '#888' }
+            }
           >
-            <option.icon className={`w-5 h-5 ${role === option.value ? 'text-[#22c55e]' : 'text-gray-400'}`} />
+            <option.icon className="w-5 h-5" style={{ color: role === option.value ? '#e6964d' : '#aaa' }} />
             <div>
               <div className="font-semibold text-sm">{option.label}</div>
               <div className="text-xs opacity-70">{option.desc}</div>
@@ -104,7 +112,7 @@ function SignupForm() {
       <form onSubmit={handleSignup} className="space-y-5">
         {/* Full name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="fullName">
+          <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="fullName">
             Full name
           </label>
           <input
@@ -114,13 +122,14 @@ function SignupForm() {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Jane Smith"
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100 transition-colors text-sm"
+            className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+            style={inputStyle}
           />
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
+          <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="email">
             Email
           </label>
           <input
@@ -130,13 +139,14 @@ function SignupForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100 transition-colors text-sm"
+            className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+            style={inputStyle}
           />
         </div>
 
         {/* Password */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
+          <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="password">
             Password
           </label>
           <div className="relative">
@@ -148,12 +158,14 @@ function SignupForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min 8 characters"
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 pr-11 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100 transition-colors text-sm"
+              className="w-full rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none transition-colors"
+              style={inputStyle}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70"
+              style={{ color: '#888' }}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -162,7 +174,7 @@ function SignupForm() {
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
+          <div className="rounded-xl px-4 py-3 text-sm" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
             {error}
           </div>
         )}
@@ -171,17 +183,18 @@ function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#22c55e] text-white font-semibold py-3 rounded-xl hover:bg-[#16a34a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-green-200"
+          className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Create account
         </button>
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs" style={{ color: '#aaa' }}>
           By signing up, you agree to our{' '}
-          <Link href="#" className="underline hover:text-gray-600">Terms</Link>{' '}
+          <Link href="#" className="underline hover:opacity-70">Terms</Link>{' '}
           and{' '}
-          <Link href="#" className="underline hover:text-gray-600">Privacy Policy</Link>
+          <Link href="#" className="underline hover:opacity-70">Privacy Policy</Link>
         </p>
       </form>
     </>
@@ -190,19 +203,19 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6 pt-20">
+    <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#e6e6dd' }}>
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-          <Suspense fallback={<div className="text-gray-400 text-sm">Loading...</div>}>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+          <Suspense fallback={<div className="text-sm" style={{ color: '#888' }}>Loading...</div>}>
             <SignupForm />
           </Suspense>
         </div>
 
         {/* Sign in link */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm mt-6" style={{ color: '#888' }}>
           Already have an account?{' '}
-          <Link href="/login" className="text-[#22c55e] hover:text-[#16a34a] font-medium transition-colors">
+          <Link href="/login" className="font-medium transition-opacity hover:opacity-80" style={{ color: '#e6964d' }}>
             Sign in
           </Link>
         </p>

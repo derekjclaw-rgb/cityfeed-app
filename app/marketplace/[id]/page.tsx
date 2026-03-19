@@ -2,6 +2,7 @@
 
 /**
  * Listing Detail Page — hero, stats, booking widget
+ * Updated: new color palette, new categories
  */
 import { useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -43,16 +44,6 @@ const MOCK_DETAILS: Record<string, {
   '9': { description: 'Blank white wall in a community arts space in East Village — ideal for large-scale murals, experiential activations, or painted brand campaigns. Adjacent to a popular coffee shop with high social media capture potential.', dimensions: '20ft × 15ft', production_time: '7-10 business days', min_days: 14, max_days: 60, content_restrictions: 'Community review required. No political content.' },
 }
 
-const CATEGORIES: Record<string, string> = {
-  billboard: 'Billboard',
-  digital_screen: 'Digital Screen',
-  window: 'Window Wrap',
-  storefront: 'Storefront',
-  vehicle_wrap: 'Vehicle Wrap',
-  event_space: 'Event Space',
-  transit: 'Transit',
-}
-
 function BookingWidget({ pricePerDay, listingId }: { pricePerDay: number; listingId: string }) {
   const router = useRouter()
   const [startDate, setStartDate] = useState('')
@@ -76,52 +67,54 @@ function BookingWidget({ pricePerDay, listingId }: { pricePerDay: number; listin
   const today = new Date().toISOString().split('T')[0]
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm sticky top-24">
+    <div className="rounded-2xl p-6 sticky top-24" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 8px rgba(0,0,0,0.07)' }}>
       <div className="flex items-baseline gap-1 mb-6">
-        <span className="text-3xl font-bold text-gray-900">${pricePerDay}</span>
-        <span className="text-gray-500 text-sm">/day</span>
+        <span className="text-3xl font-bold" style={{ color: '#2b2b2b' }}>${pricePerDay}</span>
+        <span className="text-sm" style={{ color: '#888' }}>/day</span>
       </div>
 
       <div className="space-y-3 mb-5">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Start Date</label>
+          <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Start Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
             <input
               type="date"
               min={today}
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100"
+              className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
+              style={{ border: '1px solid #d4d4c9', color: '#2b2b2b' }}
             />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">End Date</label>
+          <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>End Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
             <input
               type="date"
               min={startDate || today}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#22c55e] focus:ring-2 focus:ring-green-100"
+              className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
+              style={{ border: '1px solid #d4d4c9', color: '#2b2b2b' }}
             />
           </div>
         </div>
       </div>
 
       {days > 0 && (
-        <div className="border border-gray-100 rounded-xl p-4 mb-5 space-y-2 bg-gray-50">
-          <div className="flex justify-between text-sm text-gray-600">
+        <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f4f4f0', border: '1px solid #e0e0d8' }}>
+          <div className="flex justify-between text-sm" style={{ color: '#555' }}>
             <span>${pricePerDay} × {days} day{days !== 1 ? 's' : ''}</span>
             <span>${subtotal.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between text-sm text-gray-500">
+          <div className="flex justify-between text-sm" style={{ color: '#888' }}>
             <span>City Feed fee (7%)</span>
             <span>${fee.toLocaleString()}</span>
           </div>
-          <div className="border-t border-gray-200 pt-2 flex justify-between font-semibold text-gray-900">
+          <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #d4d4c9', color: '#2b2b2b' }}>
             <span>Total</span>
             <span>${total.toLocaleString()}</span>
           </div>
@@ -130,13 +123,14 @@ function BookingWidget({ pricePerDay, listingId }: { pricePerDay: number; listin
 
       <button
         onClick={handleBook}
-        className="w-full bg-[#22c55e] text-white font-semibold py-3.5 rounded-xl hover:bg-[#16a34a] transition-colors shadow-lg shadow-green-200 flex items-center justify-center gap-2"
+        className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+        style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
       >
         Request to Book
         <ChevronRight className="w-4 h-4" />
       </button>
 
-      <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-gray-400">
+      <div className="flex items-center justify-center gap-1.5 mt-4 text-xs" style={{ color: '#888' }}>
         <Shield className="w-3.5 h-3.5" />
         You won&apos;t be charged until confirmed
       </div>
@@ -154,11 +148,11 @@ export default function ListingDetailPage() {
 
   if (!listing || !host || !details) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20">
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="text-center">
           <div className="text-4xl mb-4">🗺️</div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Listing not found</h2>
-          <Link href="/marketplace" className="text-[#22c55e] hover:text-[#16a34a] text-sm font-medium">
+          <h2 className="text-xl font-semibold mb-2" style={{ color: '#555' }}>Listing not found</h2>
+          <Link href="/marketplace" className="text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: '#e6964d' }}>
             ← Back to marketplace
           </Link>
         </div>
@@ -167,41 +161,41 @@ export default function ListingDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16">
+    <div className="min-h-screen pt-16" style={{ backgroundColor: '#e6e6dd' }}>
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-          <Link href="/marketplace" className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+        <div className="flex items-center gap-2 text-sm mb-6" style={{ color: '#888' }}>
+          <Link href="/marketplace" className="flex items-center gap-1 hover:opacity-80 transition-opacity" style={{ color: '#888' }}>
             <ArrowLeft className="w-3.5 h-3.5" />
             Marketplace
           </Link>
           <span>/</span>
-          <span className="text-gray-900 line-clamp-1">{listing.title}</span>
+          <span className="line-clamp-1" style={{ color: '#2b2b2b' }}>{listing.title}</span>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-10">
           {/* Left: main content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Hero image */}
-            <div className={`h-72 md:h-96 rounded-2xl bg-gradient-to-br ${listing.image_placeholder} relative overflow-hidden shadow-sm`}>
+            <div className={`h-72 md:h-96 rounded-2xl bg-gradient-to-br ${listing.image_placeholder} relative overflow-hidden`} style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
               <div className="absolute top-4 left-4">
-                <span className="bg-white/95 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm">
-                  {CATEGORIES[listing.category] ?? listing.category}
+                <span className="bg-white/95 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm" style={{ color: '#555' }}>
+                  {listing.category}
                 </span>
               </div>
             </div>
 
             {/* Title + meta */}
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">{listing.title}</h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+              <h1 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>{listing.title}</h1>
+              <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: '#888' }}>
                 <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4 text-[#22c55e]" />
+                  <MapPin className="w-4 h-4" style={{ color: '#e6964d' }} />
                   {listing.city}, {listing.state}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-[#22c55e] fill-[#22c55e]" />
-                  <strong className="text-gray-900">{listing.rating}</strong>
+                  <Star className="w-4 h-4 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+                  <strong style={{ color: '#2b2b2b' }}>{listing.rating}</strong>
                   <span>({listing.review_count} reviews)</span>
                 </div>
               </div>
@@ -209,7 +203,7 @@ export default function ListingDetailPage() {
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mt-4">
                 {listing.tags.map(tag => (
-                  <span key={tag} className="bg-green-50 text-green-700 text-xs font-medium px-3 py-1 rounded-full border border-green-100">
+                  <span key={tag} className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(230,150,77,0.12)', color: '#e6964d', border: '1px solid rgba(230,150,77,0.25)' }}>
                     {tag}
                   </span>
                 ))}
@@ -224,64 +218,64 @@ export default function ListingDetailPage() {
                 { icon: Ruler, label: 'Dimensions', value: details.dimensions },
                 { icon: Clock, label: 'Production', value: details.production_time },
               ].map((stat) => (
-                <div key={stat.label} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-                  <stat.icon className="w-4 h-4 text-[#22c55e] mb-2" />
-                  <div className="text-xs text-gray-500 mb-1">{stat.label}</div>
-                  <div className="text-sm font-semibold text-gray-900">{stat.value}</div>
+                <div key={stat.label} className="rounded-xl p-4" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                  <stat.icon className="w-4 h-4 mb-2" style={{ color: '#e6964d' }} />
+                  <div className="text-xs mb-1" style={{ color: '#888' }}>{stat.label}</div>
+                  <div className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>{stat.value}</div>
                 </div>
               ))}
             </div>
 
             {/* Description */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">About this placement</h2>
-              <p className="text-gray-600 text-sm leading-relaxed">{details.description}</p>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h2 className="text-lg font-semibold mb-3" style={{ color: '#2b2b2b' }}>About this placement</h2>
+              <p className="text-sm leading-relaxed" style={{ color: '#555' }}>{details.description}</p>
             </div>
 
             {/* Details */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Listing details</h2>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h2 className="text-lg font-semibold mb-4" style={{ color: '#2b2b2b' }}>Listing details</h2>
               <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 {[
                   { label: 'Min. booking', value: `${details.min_days} days` },
                   { label: 'Max. booking', value: `${details.max_days} days` },
-                  { label: 'Category', value: CATEGORIES[listing.category] ?? listing.category },
+                  { label: 'Category', value: listing.category },
                   { label: 'Location', value: `${listing.city}, ${listing.state}` },
                 ].map((item) => (
-                  <div key={item.label} className="flex justify-between py-2 border-b border-gray-50">
-                    <span className="text-gray-500">{item.label}</span>
-                    <span className="font-medium text-gray-900">{item.value}</span>
+                  <div key={item.label} className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <span style={{ color: '#888' }}>{item.label}</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{item.value}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
+              <div className="mt-4 p-3 rounded-xl text-xs" style={{ backgroundColor: '#fef9f0', border: '1px solid #fde8c4', color: '#c4763a' }}>
                 <strong>Content restrictions:</strong> {details.content_restrictions}
               </div>
             </div>
 
             {/* Host card */}
-            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">About the host</h2>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h2 className="text-lg font-semibold mb-4" style={{ color: '#2b2b2b' }}>About the host</h2>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#22c55e]/10 flex items-center justify-center text-[#22c55e] font-bold text-sm">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d' }}>
                   {host.avatar}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{host.name}</div>
-                  <div className="text-sm text-gray-500">Member since {host.joined}</div>
+                  <div className="font-semibold" style={{ color: '#2b2b2b' }}>{host.name}</div>
+                  <div className="text-sm" style={{ color: '#888' }}>Member since {host.joined}</div>
                 </div>
                 <div className="ml-auto text-right">
                   <div className="flex items-center gap-1 text-sm">
-                    <Star className="w-3.5 h-3.5 text-[#22c55e] fill-[#22c55e]" />
-                    <strong>{host.rating}</strong>
+                    <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+                    <strong style={{ color: '#2b2b2b' }}>{host.rating}</strong>
                   </div>
-                  <div className="text-xs text-gray-500">{host.listings} listing{host.listings !== 1 ? 's' : ''}</div>
+                  <div className="text-xs" style={{ color: '#888' }}>{host.listings} listing{host.listings !== 1 ? 's' : ''}</div>
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" />
-                Identity verified &nbsp;·&nbsp; 
-                <CheckCircle className="w-3.5 h-3.5 text-[#22c55e]" />
+              <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: '#888' }}>
+                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#e6964d' }} />
+                Identity verified &nbsp;·&nbsp;
+                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#e6964d' }} />
                 Fast responder
               </div>
             </div>
