@@ -31,7 +31,7 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="fixed top-0 w-full z-50" style={{ backgroundColor: 'rgba(230,230,221,0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #d4d4c9' }}>
+    <nav className="fixed top-0 w-full z-50" style={{ backgroundColor: '#2b2b2b', backdropFilter: 'blur(12px)', borderBottom: '1px solid #1a1a1a' }}>
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center">
@@ -53,7 +53,7 @@ export default function Navbar() {
               href={link.href}
               className="text-sm font-medium transition-colors"
               style={{
-                color: pathname === link.href ? '#e6964d' : '#555',
+                color: pathname === link.href ? '#e6964d' : '#e6e6dd',
               }}
             >
               {link.label}
@@ -68,13 +68,13 @@ export default function Navbar() {
               <Link
                 href="/dashboard/listings"
                 className="text-sm font-medium transition-colors"
-                style={{ color: '#555' }}
+                style={{ color: '#e6e6dd' }}
               >
                 Dashboard
               </Link>
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d' }}
+                style={{ backgroundColor: 'rgba(230,150,77,0.2)', color: '#e6964d' }}
               >
                 {user.email?.charAt(0).toUpperCase() ?? 'U'}
               </div>
@@ -84,7 +84,7 @@ export default function Navbar() {
               <Link
                 href="/login"
                 className="text-sm font-medium transition-colors"
-                style={{ color: '#555' }}
+                style={{ color: '#e6e6dd' }}
               >
                 Login
               </Link>
@@ -102,7 +102,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           className="md:hidden"
-          style={{ color: '#2b2b2b' }}
+          style={{ color: '#e6e6dd' }}
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -111,25 +111,25 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden px-6 pb-4 space-y-3" style={{ backgroundColor: '#e6e6dd', borderTop: '1px solid #d4d4c9' }}>
+        <div className="md:hidden px-6 pb-4 space-y-3" style={{ backgroundColor: '#2b2b2b', borderTop: '1px solid #3d3d3d' }}>
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-sm font-medium"
-              style={{ color: '#555' }}
+              style={{ color: '#e6e6dd' }}
             >
               {link.label}
             </Link>
           ))}
-          <hr style={{ borderColor: '#d4d4c9' }} />
+          <hr style={{ borderColor: '#3d3d3d' }} />
           {user ? (
             <Link
               href="/dashboard/listings"
               onClick={() => setMobileOpen(false)}
               className="block py-2 text-sm font-medium"
-              style={{ color: '#555' }}
+              style={{ color: '#e6e6dd' }}
             >
               Dashboard
             </Link>
@@ -139,7 +139,7 @@ export default function Navbar() {
                 href="/login"
                 onClick={() => setMobileOpen(false)}
                 className="block py-2 text-sm font-medium"
-                style={{ color: '#555' }}
+                style={{ color: '#e6e6dd' }}
               >
                 Login
               </Link>

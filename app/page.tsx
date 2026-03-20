@@ -126,7 +126,7 @@ export default function HomePage() {
             <span style={{ color: '#e6964d' }}>your terms</span>
           </h1>
           <p className="text-xl md:text-2xl mb-10 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
-            Real world marketplace for local advertising. Book real-world ad placements in minutes: digital screens, billboards, storefronts, and more.
+            A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no longterm contracts, no agency middlemen.
           </p>
 
           {/* CTAs */}

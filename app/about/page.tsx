@@ -39,7 +39,7 @@ export default function AboutPage() {
                 step: '02',
                 icon: CheckCircle,
                 title: 'Book instantly',
-                desc: 'Select your dates, upload your creative, and pay securely. No haggling, no phone calls, no agency middlemen.',
+                desc: 'Select your dates, upload your creative, and pay securely. No haggling, no longterm contracts, no agency middlemen.',
               },
               {
                 step: '03',
