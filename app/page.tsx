@@ -119,29 +119,29 @@ export default function HomePage() {
   return (
     <div style={{ backgroundColor: '#e6e6dd' }}>
       {/* Hero */}
-      <section className="pt-20 pb-8 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 leading-[1.1]" style={{ color: '#2b2b2b' }}>
+      <section className="pt-16 pb-6 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 leading-[1.1]" style={{ color: '#2b2b2b' }}>
             Advertise on{' '}
             <span style={{ color: '#e6964d' }}>your terms</span>
           </h1>
-          <p className="text-lg md:text-xl mb-6 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
+          <p className="text-base md:text-lg mb-5 max-w-xl mx-auto leading-relaxed" style={{ color: '#555' }}>
             A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no longterm contracts, no agency middlemen.
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Link
               href="/marketplace"
-              className="group inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all hover:scale-105 shadow-lg"
+              className="group inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105 shadow-lg"
               style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
             >
               Find Ad Space
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               href="/signup?role=host"
-              className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105"
               style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
               List Your Space
@@ -151,8 +151,8 @@ export default function HomePage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-10 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <section className="py-4 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+        <div className="max-w-5xl mx-auto flex justify-center gap-12 md:gap-16 text-center">
           {[
             { value: '2,400+', label: 'Active placements' },
             { value: '180+', label: 'Cities covered' },
@@ -160,8 +160,8 @@ export default function HomePage() {
             { value: '48hr', label: 'Avg. booking time' },
           ].map((stat) => (
             <div key={stat.label}>
-              <div className="text-3xl font-bold mb-1" style={{ color: '#e6964d' }}>{stat.value}</div>
-              <div className="text-sm" style={{ color: '#888' }}>{stat.label}</div>
+              <div className="text-xl font-bold" style={{ color: '#e6964d' }}>{stat.value}</div>
+              <div className="text-xs" style={{ color: '#888' }}>{stat.label}</div>
             </div>
           ))}
         </div>
