@@ -1,34 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { MapPin, Search, Star, ArrowRight, Calendar } from 'lucide-react'
-
-// ─── Mock listing data (shared with marketplace) ──────────────────────────────
-interface Listing {
-  id: string
-  title: string
-  category: string
-  city: string
-  state: string
-  price_per_day: number
-  rating: number
-  review_count: number
-  image_placeholder: string
-  tags: string[]
-}
-
-export const HOMEPAGE_LISTINGS: Listing[] = [
-  { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'Digital Billboards', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'] },
-  { id: '2', title: 'Coffee Shop Window Wrap — Arts District', category: 'Outdoor Static', city: 'Los Angeles', state: 'CA', price_per_day: 85, rating: 4.7, review_count: 11, image_placeholder: 'from-amber-100 to-amber-200', tags: ['Street-level', 'High foot traffic'] },
-  { id: '3', title: 'Food Truck Fleet Wraps — 5 Vehicles', category: 'Human-Based', city: 'Austin', state: 'TX', price_per_day: 200, rating: 4.8, review_count: 17, image_placeholder: 'from-orange-100 to-orange-200', tags: ['Mobile', 'Event-ready'] },
-  { id: '4', title: 'Indoor Digital Screen — Union Square Mall', category: 'Display On-Premise', city: 'San Francisco', state: 'CA', price_per_day: 320, rating: 4.6, review_count: 8, image_placeholder: 'from-blue-100 to-blue-200', tags: ['Indoor', '4K display', 'Loop ads'] },
-  { id: '5', title: 'Parking Lot Billboard — 15k Daily Impressions', category: 'Static Billboards', city: 'Chicago', state: 'IL', price_per_day: 380, rating: 4.9, review_count: 31, image_placeholder: 'from-red-100 to-red-200', tags: ['Verified traffic', 'Highway adjacent'] },
-  { id: '6', title: 'Boutique Storefront Banner — SoHo Block', category: 'Outdoor Static', city: 'New York', state: 'NY', price_per_day: 150, rating: 4.5, review_count: 14, image_placeholder: 'from-pink-100 to-pink-200', tags: ['Fashion district', 'Pedestrian'] },
-  { id: '7', title: 'Bus Stop Shelter — Metro Line 12', category: 'Transit', city: 'Seattle', state: 'WA', price_per_day: 120, rating: 4.7, review_count: 6, image_placeholder: 'from-teal-100 to-teal-200', tags: ['Transit', 'High volume'] },
-  { id: '8', title: 'Rooftop LED Screen — Midtown East', category: 'Outdoor Digital', city: 'New York', state: 'NY', price_per_day: 680, rating: 5.0, review_count: 4, image_placeholder: 'from-indigo-100 to-indigo-200', tags: ['Premium', 'Times Square adjacent'] },
-  { id: '9', title: 'Community Event Space Wall — East Village', category: 'Experiential', city: 'New York', state: 'NY', price_per_day: 95, rating: 4.4, review_count: 9, image_placeholder: 'from-yellow-100 to-yellow-200', tags: ['Mural-style', 'Cultural'] },
-]
+import { createClient } from '@/lib/supabase/client'
+import { MOCK_LISTINGS } from './marketplace/page'
+import type { Listing } from './marketplace/page'
 
 const CATEGORIES = [
   'All Types',
@@ -45,13 +22,44 @@ const CATEGORIES = [
   'Unique',
 ]
 
+const CATEGORY_MAP: Record<string, string> = {
+  digital_billboards: 'Digital Billboards',
+  static_billboards: 'Static Billboards',
+  transit: 'Transit',
+  outdoor_static: 'Outdoor Static',
+  outdoor_digital: 'Outdoor Digital',
+  display_on_premise: 'Display On-Premise',
+  event_based: 'Event-Based',
+  human_based: 'Human-Based',
+  experiential: 'Experiential',
+  street_furniture: 'Street Furniture',
+  unique: 'Unique',
+}
+
+const GRADIENT_POOL = [
+  'from-purple-100 to-purple-200',
+  'from-amber-100 to-amber-200',
+  'from-orange-100 to-orange-200',
+  'from-blue-100 to-blue-200',
+  'from-red-100 to-red-200',
+  'from-pink-100 to-pink-200',
+  'from-teal-100 to-teal-200',
+  'from-indigo-100 to-indigo-200',
+  'from-yellow-100 to-yellow-200',
+]
+
 // ─── Listing Card ──────────────────────────────────────────────────────────────
 function ListingCard({ listing }: { listing: Listing }) {
+  const firstImage = listing.images?.[0]
   return (
     <Link href={`/marketplace/${listing.id}`} className="block group">
       <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-0.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-        {/* Image placeholder */}
-        <div className={`h-44 bg-gradient-to-br ${listing.image_placeholder} relative`}>
+        <div className={`h-44 relative overflow-hidden`}>
+          {firstImage ? (
+            <img src={firstImage} alt={listing.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-br ${listing.image_placeholder}`} />
+          )}
           <div className="absolute top-3 left-3">
             <span className="bg-white/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-full font-medium shadow-sm" style={{ color: '#555' }}>
               {listing.category}
@@ -63,32 +71,28 @@ function ListingCard({ listing }: { listing: Listing }) {
             </span>
           </div>
         </div>
-
-        {/* Content */}
         <div className="p-5">
           <h3 className="font-semibold leading-snug mb-2 line-clamp-2 text-sm transition-colors group-hover:text-[#e6964d]" style={{ color: '#2b2b2b' }}>
             {listing.title}
           </h3>
-
           <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#888' }}>
             <MapPin className="w-3 h-3" />
             {listing.city}, {listing.state}
           </div>
-
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {listing.tags.slice(0, 2).map(tag => (
-              <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Rating */}
+          {listing.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {listing.tags.slice(0, 2).map(tag => (
+                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
-              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating}</span>
-              <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>
+              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating > 0 ? listing.rating : 'New'}</span>
+              {listing.review_count > 0 && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
             </div>
             <span className="text-xs font-medium" style={{ color: '#e6964d' }}>View details →</span>
           </div>
@@ -104,17 +108,48 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All Types')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [featuredListings, setFeaturedListings] = useState<Listing[]>(MOCK_LISTINGS.slice(0, 6))
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('listings')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(6)
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          setFeaturedListings(
+            data.map((row, i) => ({
+              id: row.id,
+              title: row.title,
+              category: CATEGORY_MAP[row.category] ?? row.category,
+              city: row.city ?? '',
+              state: row.state ?? '',
+              price_per_day: row.price_per_day ?? 0,
+              rating: 0,
+              review_count: 0,
+              image_placeholder: GRADIENT_POOL[i % GRADIENT_POOL.length],
+              images: row.images ?? [],
+              tags: [],
+              lat: row.lat ?? 39.8283,
+              lng: row.lng ?? -98.5795,
+              daily_impressions: row.daily_impressions ?? 0,
+            }))
+          )
+        }
+        // else: keep mock data
+      })
+  }, [])
 
   const filtered = useMemo(() => {
-    return HOMEPAGE_LISTINGS.filter(l => {
-      const matchesSearch =
-        !search ||
-        l.title.toLowerCase().includes(search.toLowerCase()) ||
-        l.city.toLowerCase().includes(search.toLowerCase())
+    return featuredListings.filter(l => {
+      const matchesSearch = !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase())
       const matchesCategory = selectedCategory === 'All Types' || l.category === selectedCategory
       return matchesSearch && matchesCategory
     })
-  }, [search, selectedCategory])
+  }, [featuredListings, search, selectedCategory])
 
   return (
     <div style={{ backgroundColor: '#e6e6dd' }}>
@@ -126,10 +161,8 @@ export default function HomePage() {
             <span style={{ color: '#e6964d' }}>your terms</span>
           </h1>
           <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
-            A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no longterm contracts, no agency middlemen.
+            A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no long-term contracts, no agency middlemen.
           </p>
-
-          {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Link
               href="/marketplace"
@@ -171,9 +204,7 @@ export default function HomePage() {
       <section className="py-10 px-6" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="max-w-5xl mx-auto">
           <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
-            {/* Search row */}
             <div className="flex flex-col md:flex-row gap-3 mb-4">
-              {/* Search input */}
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
                 <input
@@ -181,78 +212,44 @@ export default function HomePage() {
                   placeholder="Search by city or location..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none transition-colors"
-                  style={{
-                    backgroundColor: '#f4f4f0',
-                    border: '1px solid #d4d4c9',
-                    color: '#2b2b2b',
-                  }}
+                  className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none"
+                  style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
                 />
               </div>
-
-              {/* Category dropdown */}
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-                style={{
-                  backgroundColor: '#f4f4f0',
-                  border: '1px solid #d4d4c9',
-                  color: '#2b2b2b',
-                  minWidth: '200px',
-                }}
+                style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b', minWidth: '200px' }}
               >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
+                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
-
-            {/* Date row */}
             <div className="flex flex-col sm:flex-row gap-3 items-end">
               <div className="flex gap-3 flex-1">
                 <div className="flex-1">
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Start date (optional)</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: '#f4f4f0',
-                        border: '1px solid #d4d4c9',
-                        color: '#2b2b2b',
-                      }}
-                    />
+                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
                   </div>
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>End date (optional)</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: '#f4f4f0',
-                        border: '1px solid #d4d4c9',
-                        color: '#2b2b2b',
-                      }}
-                    />
+                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
                   </div>
                 </div>
               </div>
-              <button
-                className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+              <Link
+                href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}
+                className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center gap-2 hover:opacity-90"
                 style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 2px 8px rgba(230,150,77,0.3)' }}
               >
                 <Search className="w-4 h-4" />
                 Search
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -263,25 +260,16 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
-              {filtered.length > 0
-                ? `${filtered.length} placements available`
-                : 'No placements found'}
+              {filtered.length > 0 ? `${filtered.length} placements available` : 'No placements found'}
             </h2>
           </div>
-
           {filtered.length > 0 ? (
             <>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                {filtered.map(listing => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
+                {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
               </div>
               <div className="text-center">
-                <Link
-                  href="/marketplace"
-                  className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80 transition-opacity"
-                  style={{ color: '#e6964d' }}
-                >
+                <Link href="/marketplace" className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: '#e6964d' }}>
                   View all placements →
                 </Link>
               </div>
@@ -291,11 +279,7 @@ export default function HomePage() {
               <div className="text-4xl mb-4">🗺️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
               <p className="text-sm mb-6" style={{ color: '#888' }}>Try a different search or category</p>
-              <button
-                onClick={() => { setSearch(''); setSelectedCategory('All Types') }}
-                className="text-sm font-medium hover:opacity-80 transition-opacity"
-                style={{ color: '#e6964d' }}
-              >
+              <button onClick={() => { setSearch(''); setSelectedCategory('All Types') }} className="text-sm font-medium" style={{ color: '#e6964d' }}>
                 Clear filters
               </button>
             </div>

@@ -1,0 +1,76 @@
+import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
+import { createClient } from '@supabase/supabase-js'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2026-02-25.clover' })
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { listingId, startDate, endDate, days, total, userId, listingTitle, pricePerDay } = body
+
+    if (!listingId || !startDate || !endDate || !userId || !total) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Create a pending booking record
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert({
+        listing_id: listingId,
+        advertiser_id: userId,
+        start_date: startDate,
+        end_date: endDate,
+        total_days: days,
+        price_per_day: pricePerDay,
+        subtotal: days * pricePerDay,
+        buyer_fee: Math.round(days * pricePerDay * 0.07),
+        seller_fee: Math.round(days * pricePerDay * 0.07),
+        total_amount: total,
+        status: 'pending_payment',
+      })
+      .select('id')
+      .single()
+
+    if (bookingError) {
+      console.error('Booking insert error:', bookingError)
+      return NextResponse.json({ error: bookingError.message }, { status: 500 })
+    }
+
+    // Create Stripe Checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: listingTitle,
+              description: `Ad placement booking: ${startDate} → ${endDate} (${days} days)`,
+            },
+            unit_amount: Math.round(total * 100), // cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking.id}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/marketplace/${listingId}/book`,
+      metadata: {
+        booking_id: booking.id,
+        listing_id: listingId,
+        user_id: userId,
+      },
+    })
+
+    return NextResponse.json({ url: session.url })
+  } catch (err) {
+    console.error('Checkout error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

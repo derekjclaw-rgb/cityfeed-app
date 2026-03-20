@@ -46,7 +46,17 @@ function SignupForm() {
       setError(error.message)
       setLoading(false)
     } else {
-      setSuccess(true)
+      // Check if email confirmation is needed
+      const supabase2 = createClient()
+      const { data: { session } } = await supabase2.auth.getSession()
+      if (session) {
+        // Auto-confirmed, redirect to dashboard
+        router.push('/dashboard')
+        router.refresh()
+      } else {
+        // Email confirmation needed
+        setSuccess(true)
+      }
     }
   }
 

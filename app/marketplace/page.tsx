@@ -2,14 +2,15 @@
 
 /**
  * Marketplace page — browse listing cards with search + category filter
- * Updated: new color palette, new categories
+ * Phase 3: Real Supabase data with mock fallback
  */
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { MapPin, Search, Star, SlidersHorizontal, X, LayoutGrid, Map } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface Listing {
+export interface Listing {
   id: string
   title: string
   category: string
@@ -19,13 +20,14 @@ interface Listing {
   rating: number
   review_count: number
   image_placeholder: string
+  images?: string[]
   tags: string[]
   lat: number
   lng: number
   daily_impressions: number
 }
 
-// ─── Mock data ─────────────────────────────────────────────────────────────────
+// ─── Mock data (fallback) ──────────────────────────────────────────────────────
 export const MOCK_LISTINGS: Listing[] = [
   { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'Digital Billboards', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'], lat: 36.1699, lng: -115.1398, daily_impressions: 45000 },
   { id: '2', title: 'Coffee Shop Window Wrap — Arts District', category: 'Outdoor Static', city: 'Los Angeles', state: 'CA', price_per_day: 85, rating: 4.7, review_count: 11, image_placeholder: 'from-amber-100 to-amber-200', tags: ['Street-level', 'High foot traffic'], lat: 34.0522, lng: -118.2437, daily_impressions: 3200 },
@@ -54,18 +56,72 @@ const CATEGORIES = [
   { value: 'Unique', label: 'Unique' },
 ]
 
+const CATEGORY_MAP: Record<string, string> = {
+  digital_billboards: 'Digital Billboards',
+  static_billboards: 'Static Billboards',
+  transit: 'Transit',
+  outdoor_static: 'Outdoor Static',
+  outdoor_digital: 'Outdoor Digital',
+  display_on_premise: 'Display On-Premise',
+  event_based: 'Event-Based',
+  human_based: 'Human-Based',
+  experiential: 'Experiential',
+  street_furniture: 'Street Furniture',
+  unique: 'Unique',
+}
+
+const GRADIENT_POOL = [
+  'from-purple-100 to-purple-200',
+  'from-amber-100 to-amber-200',
+  'from-orange-100 to-orange-200',
+  'from-blue-100 to-blue-200',
+  'from-red-100 to-red-200',
+  'from-pink-100 to-pink-200',
+  'from-teal-100 to-teal-200',
+  'from-indigo-100 to-indigo-200',
+  'from-yellow-100 to-yellow-200',
+]
+
+// ─── Normalize DB row to Listing ───────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeDbListing(row: Record<string, any>, index: number): Listing {
+  return {
+    id: row.id,
+    title: row.title,
+    category: CATEGORY_MAP[row.category] ?? row.category,
+    city: row.city ?? '',
+    state: row.state ?? '',
+    price_per_day: row.price_per_day ?? 0,
+    rating: 0,
+    review_count: 0,
+    image_placeholder: GRADIENT_POOL[index % GRADIENT_POOL.length],
+    images: row.images ?? [],
+    tags: [],
+    lat: row.lat ?? 39.8283,
+    lng: row.lng ?? -98.5795,
+    daily_impressions: row.daily_impressions ?? 0,
+  }
+}
+
 // ─── Listing Card ──────────────────────────────────────────────────────────────
 function ListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
+  const firstImage = listing.images?.[0]
+
   return (
     <Link href={`/marketplace/${listing.id}`} className="block">
       <div
         className={`group bg-white rounded-2xl overflow-hidden transition-all ${compact ? '' : 'hover:-translate-y-1'}`}
-        style={{ border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', ...(compact ? {} : {}) }}
+        style={{ border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
         onMouseEnter={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
         onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
       >
-        {/* Image placeholder */}
-        <div className={`${compact ? 'h-32' : 'h-44'} bg-gradient-to-br ${listing.image_placeholder} relative`}>
+        {/* Image */}
+        <div className={`${compact ? 'h-32' : 'h-44'} relative overflow-hidden`}>
+          {firstImage ? (
+            <img src={firstImage} alt={listing.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-br ${listing.image_placeholder}`} />
+          )}
           <div className="absolute top-3 left-3">
             <span className="bg-white/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-full font-medium shadow-sm" style={{ color: '#555' }}>
               {listing.category}
@@ -89,7 +145,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
             {listing.city}, {listing.state}
           </div>
 
-          {!compact && (
+          {!compact && listing.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {listing.tags.slice(0, 2).map(tag => (
                 <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
@@ -103,8 +159,8 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
               <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
-              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating}</span>
-              {!compact && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
+              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating > 0 ? listing.rating : 'New'}</span>
+              {!compact && listing.review_count > 0 && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
             </div>
             {!compact && (
               <span className="text-xs font-medium" style={{ color: '#e6964d' }}>View details →</span>
@@ -125,79 +181,42 @@ function MapView({ listings }: { listings: Listing[] }) {
 
   useEffect(() => {
     if (!mapContainer.current) return
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let map: any
-
     import('mapbox-gl').then((mb) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapboxgl = mb as any
       mapboxgl.default.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
       const MapGL = mapboxgl.default
-
       map = new MapGL.Map({
         container: mapContainer.current!,
         style: 'mapbox://styles/mapbox/light-v11',
         center: [-98.5795, 39.8283],
         zoom: 3.5,
       })
-
       mapRef.current = map
-
       map.on('load', () => {
         listings.forEach((listing) => {
           const el = document.createElement('div')
-          el.className = 'mapbox-marker'
-          el.innerHTML = `
-            <div style="
-              background: #e6964d;
-              color: white;
-              font-size: 11px;
-              font-weight: 700;
-              padding: 4px 8px;
-              border-radius: 20px;
-              white-space: nowrap;
-              cursor: pointer;
-              box-shadow: 0 2px 8px rgba(230,150,77,0.4);
-              border: 2px solid white;
-              font-family: system-ui, sans-serif;
-            ">$${listing.price_per_day}</div>
-          `
-
-          el.addEventListener('click', () => {
-            setSelectedListing(listing)
-          })
-
-          new MapGL.Marker({ element: el })
-            .setLngLat([listing.lng, listing.lat])
-            .addTo(map)
+          el.innerHTML = `<div style="background:#e6964d;color:white;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(230,150,77,0.4);border:2px solid white;font-family:system-ui,sans-serif;">$${listing.price_per_day}</div>`
+          el.addEventListener('click', () => setSelectedListing(listing))
+          new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       })
     })
-
-    return () => {
-      map?.remove()
-    }
+    return () => { map?.remove() }
   }, [listings])
 
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
-
-      {/* Popup overlay */}
       {selectedListing && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
           <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
           <div className="p-4">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>
-                {selectedListing.title}
-              </h3>
-              <button
-                onClick={() => setSelectedListing(null)}
-                className="flex-shrink-0 mt-0.5 hover:opacity-70 transition-opacity"
-                style={{ color: '#888' }}
-              >
+              <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>{selectedListing.title}</h3>
+              <button onClick={() => setSelectedListing(null)} className="flex-shrink-0 mt-0.5 hover:opacity-70" style={{ color: '#888' }}>
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -207,11 +226,7 @@ function MapView({ listings }: { listings: Listing[] }) {
             </div>
             <div className="flex items-center justify-between">
               <span className="font-bold text-sm" style={{ color: '#e6964d' }}>${selectedListing.price_per_day}/day</span>
-              <Link
-                href={`/marketplace/${selectedListing.id}`}
-                className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90 transition-colors"
-                style={{ backgroundColor: '#e6964d' }}
-              >
+              <Link href={`/marketplace/${selectedListing.id}`} className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90" style={{ backgroundColor: '#e6964d' }}>
                 View listing →
               </Link>
             </div>
@@ -228,14 +243,62 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rating'>('rating')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
+  const [allListings, setAllListings] = useState<Listing[]>(MOCK_LISTINGS)
+  const [isLoading, setIsLoading] = useState(true)
+  const [usingRealData, setUsingRealData] = useState(false)
+
+  const fetchListings = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      let query = supabase
+        .from('listings')
+        .select('*')
+        .eq('status', 'active')
+
+      if (selectedCategory !== 'all') {
+        // Map display category back to db value
+        const dbCategory = Object.entries(CATEGORY_MAP).find(([, v]) => v === selectedCategory)?.[0]
+        if (dbCategory) query = query.eq('category', dbCategory)
+      }
+
+      if (search) {
+        query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%`)
+      }
+
+      if (sortBy === 'price_asc') query = query.order('price_per_day', { ascending: true })
+      else if (sortBy === 'price_desc') query = query.order('price_per_day', { ascending: false })
+      else query = query.order('created_at', { ascending: false })
+
+      const { data, error } = await query
+
+      if (!error && data && data.length > 0) {
+        setAllListings(data.map((row, i) => normalizeDbListing(row, i)))
+        setUsingRealData(true)
+      } else {
+        // Fall back to mock data
+        setAllListings(MOCK_LISTINGS)
+        setUsingRealData(false)
+      }
+    } catch {
+      setAllListings(MOCK_LISTINGS)
+      setUsingRealData(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [selectedCategory, search, sortBy])
+
+  useEffect(() => {
+    setIsLoading(true)
+    const t = setTimeout(fetchListings, 300)
+    return () => clearTimeout(t)
+  }, [fetchListings])
 
   const filtered = useMemo(() => {
-    return MOCK_LISTINGS
+    if (usingRealData) return allListings
+    // Client-side filter for mock data
+    return allListings
       .filter(l => {
-        const matchesSearch =
-          !search ||
-          l.title.toLowerCase().includes(search.toLowerCase()) ||
-          l.city.toLowerCase().includes(search.toLowerCase())
+        const matchesSearch = !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase())
         const matchesCategory = selectedCategory === 'all' || l.category === selectedCategory
         return matchesSearch && matchesCategory
       })
@@ -244,7 +307,7 @@ export default function MarketplacePage() {
         if (sortBy === 'price_desc') return b.price_per_day - a.price_per_day
         return b.rating - a.rating
       })
-  }, [search, selectedCategory, sortBy])
+  }, [allListings, usingRealData, search, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#e6e6dd' }}>
@@ -253,13 +316,12 @@ export default function MarketplacePage() {
         <div className="py-10">
           <h1 className="text-3xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Browse ad placements</h1>
           <p style={{ color: '#888' }}>
-            {MOCK_LISTINGS.length} listings across the US
+            {isLoading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''} across the US`}
           </p>
         </div>
 
         {/* Search + Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          {/* Search input */}
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
             <input
@@ -267,42 +329,28 @@ export default function MarketplacePage() {
               placeholder="Search by location, type..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none transition-colors"
-              style={{
-                backgroundColor: '#fff',
-                border: '1px solid #d4d4c9',
-                color: '#2b2b2b',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-              }}
+              className="w-full rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none"
+              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#2b2b2b', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity" style={{ color: '#888' }}>
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#888' }}>
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-
-          {/* Sort */}
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4" style={{ color: '#888' }} />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-              style={{
-                backgroundColor: '#fff',
-                border: '1px solid #d4d4c9',
-                color: '#555',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-              }}
+              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
             >
               <option value="rating">Top rated</option>
               <option value="price_asc">Price: Low to high</option>
               <option value="price_desc">Price: High to low</option>
             </select>
           </div>
-
-          {/* View toggle */}
           <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <button
               onClick={() => setViewMode('grid')}
@@ -330,11 +378,7 @@ export default function MarketplacePage() {
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
               className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-              style={
-                selectedCategory === cat.value
-                  ? { backgroundColor: '#e6964d', color: '#fff' }
-                  : { backgroundColor: '#fff', color: '#555', border: '1px solid #d4d4c9' }
-              }
+              style={selectedCategory === cat.value ? { backgroundColor: '#e6964d', color: '#fff' } : { backgroundColor: '#fff', color: '#555', border: '1px solid #d4d4c9' }}
             >
               {cat.label}
             </button>
@@ -343,43 +387,36 @@ export default function MarketplacePage() {
 
         {/* Results count */}
         <div className="text-sm mb-6" style={{ color: '#888' }}>
-          {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-          {selectedCategory !== 'all' && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}
-          {search && ` for "${search}"`}
+          {isLoading ? 'Searching...' : (
+            <>
+              {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+              {selectedCategory !== 'all' && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}
+              {search && ` for "${search}"`}
+            </>
+          )}
         </div>
 
         {/* Content */}
         {viewMode === 'grid' ? (
           filtered.length > 0 ? (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map(listing => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
+              {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
             </div>
           ) : (
             <div className="text-center py-24">
               <div className="text-4xl mb-4">🗺️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
               <p className="text-sm" style={{ color: '#888' }}>Try a different search or category</p>
-              <button
-                onClick={() => { setSearch(''); setSelectedCategory('all') }}
-                className="mt-6 text-sm hover:opacity-80 transition-opacity"
-                style={{ color: '#e6964d' }}
-              >
+              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm" style={{ color: '#e6964d' }}>
                 Clear filters
               </button>
             </div>
           )
         ) : (
-          /* Map view */
           <div className="flex gap-5 h-[680px]">
-            {/* Left: scrollable list */}
             <div className="w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
-              {filtered.map(listing => (
-                <ListingCard key={listing.id} listing={listing} compact />
-              ))}
+              {filtered.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
             </div>
-            {/* Right: map */}
             <div className="flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
               <MapView listings={filtered} />
             </div>
