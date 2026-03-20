@@ -36,11 +36,11 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/logo.png"
+            src="/logo-nav.png"
             alt="City Feed"
-            width={160}
-            height={114}
-            style={{ height: '52px', width: 'auto' }}
+            width={180}
+            height={100}
+            style={{ height: '48px', width: 'auto' }}
             priority
           />
         </Link>

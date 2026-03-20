@@ -119,13 +119,13 @@ export default function HomePage() {
   return (
     <div style={{ backgroundColor: '#e6e6dd' }}>
       {/* Hero */}
-      <section className="pt-16 pb-6 px-6">
+      <section className="pt-24 pb-8 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3 leading-[1.1]" style={{ color: '#2b2b2b' }}>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 leading-[1.1]" style={{ color: '#2b2b2b' }}>
             Advertise on{' '}
             <span style={{ color: '#e6964d' }}>your terms</span>
           </h1>
-          <p className="text-base md:text-lg mb-5 max-w-xl mx-auto leading-relaxed" style={{ color: '#555' }}>
+          <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
             A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no longterm contracts, no agency middlemen.
           </p>
 
