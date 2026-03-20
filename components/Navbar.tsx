@@ -38,9 +38,9 @@ export default function Navbar() {
           <Image
             src="/logo.png"
             alt="City Feed"
-            width={120}
-            height={86}
-            style={{ height: '38px', width: 'auto' }}
+            width={160}
+            height={114}
+            style={{ height: '52px', width: 'auto' }}
             priority
           />
         </Link>
