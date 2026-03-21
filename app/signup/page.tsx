@@ -39,6 +39,7 @@ function SignupForm() {
           full_name: fullName,
           role,
         },
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     })
 
