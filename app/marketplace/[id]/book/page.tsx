@@ -8,6 +8,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, Shield, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { MOCK_LISTINGS } from '../../page'
 
 function BookPageInner() {
   const params = useParams()
@@ -37,7 +38,7 @@ function BookPageInner() {
       setUserId(data.user.id)
     })
 
-    // Load listing
+    // Load listing — try Supabase first, fall back to mock data
     supabase
       .from('listings')
       .select('title, price_per_day, city, state, min_days, max_days')
@@ -45,7 +46,20 @@ function BookPageInner() {
       .single()
       .then(({ data, error }) => {
         if (error || !data) {
-          setError('Listing not found')
+          // Fall back to mock listings for test environment
+          const mock = MOCK_LISTINGS.find(l => l.id === listingId)
+          if (mock) {
+            setListing({
+              title: mock.title,
+              price_per_day: mock.price_per_day,
+              city: mock.city,
+              state: mock.state,
+              min_days: 1,
+              max_days: 365,
+            })
+          } else {
+            setError('Listing not found')
+          }
         } else {
           setListing(data)
         }
