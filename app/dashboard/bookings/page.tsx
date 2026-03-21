@@ -116,7 +116,9 @@ export default function BookingsPage() {
               {isHost ? 'No bookings yet' : 'No campaigns yet'}
             </h2>
             <p className="text-sm mb-6" style={{ color: '#888' }}>
-              {isHost ? 'When advertisers book your listings, they\'ll appear here.' : 'Browse the marketplace to find your first ad placement.'}
+              {isHost
+                ? 'When advertisers book your listings, they\'ll appear here.'
+                : 'No bookings yet. Browse the marketplace to find your first placement.'}
             </p>
             <Link
               href={isHost ? '/dashboard/create-listing' : '/marketplace'}

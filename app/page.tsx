@@ -185,7 +185,7 @@ export default function HomePage() {
 
       {/* Stats Bar */}
       <section className="py-4 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
-        <div className="max-w-5xl mx-auto flex justify-center gap-12 md:gap-16 text-center">
+        <div className="max-w-5xl mx-auto flex justify-start md:justify-center gap-8 md:gap-16 text-center overflow-x-auto pb-1">
           {[
             { value: '2,400+', label: 'Active placements' },
             { value: '180+', label: 'Cities covered' },
@@ -265,7 +265,7 @@ export default function HomePage() {
           </div>
           {filtered.length > 0 ? (
             <>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
                 {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
               </div>
               <div className="text-center">

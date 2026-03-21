@@ -114,7 +114,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
   const today = new Date().toISOString().split('T')[0]
 
   return (
-    <div className="rounded-2xl p-6 sticky top-24" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 8px rgba(0,0,0,0.07)' }}>
+    <div className="rounded-2xl p-6 lg:sticky lg:top-24" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 8px rgba(0,0,0,0.07)' }}>
       <div className="flex items-baseline gap-1 mb-6">
         <span className="text-3xl font-bold" style={{ color: '#2b2b2b' }}>${listing.price_per_day}</span>
         <span className="text-sm" style={{ color: '#888' }}>/day</span>
@@ -293,8 +293,8 @@ export default function ListingDetailPage() {
           <span className="line-clamp-1" style={{ color: '#2b2b2b' }}>{listing.title}</span>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+          <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
             {/* Photo gallery */}
             {listing.images.length > 0 ? (
               <div className="space-y-3">
@@ -428,8 +428,8 @@ export default function ListingDetailPage() {
             </div>
           </div>
 
-          {/* Booking widget */}
-          <div className="lg:col-span-1">
+          {/* Booking widget — appears first on mobile, sidebar on desktop */}
+          <div className="lg:col-span-1 order-1 lg:order-2">
             <BookingWidget listing={listing} />
           </div>
         </div>

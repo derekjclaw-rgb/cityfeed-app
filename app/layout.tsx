@@ -3,6 +3,7 @@ import { Geist } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { GlobalToastContainer } from '@/components/Toast'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -33,6 +34,7 @@ export default function RootLayout({
         style={{ backgroundColor: '#e6e6dd', color: '#2b2b2b' }}
       >
         <Navbar />
+        <GlobalToastContainer />
         <main className="min-h-screen">{children}</main>
         <Footer />
       </body>

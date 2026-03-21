@@ -137,9 +137,17 @@ export default function MyListingsPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2 mb-6" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
+          <div className="rounded-xl px-4 py-3 text-sm flex items-center justify-between gap-2 mb-6" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              Something went wrong. Please try again.
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="text-xs font-semibold underline underline-offset-2 hover:opacity-70"
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -149,7 +157,7 @@ export default function MyListingsPage() {
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(230,150,77,0.12)' }}>
               <MapPin className="w-7 h-7" style={{ color: '#e6964d' }} />
             </div>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: '#2b2b2b' }}>No listings yet</h2>
+            <h2 className="text-xl font-semibold mb-2" style={{ color: '#2b2b2b' }}>You haven&apos;t listed any spaces yet.</h2>
             <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: '#888' }}>
               List your first ad space and start earning from brands looking for placements like yours.
             </p>

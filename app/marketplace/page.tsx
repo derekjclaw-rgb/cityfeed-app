@@ -399,25 +399,29 @@ export default function MarketplacePage() {
         {/* Content */}
         {viewMode === 'grid' ? (
           filtered.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
             </div>
           ) : (
             <div className="text-center py-24">
               <div className="text-4xl mb-4">🗺️</div>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
-              <p className="text-sm" style={{ color: '#888' }}>Try a different search or category</p>
-              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm" style={{ color: '#e6964d' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No placements found. Try a different search or check back soon.</h3>
+              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
                 Clear filters
               </button>
             </div>
           )
         ) : (
-          <div className="flex gap-5 h-[680px]">
-            <div className="w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
+          /* Map view — stacks vertically on mobile, side-by-side on lg */
+          <div className="flex flex-col lg:flex-row gap-5 lg:h-[680px]">
+            {/* Map first on mobile (full width), sidebar on desktop */}
+            <div className="w-full lg:hidden rounded-2xl overflow-hidden shadow-sm" style={{ height: '320px', border: '1px solid #d4d4c9' }}>
+              <MapView listings={filtered} />
+            </div>
+            <div className="w-full lg:w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
               {filtered.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
             </div>
-            <div className="flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
+            <div className="hidden lg:block flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
               <MapView listings={filtered} />
             </div>
           </div>
