@@ -203,7 +203,7 @@ export default function HomePage() {
       {/* Search + Filter */}
       <section className="py-6 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden" style={{ border: '1px solid #d4d4c9' }}>
             <div className="flex flex-col md:flex-row gap-3 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
@@ -227,18 +227,18 @@ export default function HomePage() {
             </div>
             <div className="flex flex-col gap-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex-1">
+                <div className="min-w-0">
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Start date (optional)</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-xl pl-10 pr-2 py-3 text-xs sm:text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b', maxWidth: '100%' }} />
                   </div>
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0">
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>End date (optional)</label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-xl pl-10 pr-2 py-3 text-xs sm:text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b', maxWidth: '100%' }} />
                   </div>
                 </div>
               </div>
