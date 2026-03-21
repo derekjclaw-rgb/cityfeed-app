@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#2b2b2b"/>
+  <rect x="60" y="60" width="1080" height="510" rx="24" fill="#1a1a1a"/>
+  <text x="600" y="240" font-family="Arial, sans-serif" font-weight="bold" font-size="96" fill="#e6964d" text-anchor="middle">City Feed</text>
+  <text x="600" y="320" font-family="Arial, sans-serif" font-size="36" fill="#e6e6dd" text-anchor="middle">Real World Advertising Marketplace</text>
+  <text x="600" y="400" font-family="Arial, sans-serif" font-size="24" fill="#888888" text-anchor="middle">Book ad placements in minutes. No haggling. No contracts.</text>
+  <rect x="480" y="450" width="240" height="60" rx="12" fill="#e6964d"/>
+  <text x="600" y="490" font-family="Arial, sans-serif" font-weight="bold" font-size="22" fill="#ffffff" text-anchor="middle">Browse Listings</text>
+</svg>

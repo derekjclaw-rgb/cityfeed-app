@@ -8,6 +8,8 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { MapPin, Search, Star, SlidersHorizontal, X, LayoutGrid, Map } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import FavoriteButton from '@/components/FavoriteButton'
+import { SHOW_MOCK_DATA } from '@/lib/constants'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface Listing {
@@ -127,6 +129,14 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
               {listing.category}
             </span>
           </div>
+          {/* Favorite button — only show for real listings (non-numeric IDs) */}
+          {!/^\d+$/.test(listing.id) && (
+            <div className="absolute top-3 right-3">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)' }}>
+                <FavoriteButton listingId={listing.id} size={16} />
+              </div>
+            </div>
+          )}
           <div className="absolute bottom-3 right-3">
             <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#e6964d' }}>
               ${listing.price_per_day}/day
@@ -275,12 +285,20 @@ export default function MarketplacePage() {
         setAllListings(data.map((row, i) => normalizeDbListing(row, i)))
         setUsingRealData(true)
       } else {
-        // Fall back to mock data
-        setAllListings(MOCK_LISTINGS)
+        // Fall back to mock data if enabled
+        if (SHOW_MOCK_DATA) {
+          setAllListings(MOCK_LISTINGS)
+        } else {
+          setAllListings([])
+        }
         setUsingRealData(false)
       }
     } catch {
-      setAllListings(MOCK_LISTINGS)
+      if (SHOW_MOCK_DATA) {
+        setAllListings(MOCK_LISTINGS)
+      } else {
+        setAllListings([])
+      }
       setUsingRealData(false)
     } finally {
       setIsLoading(false)

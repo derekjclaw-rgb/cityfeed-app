@@ -2,11 +2,15 @@
 
 /**
  * Bookings list — shows all bookings for current user (host or advertiser)
+ * Enhanced: status badges, timeline, accept/decline (host), POP prompt, earnings
  */
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ClipboardList, Loader2, MessageSquare, Star, ExternalLink } from 'lucide-react'
+import {
+  ArrowLeft, ClipboardList, Loader2, MessageSquare, Star, ExternalLink,
+  CheckCircle, XCircle, Upload, Receipt, DollarSign, Clock
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Booking {
@@ -15,20 +19,111 @@ interface Booking {
   start_date: string
   end_date: string
   total_amount: number
+  payout_amount?: number
   created_at: string
+  listing_id: string
   listing_title: string
   other_party_name: string
 }
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  pending:     { bg: '#fef9ec', text: '#b45309', label: 'Pending' },
-  confirmed:   { bg: '#f0fdf4', text: '#16a34a', label: 'Confirmed' },
-  active:      { bg: '#f0fdf4', text: '#16a34a', label: 'Active' },
-  completed:   { bg: '#f8f8f5', text: '#888',    label: 'Completed' },
-  cancelled:   { bg: '#fef2f2', text: '#dc2626', label: 'Cancelled' },
-  pop_pending: { bg: '#fef3e8', text: '#e6964d', label: 'POP Pending' },
-  pop_review:  { bg: '#fef3e8', text: '#e6964d', label: 'POP Review' },
-  disputed:    { bg: '#fef2f2', text: '#dc2626', label: 'Disputed' },
+const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; description: string }> = {
+  pending_payment: {
+    bg: '#fef9ec', text: '#b45309',
+    label: 'Pending Payment', description: 'Awaiting payment confirmation',
+  },
+  pending: {
+    bg: '#fef9ec', text: '#b45309',
+    label: 'Pending Review', description: 'Host reviewing your request',
+  },
+  confirmed: {
+    bg: '#eff6ff', text: '#1d4ed8',
+    label: 'Confirmed', description: 'Booking confirmed, campaign not yet started',
+  },
+  active: {
+    bg: '#f0fdf4', text: '#16a34a',
+    label: 'Active — Campaign Running', description: 'Your campaign is live',
+  },
+  pop_pending: {
+    bg: '#fef3e8', text: '#e6964d',
+    label: 'POP Submitted — Review Required', description: 'Proof of placement awaiting your approval',
+  },
+  pop_review: {
+    bg: '#fef3e8', text: '#e6964d',
+    label: 'POP Submitted — Review Required', description: 'Review the proof of placement',
+  },
+  completed: {
+    bg: '#f0fdf4', text: '#16a34a',
+    label: 'Completed ✓', description: 'Campaign complete, payout released',
+  },
+  cancelled: {
+    bg: '#fef2f2', text: '#dc2626',
+    label: 'Cancelled', description: 'This booking was cancelled',
+  },
+  disputed: {
+    bg: '#fef2f2', text: '#dc2626',
+    label: 'Disputed', description: 'Under review by City Feed',
+  },
+}
+
+const TIMELINE_STEPS = [
+  { key: 'pending_payment', label: 'Payment' },
+  { key: 'confirmed', label: 'Confirmed' },
+  { key: 'active', label: 'Live' },
+  { key: 'pop_pending', label: 'POP Review' },
+  { key: 'completed', label: 'Done' },
+]
+
+function getTimelineStep(status: string): number {
+  const map: Record<string, number> = {
+    pending_payment: 0,
+    pending: 0,
+    confirmed: 1,
+    active: 2,
+    pop_pending: 3,
+    pop_review: 3,
+    completed: 4,
+    cancelled: -1,
+    disputed: -1,
+  }
+  return map[status] ?? 0
+}
+
+function StatusTimeline({ status }: { status: string }) {
+  if (status === 'cancelled' || status === 'disputed') return null
+  const current = getTimelineStep(status)
+
+  return (
+    <div className="mt-3 mb-1">
+      <div className="flex items-center gap-0">
+        {TIMELINE_STEPS.map((step, i) => (
+          <div key={step.key} className="flex items-center flex-1 last:flex-none">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{
+                  backgroundColor: i <= current ? '#e6964d' : '#e8e8e0',
+                  border: `2px solid ${i <= current ? '#e6964d' : '#d4d4c9'}`,
+                }}
+              >
+                {i < current && (
+                  <CheckCircle className="w-2.5 h-2.5" style={{ color: '#fff' }} />
+                )}
+              </div>
+              <span className="text-xs" style={{ color: i <= current ? '#e6964d' : '#aaa', whiteSpace: 'nowrap' }}>
+                {step.label}
+              </span>
+            </div>
+            {i < TIMELINE_STEPS.length - 1 && (
+              <div
+                className="flex-1 h-0.5 mb-4 mx-1"
+                style={{ backgroundColor: i < current ? '#e6964d' : '#e8e8e0' }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function BookingsPage() {
@@ -36,6 +131,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [isHost, setIsHost] = useState(false)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -56,7 +152,7 @@ export default function BookingsPage() {
       const { data } = await supabase
         .from('bookings')
         .select(`
-          id, status, start_date, end_date, total_amount, created_at,
+          id, status, start_date, end_date, total_amount, payout_amount, created_at, listing_id,
           listings(title),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name),
           host:profiles!bookings_host_id_fkey(full_name)
@@ -70,7 +166,9 @@ export default function BookingsPage() {
         start_date: b.start_date as string,
         end_date: b.end_date as string,
         total_amount: b.total_amount as number,
+        payout_amount: b.payout_amount as number | undefined,
         created_at: b.created_at as string,
+        listing_id: b.listing_id as string,
         listing_title: (b.listings as { title?: string } | null)?.title ?? 'Listing',
         other_party_name: host
           ? ((b.advertiser as { full_name?: string } | null)?.full_name ?? 'Advertiser')
@@ -84,6 +182,14 @@ export default function BookingsPage() {
     load()
   }, [router])
 
+  async function handleHostAction(bookingId: string, newStatus: 'confirmed' | 'cancelled') {
+    setActionLoading(bookingId + newStatus)
+    const supabase = createClient()
+    await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId)
+    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b))
+    setActionLoading(null)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
@@ -92,22 +198,48 @@ export default function BookingsPage() {
     )
   }
 
+  // Group by active/completed/cancelled for better UX
+  const active = bookings.filter(b => !['completed', 'cancelled', 'disputed'].includes(b.status))
+  const completed = bookings.filter(b => b.status === 'completed')
+  const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
+
+  const totalEarnings = isHost
+    ? completed.reduce((sum, b) => sum + (b.payout_amount ?? b.total_amount * 0.93), 0)
+    : 0
+
   return (
     <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
           <Link href="/dashboard" className="hover:opacity-70" style={{ color: '#888' }}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>
-              {isHost ? 'Bookings' : 'My Bookings'}
+              {isHost ? 'Bookings' : 'My Campaigns'}
             </h1>
             <p className="text-sm" style={{ color: '#888' }}>
-              {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
+              {bookings.length} total booking{bookings.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
+
+        {/* Host earnings summary */}
+        {isHost && completed.length > 0 && (
+          <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
+            style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <div className="p-3 rounded-xl" style={{ backgroundColor: '#f0fdf4' }}>
+              <DollarSign className="w-6 h-6" style={{ color: '#16a34a' }} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>
+                ${totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-sm" style={{ color: '#888' }}>Total earnings from {completed.length} completed booking{completed.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+        )}
 
         {bookings.length === 0 ? (
           <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
@@ -117,8 +249,8 @@ export default function BookingsPage() {
             </h2>
             <p className="text-sm mb-6" style={{ color: '#888' }}>
               {isHost
-                ? 'When advertisers book your listings, they\'ll appear here.'
-                : 'No bookings yet. Browse the marketplace to find your first placement.'}
+                ? "When advertisers book your listings, they'll appear here."
+                : 'Browse the marketplace to find your first placement.'}
             </p>
             <Link
               href={isHost ? '/dashboard/create-listing' : '/marketplace'}
@@ -129,73 +261,245 @@ export default function BookingsPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {bookings.map(booking => {
-              const statusStyle = STATUS_COLORS[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
-              const canReview = booking.status === 'completed'
-              return (
-                <div
-                  key={booking.id}
-                  className="rounded-2xl p-5"
-                  style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-                >
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate" style={{ color: '#2b2b2b' }}>{booking.listing_title}</h3>
-                      <p className="text-xs mt-0.5" style={{ color: '#888' }}>with {booking.other_party_name}</p>
-                    </div>
-                    <span
-                      className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
-                    >
-                      {statusStyle.label}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs mb-4" style={{ color: '#888' }}>
-                    <span>
-                      {new Date(booking.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      {' — '}
-                      {new Date(booking.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </span>
-                    <span className="font-semibold" style={{ color: '#2b2b2b' }}>
-                      ${booking.total_amount?.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/dashboard/messages/${booking.id}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-                      style={{ border: '1px solid #d4d4c9', color: '#555' }}
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      Message
-                    </Link>
-                    {canReview && (
-                      <Link
-                        href={`/dashboard/bookings/${booking.id}/review`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-                        style={{ border: '1px solid #e6964d', color: '#e6964d' }}
-                      >
-                        <Star className="w-3.5 h-3.5" />
-                        Leave Review
-                      </Link>
-                    )}
-                    <Link
-                      href={`/marketplace/${booking.id}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-                      style={{ color: '#aaa' }}
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      View Listing
-                    </Link>
-                  </div>
+          <div className="space-y-8">
+            {/* Active bookings */}
+            {active.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
+                  ACTIVE ({active.length})
+                </h2>
+                <div className="space-y-4">
+                  {active.map(booking => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      isHost={isHost}
+                      onHostAction={handleHostAction}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
                 </div>
-              )
-            })}
+              </section>
+            )}
+
+            {/* Completed bookings */}
+            {completed.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
+                  COMPLETED ({completed.length})
+                </h2>
+                <div className="space-y-4">
+                  {completed.map(booking => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      isHost={isHost}
+                      onHostAction={handleHostAction}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Cancelled/Disputed */}
+            {cancelled.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
+                  CANCELLED / DISPUTED ({cancelled.length})
+                </h2>
+                <div className="space-y-4">
+                  {cancelled.map(booking => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      isHost={isHost}
+                      onHostAction={handleHostAction}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+function BookingCard({
+  booking,
+  isHost,
+  onHostAction,
+  actionLoading,
+}: {
+  booking: Booking
+  isHost: boolean
+  onHostAction: (id: string, status: 'confirmed' | 'cancelled') => void
+  actionLoading: string | null
+}) {
+  const statusConfig = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status, description: '' }
+  const canReview = booking.status === 'completed'
+  const showAcceptDecline = isHost && booking.status === 'pending'
+  const showPOPPrompt = isHost && booking.status === 'active'
+  const showCancelBtn = ['confirmed', 'pending'].includes(booking.status)
+  const showReceipt = booking.status === 'completed'
+  const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
+
+  const earnings = isHost && booking.status === 'completed'
+    ? (booking.payout_amount ?? booking.total_amount * 0.93)
+    : null
+
+  return (
+    <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+      {/* Top row */}
+      <div className="flex items-start justify-between gap-4 mb-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold truncate" style={{ color: '#2b2b2b' }}>{booking.listing_title}</h3>
+          <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+            {isHost ? `Advertiser: ${booking.other_party_name}` : `Host: ${booking.other_party_name}`}
+          </p>
+        </div>
+        <span
+          className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+          style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}
+        >
+          {statusConfig.label}
+        </span>
+      </div>
+
+      {/* Timeline */}
+      <StatusTimeline status={booking.status} />
+
+      {/* Dates + Amount */}
+      <div className="flex items-center gap-4 text-xs mt-3" style={{ color: '#888' }}>
+        <span className="flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          {new Date(booking.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {' — '}
+          {new Date(booking.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        </span>
+        <span className="font-semibold" style={{ color: '#2b2b2b' }}>
+          ${booking.total_amount?.toLocaleString()}
+        </span>
+        {earnings !== null && (
+          <span className="font-semibold flex items-center gap-1" style={{ color: '#16a34a' }}>
+            <DollarSign className="w-3 h-3" />
+            ${earnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} earned
+          </span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center flex-wrap gap-2 mt-4">
+        {/* Host: Accept/Decline pending bookings */}
+        {showAcceptDecline && (
+          <>
+            <button
+              onClick={() => onHostAction(booking.id, 'confirmed')}
+              disabled={actionLoading !== null}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity disabled:opacity-50"
+              style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a' }}
+            >
+              {actionLoading === booking.id + 'confirmed'
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <CheckCircle className="w-3.5 h-3.5" />}
+              Accept
+            </button>
+            <button
+              onClick={() => onHostAction(booking.id, 'cancelled')}
+              disabled={actionLoading !== null}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity disabled:opacity-50"
+              style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}
+            >
+              {actionLoading === booking.id + 'cancelled'
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <XCircle className="w-3.5 h-3.5" />}
+              Decline
+            </button>
+          </>
+        )}
+
+        {/* Host: POP upload prompt for active campaigns */}
+        {showPOPPrompt && (
+          <Link
+            href={`/dashboard/bookings/${booking.id}/pop`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: '#fef3e8', border: '1px solid #fde8c8', color: '#e6964d' }}
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Upload POP
+          </Link>
+        )}
+
+        {/* Advertiser: Review POP */}
+        {showPOPReview && (
+          <Link
+            href={`/dashboard/bookings/${booking.id}/pop-review`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: '#fef3e8', border: '1px solid #fde8c8', color: '#e6964d' }}
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            Review POP
+          </Link>
+        )}
+
+        {/* Message */}
+        <Link
+          href={`/dashboard/messages/${booking.id}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+          style={{ border: '1px solid #d4d4c9', color: '#555' }}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          Message
+        </Link>
+
+        {/* Review */}
+        {canReview && (
+          <Link
+            href={`/dashboard/bookings/${booking.id}/review`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ border: '1px solid #e6964d', color: '#e6964d' }}
+          >
+            <Star className="w-3.5 h-3.5" />
+            Leave Review
+          </Link>
+        )}
+
+        {/* Receipt */}
+        {showReceipt && (
+          <Link
+            href={`/dashboard/bookings/${booking.id}/receipt`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ border: '1px solid #d4d4c9', color: '#555' }}
+          >
+            <Receipt className="w-3.5 h-3.5" />
+            Receipt
+          </Link>
+        )}
+
+        {/* Cancel */}
+        {showCancelBtn && (
+          <Link
+            href={`/dashboard/bookings/${booking.id}/cancel`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ color: '#dc2626' }}
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            Cancel
+          </Link>
+        )}
+
+        {/* View Listing */}
+        <Link
+          href={`/marketplace/${booking.listing_id}`}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+          style={{ color: '#aaa' }}
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          View Listing
+        </Link>
       </div>
     </div>
   )

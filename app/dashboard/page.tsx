@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutGrid, PlusCircle, MessageSquare, ClipboardList,
-  TrendingUp, DollarSign, AlertCircle, Loader2, User
+  TrendingUp, DollarSign, AlertCircle, Loader2, User, Heart, CreditCard
 } from 'lucide-react'
 
 interface Profile {
@@ -15,6 +15,8 @@ interface Profile {
   email: string
   role: string
   avatar_url?: string
+  stripe_account_id?: string
+  stripe_connected?: boolean
 }
 
 interface Stats {
@@ -73,7 +75,7 @@ export default function DashboardPage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, full_name, email, role, avatar_url')
+        .select('id, full_name, email, role, avatar_url, stripe_account_id, stripe_connected')
         .eq('id', user.id)
         .single()
 
@@ -175,12 +177,14 @@ export default function DashboardPage() {
     { href: '/dashboard/listings', label: 'My Listings', desc: 'Manage your active listings', icon: LayoutGrid },
     { href: '/dashboard/messages', label: 'Messages', desc: 'Chat with advertisers', icon: MessageSquare },
     { href: '/dashboard/bookings', label: 'Bookings', desc: 'View booking requests', icon: ClipboardList },
+    { href: '/dashboard/stripe-onboarding', label: 'Payout Setup', desc: 'Connect your bank account', icon: CreditCard },
     { href: '/dashboard/profile', label: 'My Profile', desc: 'Edit your public profile', icon: User },
   ]
 
   const advertiserLinks = [
     { href: '/marketplace', label: 'Browse Placements', desc: 'Find ad spaces to book', icon: TrendingUp },
-    { href: '/dashboard/bookings', label: 'My Bookings', desc: 'Track your active campaigns', icon: ClipboardList },
+    { href: '/dashboard/bookings', label: 'My Campaigns', desc: 'Track your active campaigns', icon: ClipboardList },
+    { href: '/dashboard/saved', label: 'Saved Listings', desc: 'Your favorited placements', icon: Heart },
     { href: '/dashboard/messages', label: 'Messages', desc: 'Chat with hosts', icon: MessageSquare },
     { href: '/dashboard/profile', label: 'My Profile', desc: 'Edit your public profile', icon: User },
   ]
@@ -208,6 +212,26 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Stripe Connect Banner — host without connected account */}
+        {isHost && profile && !profile.stripe_connected && (
+          <div className="rounded-2xl p-4 mb-6 flex items-center gap-4" style={{ backgroundColor: '#fef3e8', border: '1px solid #fde8c8' }}>
+            <div className="p-2.5 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(230,150,77,0.15)' }}>
+              <CreditCard className="w-5 h-5" style={{ color: '#e6964d' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Connect your bank to receive payouts</p>
+              <p className="text-xs mt-0.5" style={{ color: '#888' }}>Set up Stripe to get paid when campaigns complete.</p>
+            </div>
+            <Link
+              href="/dashboard/stripe-onboarding"
+              className="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+            >
+              Set Up ⚠️
+            </Link>
+          </div>
+        )}
 
         {/* Stats Grid */}
         {stats && (
