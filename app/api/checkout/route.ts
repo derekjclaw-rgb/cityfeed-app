@@ -18,28 +18,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Create a pending booking record
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert({
-        listing_id: listingId,
-        advertiser_id: userId,
-        start_date: startDate,
-        end_date: endDate,
-        total_days: days,
-        price_per_day: pricePerDay,
-        subtotal: days * pricePerDay,
-        buyer_fee: Math.round(days * pricePerDay * 0.07),
-        seller_fee: Math.round(days * pricePerDay * 0.07),
-        total_amount: total,
-        status: 'pending_payment',
-      })
-      .select('id')
-      .single()
+    // Check if this is a mock listing (simple numeric ID vs UUID)
+    const isMockListing = /^\d+$/.test(listingId)
+    let bookingId = `mock-${listingId}-${Date.now()}`
 
-    if (bookingError) {
-      console.error('Booking insert error:', bookingError)
-      return NextResponse.json({ error: bookingError.message }, { status: 500 })
+    if (!isMockListing) {
+      // Create a real booking record for real listings
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          listing_id: listingId,
+          advertiser_id: userId,
+          start_date: startDate,
+          end_date: endDate,
+          total_days: days,
+          price_per_day: pricePerDay,
+          subtotal: days * pricePerDay,
+          buyer_fee: Math.round(days * pricePerDay * 0.07),
+          seller_fee: Math.round(days * pricePerDay * 0.07),
+          total_amount: total,
+          status: 'pending_payment',
+        })
+        .select('id')
+        .single()
+
+      if (bookingError) {
+        console.error('Booking insert error:', bookingError)
+        return NextResponse.json({ error: bookingError.message }, { status: 500 })
+      }
+      bookingId = booking.id
     }
 
     // Create Stripe Checkout session
@@ -59,10 +66,10 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking.id}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/marketplace/${listingId}/book`,
       metadata: {
-        booking_id: booking.id,
+        booking_id: bookingId,
         listing_id: listingId,
         user_id: userId,
       },
