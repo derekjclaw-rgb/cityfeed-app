@@ -1,7 +1,8 @@
 'use client'
 
 /**
- * Signup page — email/password with role selection, new color palette
+ * Signup page — email/password with role selection
+ * emailRedirectTo points to /login?confirmed=true
  */
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
@@ -39,7 +40,7 @@ function SignupForm() {
           full_name: fullName,
           role,
         },
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
       },
     })
 
@@ -57,6 +58,7 @@ function SignupForm() {
       } else {
         // Email confirmation needed
         setSuccess(true)
+        setLoading(false)
       }
     }
   }
@@ -76,7 +78,7 @@ function SignupForm() {
         <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Check your email</h2>
         <p className="text-sm mb-6" style={{ color: '#888' }}>
           We sent a confirmation link to <strong style={{ color: '#555' }}>{email}</strong>.
-          Click it to activate your account.
+          Click it to activate your account, then sign in below.
         </p>
         <Link
           href="/login"
@@ -203,9 +205,9 @@ function SignupForm() {
 
         <p className="text-center text-xs" style={{ color: '#aaa' }}>
           By signing up, you agree to our{' '}
-          <Link href="#" className="underline hover:opacity-70">Terms</Link>{' '}
+          <Link href="/terms" className="underline hover:opacity-70">Terms</Link>{' '}
           and{' '}
-          <Link href="#" className="underline hover:opacity-70">Privacy Policy</Link>
+          <Link href="/privacy" className="underline hover:opacity-70">Privacy Policy</Link>
         </p>
       </form>
     </>

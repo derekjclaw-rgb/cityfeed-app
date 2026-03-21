@@ -2,26 +2,73 @@
 
 /**
  * Navbar — shared navigation across all pages
- * City Feed logo + updated links including About + How It Works
+ * When logged in: user dropdown with Dashboard, My Profile, Settings, Log Out
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
-import { Menu, X } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+interface UserInfo {
+  email?: string
+  id: string
+  firstName: string
+  avatarUrl?: string
+}
 
 export default function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [user, setUser] = useState<{ email?: string } | null>(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [user, setUser] = useState<UserInfo | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ? { email: data.user.email ?? undefined } : null)
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) { setUser(null); return }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', data.user.id)
+        .single()
+
+      const fullName = profile?.full_name || data.user.email || 'User'
+      const firstName = fullName.split(' ')[0]
+
+      setUser({
+        email: data.user.email ?? undefined,
+        id: data.user.id,
+        firstName,
+        avatarUrl: profile?.avatar_url ?? undefined,
+      })
     })
+  }, [pathname])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setUser(null)
+    setDropdownOpen(false)
+    setMobileOpen(false)
+    router.push('/')
+    router.refresh()
+  }
 
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
@@ -29,6 +76,8 @@ export default function Navbar() {
     { href: '/how-it-works', label: 'How It Works' },
     { href: '/dashboard/create-listing', label: 'List Your Space' },
   ]
+
+  const initials = user?.firstName?.charAt(0).toUpperCase() ?? 'U'
 
   return (
     <nav className="fixed top-0 w-full z-50" style={{ backgroundColor: '#2b2b2b', backdropFilter: 'blur(12px)', borderBottom: '1px solid #1a1a1a' }}>
@@ -52,9 +101,7 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               className="text-sm font-medium transition-colors"
-              style={{
-                color: pathname === link.href ? '#e6964d' : '#e6e6dd',
-              }}
+              style={{ color: pathname === link.href ? '#e6964d' : '#e6e6dd' }}
             >
               {link.label}
             </Link>
@@ -64,28 +111,79 @@ export default function Navbar() {
         {/* Desktop auth */}
         <div className="hidden md:flex items-center gap-3">
           {user ? (
-            <>
-              <Link
-                href="/dashboard/listings"
-                className="text-sm font-medium transition-colors"
-                style={{ color: '#e6e6dd' }}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:opacity-80 transition-opacity"
+                style={{ border: '1px solid rgba(255,255,255,0.12)' }}
               >
-                Dashboard
-              </Link>
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ backgroundColor: 'rgba(230,150,77,0.2)', color: '#e6964d' }}
-              >
-                {user.email?.charAt(0).toUpperCase() ?? 'U'}
-              </div>
-            </>
+                {/* Avatar */}
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.firstName} className="w-7 h-7 rounded-full object-cover" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(230,150,77,0.2)', color: '#e6964d' }}>
+                    {initials}
+                  </div>
+                )}
+                <span className="text-sm font-medium" style={{ color: '#e6e6dd' }}>{user.firstName}</span>
+                <ChevronDown className="w-4 h-4" style={{ color: '#888', transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
+
+              {/* Dropdown */}
+              {dropdownOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-48 rounded-xl overflow-hidden"
+                  style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                >
+                  <div className="px-4 py-3" style={{ borderBottom: '1px solid #f0f0ea' }}>
+                    <p className="text-xs font-medium" style={{ color: '#aaa' }}>Signed in as</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: '#2b2b2b' }}>{user.firstName}</p>
+                  </div>
+                  <div className="py-1">
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
+                      style={{ color: '#2b2b2b' }}
+                    >
+                      <LayoutDashboard className="w-4 h-4" style={{ color: '#e6964d' }} />
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/dashboard/profile"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
+                      style={{ color: '#2b2b2b' }}
+                    >
+                      <User className="w-4 h-4" style={{ color: '#e6964d' }} />
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
+                      style={{ color: '#2b2b2b' }}
+                    >
+                      <Settings className="w-4 h-4" style={{ color: '#e6964d' }} />
+                      Settings
+                    </Link>
+                  </div>
+                  <div className="py-1" style={{ borderTop: '1px solid #f0f0ea' }}>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
+                      style={{ color: '#dc2626' }}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Log Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="text-sm font-medium transition-colors"
-                style={{ color: '#e6e6dd' }}
-              >
+              <Link href="/login" className="text-sm font-medium transition-colors" style={{ color: '#e6e6dd' }}>
                 Login
               </Link>
               <Link
@@ -111,48 +209,55 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden px-6 pb-4 space-y-3" style={{ backgroundColor: '#2b2b2b', borderTop: '1px solid #3d3d3d' }}>
+        <div className="md:hidden px-6 pb-4 space-y-1" style={{ backgroundColor: '#2b2b2b', borderTop: '1px solid #3d3d3d' }}>
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm font-medium"
-              style={{ color: '#e6e6dd' }}
+              className="block py-2.5 text-sm font-medium"
+              style={{ color: pathname === link.href ? '#e6964d' : '#e6e6dd' }}
             >
               {link.label}
             </Link>
           ))}
-          <hr style={{ borderColor: '#3d3d3d' }} />
-          {user ? (
-            <Link
-              href="/dashboard/listings"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm font-medium"
-              style={{ color: '#e6e6dd' }}
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium"
-                style={{ color: '#e6e6dd' }}
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-semibold px-4 rounded-lg text-center"
-                style={{ backgroundColor: '#e6964d', color: '#fff' }}
-              >
-                Sign Up
-              </Link>
-            </>
-          )}
+          <div style={{ borderTop: '1px solid #3d3d3d', paddingTop: '12px', marginTop: '8px' }}>
+            {user ? (
+              <>
+                <div className="flex items-center gap-3 py-2 mb-2">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.firstName} className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(230,150,77,0.2)', color: '#e6964d' }}>
+                      {initials}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium" style={{ color: '#e6e6dd' }}>{user.firstName}</span>
+                </div>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#e6e6dd' }}>
+                  <LayoutDashboard className="w-4 h-4" style={{ color: '#e6964d' }} /> Dashboard
+                </Link>
+                <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#e6e6dd' }}>
+                  <User className="w-4 h-4" style={{ color: '#e6964d' }} /> My Profile
+                </Link>
+                <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#e6e6dd' }}>
+                  <Settings className="w-4 h-4" style={{ color: '#e6964d' }} /> Settings
+                </Link>
+                <button onClick={handleLogout} className="flex items-center gap-3 py-2.5 text-sm w-full" style={{ color: '#dc2626' }}>
+                  <LogOut className="w-4 h-4" /> Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium" style={{ color: '#e6e6dd' }}>
+                  Login
+                </Link>
+                <Link href="/signup" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-semibold px-4 rounded-lg text-center mt-2" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       )}
     </nav>

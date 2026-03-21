@@ -1,18 +1,21 @@
 'use client'
 
 /**
- * Login page — Supabase email/password auth, new color palette
+ * Login page — Supabase email/password auth
+ * Handles ?confirmed=true message after email verification
  */
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
+  const confirmed = searchParams.get('confirmed') === 'true'
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -48,7 +51,17 @@ function LoginForm() {
         {/* Card */}
         <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
           <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Welcome back</h1>
-          <p className="text-sm mb-8" style={{ color: '#888' }}>Sign in to your account</p>
+          <p className="text-sm mb-6" style={{ color: '#888' }}>Sign in to your account</p>
+
+          {/* Email confirmed success message */}
+          {confirmed && (
+            <div className="flex items-start gap-3 rounded-xl px-4 py-3 mb-6" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+              <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#16a34a' }} />
+              <p className="text-sm" style={{ color: '#15803d' }}>
+                Your email has been confirmed! Sign in below to get started.
+              </p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email */}
