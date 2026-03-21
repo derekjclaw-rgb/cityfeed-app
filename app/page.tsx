@@ -154,9 +154,9 @@ export default function HomePage() {
   return (
     <div style={{ backgroundColor: '#e6e6dd' }}>
       {/* Hero */}
-      <section className="pt-24 pb-8 px-6">
+      <section className="pt-28 pb-6 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 leading-[1.1]" style={{ color: '#2b2b2b' }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 leading-[1.1]" style={{ color: '#2b2b2b' }}>
             Advertise on{' '}
             <span style={{ color: '#e6964d' }}>your terms</span>
           </h1>
@@ -184,8 +184,8 @@ export default function HomePage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-4 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
-        <div className="max-w-5xl mx-auto flex justify-start md:justify-center gap-8 md:gap-16 text-center overflow-x-auto pb-1">
+      <section className="py-3 px-4 sm:px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+        <div className="max-w-5xl mx-auto grid grid-cols-4 gap-2 sm:gap-16 text-center">
           {[
             { value: '2,400+', label: 'Active placements' },
             { value: '180+', label: 'Cities covered' },
@@ -193,17 +193,17 @@ export default function HomePage() {
             { value: '48hr', label: 'Avg. booking time' },
           ].map((stat) => (
             <div key={stat.label}>
-              <div className="text-xl font-bold" style={{ color: '#e6964d' }}>{stat.value}</div>
-              <div className="text-xs" style={{ color: '#888' }}>{stat.label}</div>
+              <div className="text-base sm:text-xl font-bold" style={{ color: '#e6964d' }}>{stat.value}</div>
+              <div className="text-[10px] sm:text-xs" style={{ color: '#888' }}>{stat.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Search + Filter */}
-      <section className="py-10 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+      <section className="py-6 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
             <div className="flex flex-col md:flex-row gap-3 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
@@ -225,8 +225,8 @@ export default function HomePage() {
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 items-end">
-              <div className="flex gap-3 flex-1">
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="flex-1">
                   <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Start date (optional)</label>
                   <div className="relative">
@@ -244,7 +244,7 @@ export default function HomePage() {
               </div>
               <Link
                 href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}
-                className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center gap-2 hover:opacity-90"
+                className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 w-full sm:w-auto"
                 style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 2px 8px rgba(230,150,77,0.3)' }}
               >
                 <Search className="w-4 h-4" />
@@ -256,7 +256,7 @@ export default function HomePage() {
       </section>
 
       {/* Placements Grid */}
-      <section className="pb-20 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+      <section className="pb-20 px-4 sm:px-6" style={{ backgroundColor: '#e6e6dd' }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
