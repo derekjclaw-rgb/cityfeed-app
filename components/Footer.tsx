@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 /**
- * Footer — shared site-wide footer, updated colors
+ * Footer — shared site-wide footer with updated legal links
  */
 export default function Footer() {
   return (
@@ -29,10 +29,10 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>Company</h4>
             <ul className="space-y-2.5">
-              <li><Link href="/about" className="text-sm transition-colors" style={{ color: '#888' }}>About</Link></li>
-              <li><Link href="/how-it-works" className="text-sm transition-colors" style={{ color: '#888' }}>How It Works</Link></li>
-              <li><Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>Blog</Link></li>
-              <li><Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>Careers</Link></li>
+              <li><Link href="/about" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>About</Link></li>
+              <li><Link href="/how-it-works" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>How It Works</Link></li>
+              <li><Link href="#" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>Blog</Link></li>
+              <li><Link href="#" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>Careers</Link></li>
             </ul>
           </div>
 
@@ -42,7 +42,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {['For Hosts', 'For Advertisers', 'Pricing', 'Help Center'].map((item) => (
                 <li key={item}>
-                  <Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>
+                  <Link href="#" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
                     {item}
                   </Link>
                 </li>
@@ -54,13 +54,21 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>Legal</h4>
             <ul className="space-y-2.5">
-              {['Terms of Service', 'Privacy Policy', 'Cookie Policy'].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="text-sm transition-colors" style={{ color: '#888' }}>
-                    {item}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link href="/terms" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy#cookies" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  Cookie Policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -71,11 +79,9 @@ export default function Footer() {
             © {new Date().getFullYear()} City Feed, Inc. All rights reserved.
           </p>
           <div className="flex gap-5">
-            {['Privacy', 'Terms', 'Contact'].map((item) => (
-              <Link key={item} href="#" className="text-xs transition-colors" style={{ color: '#aaa' }}>
-                {item}
-              </Link>
-            ))}
+            <Link href="/privacy" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Privacy</Link>
+            <Link href="/terms" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Terms</Link>
+            <Link href="#" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Contact</Link>
           </div>
         </div>
       </div>
