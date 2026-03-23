@@ -167,6 +167,24 @@ export default function CreateListingPage() {
     // Upload photos first
     const imageUrls = await uploadPhotos(userId)
 
+    // Geocode address → lat/lng via Mapbox
+    let lat: number | null = null
+    let lng: number | null = null
+    const fullAddress = `${form.address}, ${form.city}, ${form.state} ${form.zip}`.trim()
+    try {
+      const geoRes = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(fullAddress)}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+      )
+      const geoData = await geoRes.json()
+      if (geoData.features && geoData.features.length > 0) {
+        const [lngVal, latVal] = geoData.features[0].center
+        lat = latVal
+        lng = lngVal
+      }
+    } catch (geoErr) {
+      console.warn('Geocoding failed, listing will be created without coordinates:', geoErr)
+    }
+
     const supabase = createClient()
     const { error: insertError } = await supabase.from('listings').insert({
       host_id: userId,
@@ -177,6 +195,8 @@ export default function CreateListingPage() {
       city: form.city,
       state: form.state,
       zip: form.zip,
+      lat,
+      lng,
       dimensions: form.dimensions,
       daily_impressions: parseInt(form.daily_impressions) || 0,
       daily_traffic: parseInt(form.daily_traffic) || 0,
@@ -187,7 +207,7 @@ export default function CreateListingPage() {
       buy_now_enabled: form.buy_now_enabled,
       content_restrictions: form.content_restrictions,
       images: imageUrls,
-      status: 'pending',
+      status: 'active',
     })
 
     if (insertError) {
