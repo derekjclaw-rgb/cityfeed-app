@@ -129,7 +129,7 @@ function LoginForm() {
 
           {/* Forgot password */}
           <div className="mt-5 text-center">
-            <Link href="#" className="text-xs transition-opacity hover:opacity-70" style={{ color: '#888' }}>
+            <Link href="/forgot-password" className="text-xs transition-opacity hover:opacity-70" style={{ color: '#888' }}>
               Forgot your password?
             </Link>
           </div>
