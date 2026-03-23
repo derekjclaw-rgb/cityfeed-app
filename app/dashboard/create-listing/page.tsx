@@ -390,7 +390,7 @@ export default function CreateListingPage() {
               <FormField label="Estimated daily impressions" hint="Approximate daily views">
                 <input type="number" value={form.daily_impressions} onChange={e => set('daily_impressions', e.target.value)} placeholder="15000" min="0" className={inputClass} style={inputStyle} />
               </FormField>
-              <FormField label="Daily traffic" hint="Vehicles or pedestrians">
+              <FormField label="Estimated daily traffic" hint="Vehicles or pedestrians passing by">
                 <input type="number" value={form.daily_traffic} onChange={e => set('daily_traffic', e.target.value)} placeholder="8000" min="0" className={inputClass} style={inputStyle} />
               </FormField>
             </div>
