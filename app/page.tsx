@@ -210,7 +210,7 @@ export default function HomePage() {
       {/* Search + Filter */}
       <section className="py-6 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden" style={{ border: '1px solid #e0e0d8' }}>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-visible relative z-10" style={{ border: '1px solid #e0e0d8' }}>
             <div className="flex flex-col md:flex-row gap-3 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
