@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  )
+}
 
 /**
  * Auto-approve POP submissions older than 72 hours.
@@ -18,6 +20,7 @@ const supabase = createClient(
  * - Wire to Resend when email provider is configured (see lib/email.ts)
  */
 export async function GET(req: NextRequest) {
+  const supabase = getSupabase()
   // Validate cron secret for security
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET

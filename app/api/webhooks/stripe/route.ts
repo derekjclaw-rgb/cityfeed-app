@@ -3,14 +3,11 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' })
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-)
-
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
+function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
 export async function POST(req: NextRequest) {
+  const stripe = getStripe()
+  const supabase = getSupabase()
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
 
@@ -39,6 +36,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleEvent(event: Stripe.Event) {
+  const supabase = getSupabase()
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
     const bookingId = session.metadata?.booking_id
