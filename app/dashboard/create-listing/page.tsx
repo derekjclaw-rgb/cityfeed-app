@@ -410,7 +410,7 @@ export default function CreateListingPage() {
             </FormField>
             <div className="grid grid-cols-2 gap-4">
               <FormField label="Min. days">
-                <input type="number" value={form.min_days} onChange={e => set('min_days', e.target.value)} min="1" className={inputClass} style={inputStyle} />
+                <input type="number" value={form.min_days} onChange={e => set('min_days', e.target.value)} min="1" max="10" className={inputClass} style={inputStyle} />
               </FormField>
               <FormField label="Max. days">
                 <input type="number" value={form.max_days} onChange={e => set('max_days', e.target.value)} min="1" className={inputClass} style={inputStyle} />
