@@ -5,14 +5,14 @@ export default function TermsPage() {
   const lastUpdated = 'March 1, 2026'
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-24 pb-16 px-6" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-3xl mx-auto">
         <div className="mb-10">
           <h1 className="text-4xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Terms of Service</h1>
           <p className="text-sm" style={{ color: '#888' }}>Last updated: {lastUpdated}</p>
         </div>
 
-        <div className="rounded-2xl p-8 space-y-10" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-8 space-y-10" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <p className="text-sm leading-relaxed" style={{ color: '#555' }}>
             Welcome to City Feed. By creating an account or using our platform, you agree to these Terms of Service.
             Please read them carefully. If you do not agree, do not use City Feed.
@@ -105,7 +105,7 @@ export default function TermsPage() {
             <h2 className="text-xl font-bold mb-4" style={{ color: '#2b2b2b' }}>8. Changes to Terms</h2>
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
               <p>City Feed may update these Terms at any time. We will notify users of material changes via email or in-app notification. Continued use of the platform after changes constitutes acceptance of the new Terms.</p>
-              <p>Questions about these Terms? Contact us at <span style={{ color: '#e6964d' }}>support@cityfeed.io</span></p>
+              <p>Questions about these Terms? Contact us at <span style={{ color: '#7ecfc0' }}>support@cityfeed.io</span></p>
             </div>
           </section>
         </div>

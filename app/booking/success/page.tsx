@@ -36,14 +36,14 @@ function SuccessPageInner() {
   }, [bookingId])
 
   return (
-    <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="text-center max-w-md w-full">
         {loading ? (
-          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#e6964d' }} />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#7ecfc0' }} />
         ) : (
           <>
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(230,150,77,0.12)', border: '2px solid rgba(230,150,77,0.3)' }}>
-              <CheckCircle className="w-10 h-10" style={{ color: '#e6964d' }} />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '2px solid rgba(239,65,53,0.3)' }}>
+              <CheckCircle className="w-10 h-10" style={{ color: '#7ecfc0' }} />
             </div>
             <h1 className="text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Booking confirmed!</h1>
             <p className="text-sm mb-6" style={{ color: '#888' }}>
@@ -51,7 +51,7 @@ function SuccessPageInner() {
             </p>
 
             {booking && (
-              <div className="rounded-2xl p-5 mb-8 text-left" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <div className="rounded-2xl p-5 mb-8 text-left" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                 <h2 className="font-semibold mb-3 text-sm" style={{ color: '#2b2b2b' }}>Booking details</h2>
                 {booking.listings && (
                   <p className="text-sm font-medium mb-2" style={{ color: '#2b2b2b' }}>
@@ -65,7 +65,7 @@ function SuccessPageInner() {
                   </div>
                   <div className="flex justify-between">
                     <span>Total paid</span>
-                    <span className="font-semibold" style={{ color: '#e6964d' }}>${booking.total_amount.toLocaleString()}</span>
+                    <span className="font-semibold" style={{ color: '#ef4135' }}>${booking.total_amount.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Status</span>
@@ -79,14 +79,14 @@ function SuccessPageInner() {
               <Link
                 href="/dashboard"
                 className="font-semibold px-6 py-3 rounded-xl hover:opacity-90 text-sm"
-                style={{ backgroundColor: '#e6964d', color: '#fff' }}
+                style={{ backgroundColor: '#ef4135', color: '#fff' }}
               >
                 Go to dashboard
               </Link>
               <Link
                 href="/marketplace"
                 className="font-semibold px-6 py-3 rounded-xl hover:opacity-90 text-sm"
-                style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
               >
                 Browse more
               </Link>
@@ -101,8 +101,8 @@ function SuccessPageInner() {
 export default function BookingSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     }>
       <SuccessPageInner />

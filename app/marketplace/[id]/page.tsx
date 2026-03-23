@@ -126,7 +126,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
   }
 
   return (
-    <div className="rounded-2xl p-6 lg:sticky lg:top-24" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 8px rgba(0,0,0,0.07)' }}>
+    <div className="rounded-2xl p-6 lg:sticky lg:top-24" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 8px rgba(0,0,0,0.07)' }}>
       <div className="flex items-baseline gap-1 mb-6">
         <span className="text-3xl font-bold" style={{ color: '#2b2b2b' }}>${listing.price_per_day}</span>
         <span className="text-sm" style={{ color: '#888' }}>/day</span>
@@ -141,7 +141,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
         />
       </div>
       {days > 0 && (
-        <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f4f4f0', border: '1px solid #e0e0d8' }}>
+        <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
           <div className="flex justify-between text-sm" style={{ color: '#555' }}>
             <span>${listing.price_per_day} × {days} day{days !== 1 ? 's' : ''}</span>
             <span>${subtotal.toLocaleString()}</span>
@@ -150,7 +150,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
             <span>City Feed fee (7%)</span>
             <span>${fee.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #d4d4c9', color: '#2b2b2b' }}>
+          <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
             <span>Total</span>
             <span>${total.toLocaleString()}</span>
           </div>
@@ -160,7 +160,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
         onClick={handleBook}
         disabled={!startDate || !endDate || days < 1}
         className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+        style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
       >
         Request to Book
         <ChevronRight className="w-4 h-4" />
@@ -273,19 +273,19 @@ export default function ListingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (!listing) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center">
           <div className="text-4xl mb-4">🗺️</div>
           <h2 className="text-xl font-semibold mb-2" style={{ color: '#555' }}>Listing not found</h2>
-          <Link href="/marketplace" className="text-sm font-medium hover:opacity-80" style={{ color: '#e6964d' }}>← Back to marketplace</Link>
+          <Link href="/marketplace" className="text-sm font-medium hover:opacity-80" style={{ color: '#7ecfc0' }}>← Back to marketplace</Link>
         </div>
       </div>
     )
@@ -299,7 +299,7 @@ export default function ListingDetailPage() {
     : mockHost?.joined ?? ''
 
   return (
-    <div className="min-h-screen pt-16" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-16" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center gap-2 text-sm mb-6" style={{ color: '#888' }}>
           <Link href="/marketplace" className="flex items-center gap-1 hover:opacity-80" style={{ color: '#888' }}>
@@ -325,7 +325,7 @@ export default function ListingDetailPage() {
                         key={i}
                         onClick={() => setActivePhoto(i)}
                         className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden transition-all"
-                        style={{ border: i === activePhoto ? '2px solid #e6964d' : '2px solid transparent' }}
+                        style={{ border: i === activePhoto ? '2px solid #7ecfc0' : '2px solid transparent' }}
                       >
                         <img src={img} alt="" className="w-full h-full object-cover" />
                       </button>
@@ -348,12 +348,12 @@ export default function ListingDetailPage() {
               <h1 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>{listing.title}</h1>
               <div className="flex flex-wrap items-center gap-4 text-sm" style={{ color: '#888' }}>
                 <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" style={{ color: '#e6964d' }} />
+                  <MapPin className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                   {listing.city}, {listing.state}
                 </div>
                 {listing.rating > 0 && (
                   <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+                    <Star className="w-4 h-4 fill-[#debb73]" style={{ color: '#debb73' }} />
                     <strong style={{ color: '#2b2b2b' }}>{listing.rating}</strong>
                     <span>({listing.review_count} reviews)</span>
                   </div>
@@ -362,7 +362,7 @@ export default function ListingDetailPage() {
               {listing.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {listing.tags.map(tag => (
-                    <span key={tag} className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(230,150,77,0.12)', color: '#e6964d', border: '1px solid rgba(230,150,77,0.25)' }}>
+                    <span key={tag} className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: 'rgba(126,207,192,0.12)', color: '#7ecfc0', border: '1px solid rgba(126,207,192,0.25)' }}>
                       {tag}
                     </span>
                   ))}
@@ -378,8 +378,8 @@ export default function ListingDetailPage() {
                 { icon: Ruler, label: 'Dimensions', value: listing.dimensions ?? 'N/A' },
                 { icon: Clock, label: 'Production', value: listing.production_time ?? 'N/A' },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-xl p-4" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                  <stat.icon className="w-4 h-4 mb-2" style={{ color: '#e6964d' }} />
+                <div key={stat.label} className="rounded-xl p-4" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                  <stat.icon className="w-4 h-4 mb-2" style={{ color: '#7ecfc0' }} />
                   <div className="text-xs mb-1" style={{ color: '#888' }}>{stat.label}</div>
                   <div className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>{stat.value}</div>
                 </div>
@@ -387,13 +387,13 @@ export default function ListingDetailPage() {
             </div>
 
             {/* Description */}
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-lg font-semibold mb-3" style={{ color: '#2b2b2b' }}>About this placement</h2>
               <p className="text-sm leading-relaxed" style={{ color: '#555' }}>{listing.description}</p>
             </div>
 
             {/* Details */}
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-lg font-semibold mb-4" style={{ color: '#2b2b2b' }}>Listing details</h2>
               <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 {[
@@ -402,14 +402,14 @@ export default function ListingDetailPage() {
                   { label: 'Category', value: listing.category },
                   { label: 'Location', value: `${listing.city}, ${listing.state}` },
                 ].map((item) => (
-                  <div key={item.label} className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                  <div key={item.label} className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                     <span style={{ color: '#888' }}>{item.label}</span>
                     <span className="font-medium" style={{ color: '#2b2b2b' }}>{item.value}</span>
                   </div>
                 ))}
               </div>
               {listing.content_restrictions && (
-                <div className="mt-4 p-3 rounded-xl text-xs" style={{ backgroundColor: '#fef9f0', border: '1px solid #fde8c4', color: '#c4763a' }}>
+                <div className="mt-4 p-3 rounded-xl text-xs" style={{ backgroundColor: '#f0f8f5', border: '1px solid #e8f5f3', color: '#2b6b5e' }}>
                   <strong>Content restrictions:</strong> {listing.content_restrictions}
                 </div>
               )}
@@ -417,47 +417,47 @@ export default function ListingDetailPage() {
 
             {/* Creative Specs */}
             {listing.creative_specs && (
-              <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
                 <h2 className="text-lg font-semibold mb-4" style={{ color: '#2b2b2b' }}>Creative specs</h2>
                 <div className="space-y-3 text-sm">
                   {listing.creative_specs.formats && listing.creative_specs.formats.length > 0 && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Accepted formats</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.formats.join(', ')}</span>
                     </div>
                   )}
                   {listing.creative_specs.dimensions && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Preferred dimensions</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.dimensions}</span>
                     </div>
                   )}
                   {listing.creative_specs.max_file_size && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Max file size</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.max_file_size}</span>
                     </div>
                   )}
                   {listing.creative_specs.video_duration && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Video duration</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.video_duration}</span>
                     </div>
                   )}
                   {listing.creative_specs.audio_allowed !== undefined && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Audio</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.audio_allowed ? 'Allowed' : 'Not allowed'}</span>
                     </div>
                   )}
                   {listing.creative_specs.loop_count !== undefined && listing.creative_specs.loop_count !== null && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Loop count</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.loop_count === 0 ? 'Infinite' : listing.creative_specs.loop_count}</span>
                     </div>
                   )}
                   {listing.creative_specs.host_prints && (
-                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Printing</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>
                         Host provides printing
@@ -470,10 +470,10 @@ export default function ListingDetailPage() {
             )}
 
             {/* Host card */}
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-lg font-semibold mb-4" style={{ color: '#2b2b2b' }}>About the host</h2>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}>
                   {hostInitials}
                 </div>
                 <div>
@@ -483,7 +483,7 @@ export default function ListingDetailPage() {
                 {mockHost && (
                   <div className="ml-auto text-right">
                     <div className="flex items-center gap-1 text-sm">
-                      <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+                      <Star className="w-3.5 h-3.5 fill-[#debb73]" style={{ color: '#debb73' }} />
                       <strong style={{ color: '#2b2b2b' }}>{mockHost.rating}</strong>
                     </div>
                     <div className="text-xs" style={{ color: '#888' }}>{mockHost.listings} listing{mockHost.listings !== 1 ? 's' : ''}</div>
@@ -491,9 +491,9 @@ export default function ListingDetailPage() {
                 )}
               </div>
               <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: '#888' }}>
-                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#e6964d' }} />
+                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#7ecfc0' }} />
                 Identity verified &nbsp;·&nbsp;
-                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#e6964d' }} />
+                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#7ecfc0' }} />
                 Fast responder
               </div>
             </div>
@@ -507,16 +507,16 @@ export default function ListingDetailPage() {
       </div>
 
       {/* Mobile sticky CTA ribbon */}
-      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 px-4 py-3" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 px-4 py-3" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold" style={{ color: '#e6964d' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
+            <div className="text-lg font-bold" style={{ color: '#ef4135' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
             <div className="text-xs" style={{ color: '#888' }}>Min. {listing.min_days} days</div>
           </div>
           <a
             href={`/marketplace/${listing.id}/book`}
             className="font-semibold px-6 py-3 rounded-xl text-sm"
-            style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 2px 8px rgba(230,150,77,0.3)' }}
+            style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 2px 8px rgba(239,65,53,0.3)' }}
           >
             Book Now
           </a>

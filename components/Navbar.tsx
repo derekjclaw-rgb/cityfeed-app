@@ -101,7 +101,7 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               className="text-sm font-medium transition-colors"
-              style={{ color: pathname === link.href ? '#e6964d' : '#e6e6dd' }}
+              style={{ color: pathname === link.href ? '#7ecfc0' : '#f0f0ec' }}
             >
               {link.label}
             </Link>
@@ -121,11 +121,11 @@ export default function Navbar() {
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.firstName} className="w-7 h-7 rounded-full object-cover" />
                 ) : (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(230,150,77,0.2)', color: '#e6964d' }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.2)', color: '#7ecfc0' }}>
                     {initials}
                   </div>
                 )}
-                <span className="text-sm font-medium" style={{ color: '#e6e6dd' }}>{user.firstName}</span>
+                <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
                 <ChevronDown className="w-4 h-4" style={{ color: '#888', transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </button>
 
@@ -133,7 +133,7 @@ export default function Navbar() {
               {dropdownOpen && (
                 <div
                   className="absolute right-0 mt-2 w-48 rounded-xl overflow-hidden"
-                  style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                  style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
                 >
                   <div className="px-4 py-3" style={{ borderBottom: '1px solid #f0f0ea' }}>
                     <p className="text-xs font-medium" style={{ color: '#aaa' }}>Signed in as</p>
@@ -146,7 +146,7 @@ export default function Navbar() {
                       className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
                       style={{ color: '#2b2b2b' }}
                     >
-                      <LayoutDashboard className="w-4 h-4" style={{ color: '#e6964d' }} />
+                      <LayoutDashboard className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                       Dashboard
                     </Link>
                     <Link
@@ -155,7 +155,7 @@ export default function Navbar() {
                       className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
                       style={{ color: '#2b2b2b' }}
                     >
-                      <User className="w-4 h-4" style={{ color: '#e6964d' }} />
+                      <User className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                       My Profile
                     </Link>
                     <Link
@@ -164,7 +164,7 @@ export default function Navbar() {
                       className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity"
                       style={{ color: '#2b2b2b' }}
                     >
-                      <Settings className="w-4 h-4" style={{ color: '#e6964d' }} />
+                      <Settings className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                       Settings
                     </Link>
                   </div>
@@ -183,13 +183,13 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link href="/login" className="text-sm font-medium transition-colors" style={{ color: '#e6e6dd' }}>
+              <Link href="/login" className="text-sm font-medium transition-colors" style={{ color: '#f0f0ec' }}>
                 Login
               </Link>
               <Link
                 href="/signup"
                 className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: '#e6964d', color: '#fff' }}
+                style={{ backgroundColor: '#ef4135', color: '#fff' }}
               >
                 Sign Up
               </Link>
@@ -200,7 +200,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           className="md:hidden"
-          style={{ color: '#e6e6dd' }}
+          style={{ color: '#f0f0ec' }}
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -216,7 +216,7 @@ export default function Navbar() {
               href={link.href}
               onClick={() => setMobileOpen(false)}
               className="block py-2.5 text-sm font-medium"
-              style={{ color: pathname === link.href ? '#e6964d' : '#e6e6dd' }}
+              style={{ color: pathname === link.href ? '#7ecfc0' : '#f0f0ec' }}
             >
               {link.label}
             </Link>
@@ -228,20 +228,20 @@ export default function Navbar() {
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.firstName} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(230,150,77,0.2)', color: '#e6964d' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.2)', color: '#7ecfc0' }}>
                       {initials}
                     </div>
                   )}
-                  <span className="text-sm font-medium" style={{ color: '#e6e6dd' }}>{user.firstName}</span>
+                  <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
                 </div>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#e6e6dd' }}>
-                  <LayoutDashboard className="w-4 h-4" style={{ color: '#e6964d' }} /> Dashboard
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
+                  <LayoutDashboard className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Dashboard
                 </Link>
-                <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#e6e6dd' }}>
-                  <User className="w-4 h-4" style={{ color: '#e6964d' }} /> My Profile
+                <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
+                  <User className="w-4 h-4" style={{ color: '#7ecfc0' }} /> My Profile
                 </Link>
-                <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#e6e6dd' }}>
-                  <Settings className="w-4 h-4" style={{ color: '#e6964d' }} /> Settings
+                <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
+                  <Settings className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Settings
                 </Link>
                 <button onClick={handleLogout} className="flex items-center gap-3 py-2.5 text-sm w-full" style={{ color: '#dc2626' }}>
                   <LogOut className="w-4 h-4" /> Log Out
@@ -249,10 +249,10 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium" style={{ color: '#e6e6dd' }}>
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium" style={{ color: '#f0f0ec' }}>
                   Login
                 </Link>
-                <Link href="/signup" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-semibold px-4 rounded-lg text-center mt-2" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
+                <Link href="/signup" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-semibold px-4 rounded-lg text-center mt-2" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
                   Sign Up
                 </Link>
               </>

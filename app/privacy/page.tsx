@@ -5,14 +5,14 @@ export default function PrivacyPage() {
   const lastUpdated = 'March 1, 2026'
 
   return (
-    <div className="min-h-screen pt-24 pb-16 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-24 pb-16 px-6" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-3xl mx-auto">
         <div className="mb-10">
           <h1 className="text-4xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Privacy Policy</h1>
           <p className="text-sm" style={{ color: '#888' }}>Last updated: {lastUpdated}</p>
         </div>
 
-        <div className="rounded-2xl p-8 space-y-10" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-8 space-y-10" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <p className="text-sm leading-relaxed" style={{ color: '#555' }}>
             City Feed, Inc. (&quot;City Feed,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) respects your privacy. This Privacy Policy explains how we collect,
             use, and share information about you when you use our platform.
@@ -56,15 +56,15 @@ export default function PrivacyPage() {
               <div className="space-y-4">
                 <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
                   <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Stripe</p>
-                  <p>Payment processing. Stripe handles all credit card transactions. City Feed never stores your full payment card details. Stripe is PCI-DSS compliant. Learn more at <span style={{ color: '#e6964d' }}>stripe.com/privacy</span>.</p>
+                  <p>Payment processing. Stripe handles all credit card transactions. City Feed never stores your full payment card details. Stripe is PCI-DSS compliant. Learn more at <span style={{ color: '#7ecfc0' }}>stripe.com/privacy</span>.</p>
                 </div>
                 <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
                   <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Supabase</p>
-                  <p>Database and authentication infrastructure. Your account data, messages, and files are stored on Supabase&apos;s secure servers. Learn more at <span style={{ color: '#e6964d' }}>supabase.com/privacy</span>.</p>
+                  <p>Database and authentication infrastructure. Your account data, messages, and files are stored on Supabase&apos;s secure servers. Learn more at <span style={{ color: '#7ecfc0' }}>supabase.com/privacy</span>.</p>
                 </div>
                 <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
                   <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Mapbox</p>
-                  <p>Map rendering for listing locations. Mapbox may collect anonymous location data for map tile requests. Learn more at <span style={{ color: '#e6964d' }}>mapbox.com/legal/privacy</span>.</p>
+                  <p>Map rendering for listing locations. Mapbox may collect anonymous location data for map tile requests. Learn more at <span style={{ color: '#7ecfc0' }}>mapbox.com/legal/privacy</span>.</p>
                 </div>
               </div>
             </div>
@@ -101,7 +101,7 @@ export default function PrivacyPage() {
                 <li><strong>Portability:</strong> Request an export of your data in a machine-readable format</li>
                 <li><strong>Opt-out:</strong> Unsubscribe from non-transactional emails at any time</li>
               </ul>
-              <p className="mt-2">To exercise these rights, contact us at <span style={{ color: '#e6964d' }}>privacy@cityfeed.io</span>.</p>
+              <p className="mt-2">To exercise these rights, contact us at <span style={{ color: '#7ecfc0' }}>privacy@cityfeed.io</span>.</p>
             </div>
           </section>
 
@@ -119,8 +119,8 @@ export default function PrivacyPage() {
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
               <p>Questions, concerns, or requests regarding this Privacy Policy can be directed to:</p>
               <p><strong>City Feed, Inc.</strong><br />
-              Email: <span style={{ color: '#e6964d' }}>privacy@cityfeed.io</span><br />
-              For general support: <span style={{ color: '#e6964d' }}>support@cityfeed.io</span>
+              Email: <span style={{ color: '#7ecfc0' }}>privacy@cityfeed.io</span><br />
+              For general support: <span style={{ color: '#7ecfc0' }}>support@cityfeed.io</span>
               </p>
             </div>
           </section>

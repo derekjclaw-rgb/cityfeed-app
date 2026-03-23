@@ -282,36 +282,36 @@ export default function CreateListingPage() {
   }
 
   const inputClass = 'w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors'
-  const inputStyle = { backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }
-  const cardStyle = { backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }
+  const inputStyle = { backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }
+  const cardStyle = { backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(230,150,77,0.12)', border: '1px solid rgba(230,150,77,0.3)' }}>
-            <CheckCircle className="w-8 h-8" style={{ color: '#e6964d' }} />
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '1px solid rgba(239,65,53,0.3)' }}>
+            <CheckCircle className="w-8 h-8" style={{ color: '#7ecfc0' }} />
           </div>
           <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Listing submitted!</h2>
           <p className="text-sm mb-8" style={{ color: '#888' }}>
             Your listing is under review. We&apos;ll notify you once it&apos;s approved and live on the marketplace.
           </p>
           <div className="flex gap-3 justify-center">
-            <Link href="/dashboard/listings" className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
+            <Link href="/dashboard/listings" className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
               View my listings
             </Link>
             <button
               onClick={() => { setSuccess(false); setPhotos([]); setForm({ title: '', description: '', category: 'digital_billboards', address: '', city: '', state: '', zip: '', dimensions: '', daily_impressions: '', daily_traffic: '', production_time: '3-5 business days', price_per_day: '', min_days: '7', max_days: '90', buy_now_enabled: false, content_restrictions: '', delivery_instructions: '', creative_formats: [], creative_dimensions: '', creative_max_file_size: '25MB', creative_video_duration: '15s', creative_audio_allowed: false, creative_loop_count: '', creative_host_prints: false, creative_print_cost: '' }) }}
               className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm"
-              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
+              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
             >
               Add another
             </button>
@@ -322,7 +322,7 @@ export default function CreateListingPage() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
         <Link href="/dashboard/listings" className="flex items-center gap-2 text-sm mb-8 hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -381,13 +381,13 @@ export default function CreateListingPage() {
             {/* Drop zone */}
             <div
               className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer`}
-              style={{ borderColor: isDragging ? '#e6964d' : '#d4d4c9', backgroundColor: isDragging ? 'rgba(230,150,77,0.05)' : 'transparent' }}
+              style={{ borderColor: isDragging ? '#7ecfc0' : '#e0e0d8', backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent' }}
               onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={e => { e.preventDefault(); setIsDragging(false); addFiles(e.dataTransfer.files) }}
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload className="w-8 h-8 mx-auto mb-3" style={{ color: isDragging ? '#e6964d' : '#ccc' }} />
+              <Upload className="w-8 h-8 mx-auto mb-3" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
               <p className="text-sm mb-1" style={{ color: '#888' }}>Drag photos here or click to upload</p>
               <p className="text-xs" style={{ color: '#aaa' }}>Up to 10 photos · JPG, PNG, WEBP · Max 10MB each</p>
               <input
@@ -404,7 +404,7 @@ export default function CreateListingPage() {
             {photos.length > 0 && (
               <div className="grid grid-cols-3 gap-3 mt-4">
                 {photos.map((photo, i) => (
-                  <div key={i} className="relative rounded-xl overflow-hidden aspect-square" style={{ border: '1px solid #d4d4c9' }}>
+                  <div key={i} className="relative rounded-xl overflow-hidden aspect-square" style={{ border: '1px solid #e0e0d8' }}>
                     <img src={photo.preview} alt="" className="w-full h-full object-cover" />
                     {photo.uploading && (
                       <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
@@ -433,7 +433,7 @@ export default function CreateListingPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="aspect-square rounded-xl flex flex-col items-center justify-center border-2 border-dashed transition-colors"
-                    style={{ borderColor: '#d4d4c9', color: '#aaa' }}
+                    style={{ borderColor: '#e0e0d8', color: '#aaa' }}
                   >
                     <ImageIcon className="w-5 h-5 mb-1" />
                     <span className="text-xs">Add more</span>
@@ -484,7 +484,7 @@ export default function CreateListingPage() {
                 type="button"
                 onClick={() => set('buy_now_enabled', !form.buy_now_enabled)}
                 className="relative w-11 h-6 rounded-full transition-colors"
-                style={{ backgroundColor: form.buy_now_enabled ? '#e6964d' : '#d4d4c9' }}
+                style={{ backgroundColor: form.buy_now_enabled ? '#7ecfc0' : '#e0e0d8' }}
               >
                 <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.buy_now_enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </button>
@@ -523,9 +523,9 @@ export default function CreateListingPage() {
                       onClick={() => toggleFormat(fmt)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                       style={{
-                        backgroundColor: checked ? '#e6964d' : '#f4f4f0',
+                        backgroundColor: checked ? '#7ecfc0' : '#f8f8f5',
                         color: checked ? '#fff' : '#555',
-                        border: checked ? '1px solid #e6964d' : '1px solid #d4d4c9',
+                        border: checked ? '1px solid #7ecfc0' : '1px solid #e0e0d8',
                       }}
                     >
                       {fmt}
@@ -549,8 +549,8 @@ export default function CreateListingPage() {
 
             {/* Digital-only specs */}
             {isDigital(form.category) && (
-              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0e8' }}>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#e6964d' }}>Digital placement options</p>
+              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0ec' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#7ecfc0' }}>Digital placement options</p>
                 <div className="grid grid-cols-2 gap-4">
                   <FormField label="Video duration">
                     <select value={form.creative_video_duration} onChange={e => set('creative_video_duration', e.target.value)} className={`${inputClass} cursor-pointer`} style={inputStyle}>
@@ -566,7 +566,7 @@ export default function CreateListingPage() {
                     type="button"
                     onClick={() => set('creative_audio_allowed', !form.creative_audio_allowed)}
                     className="relative w-11 h-6 rounded-full transition-colors"
-                    style={{ backgroundColor: form.creative_audio_allowed ? '#e6964d' : '#d4d4c9' }}
+                    style={{ backgroundColor: form.creative_audio_allowed ? '#7ecfc0' : '#e0e0d8' }}
                   >
                     <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.creative_audio_allowed ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
@@ -580,14 +580,14 @@ export default function CreateListingPage() {
 
             {/* Static-only specs */}
             {!isDigital(form.category) && (
-              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0e8' }}>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#e6964d' }}>Physical placement options</p>
+              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0ec' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#7ecfc0' }}>Physical placement options</p>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => set('creative_host_prints', !form.creative_host_prints)}
                     className="relative w-11 h-6 rounded-full transition-colors"
-                    style={{ backgroundColor: form.creative_host_prints ? '#e6964d' : '#d4d4c9' }}
+                    style={{ backgroundColor: form.creative_host_prints ? '#7ecfc0' : '#e0e0d8' }}
                   >
                     <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.creative_host_prints ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
@@ -620,7 +620,7 @@ export default function CreateListingPage() {
             type="submit"
             disabled={loading}
             className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
-            style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+            style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             {loading ? 'Submitting...' : 'Submit listing for review'}

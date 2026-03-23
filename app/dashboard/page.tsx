@@ -38,7 +38,7 @@ interface Activity {
   href: string
 }
 
-function StatCard({ label, value, icon: Icon, prefix = '', color = '#e6964d' }: {
+function StatCard({ label, value, icon: Icon, prefix = '', color = '#7ecfc0' }: {
   label: string
   value: number | string
   icon: React.ElementType
@@ -46,7 +46,7 @@ function StatCard({ label, value, icon: Icon, prefix = '', color = '#e6964d' }: 
   color?: string
 }) {
   return (
-    <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+    <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
       <div className="flex items-start justify-between mb-3">
         <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${color}18` }}>
           <Icon className="w-5 h-5" style={{ color }} />
@@ -162,8 +162,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
@@ -196,14 +196,14 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt={firstName} className="w-12 h-12 rounded-full object-cover" style={{ border: '2px solid #e6964d' }} />
+            <img src={profile.avatar_url} alt={firstName} className="w-12 h-12 rounded-full object-cover" style={{ border: '2px solid #7ecfc0' }} />
           ) : (
-            <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d', border: '2px solid #e6964d' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0', border: '2px solid #7ecfc0' }}>
               {initials}
             </div>
           )}
@@ -219,9 +219,9 @@ export default function DashboardPage() {
 
         {/* Stripe Connect Banner — host without connected account */}
         {isHost && profile && !profile.stripe_connected && (
-          <div className="rounded-2xl p-4 mb-6 flex items-center gap-4" style={{ backgroundColor: '#fef3e8', border: '1px solid #fde8c8' }}>
-            <div className="p-2.5 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(230,150,77,0.15)' }}>
-              <CreditCard className="w-5 h-5" style={{ color: '#e6964d' }} />
+          <div className="rounded-2xl p-4 mb-6 flex items-center gap-4" style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9' }}>
+            <div className="p-2.5 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(126,207,192,0.15)' }}>
+              <CreditCard className="w-5 h-5" style={{ color: '#7ecfc0' }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Connect your bank to receive payouts</p>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
             <Link
               href="/dashboard/stripe-onboarding"
               className="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff' }}
             >
               Set Up ⚠️
             </Link>
@@ -269,14 +269,14 @@ export default function DashboardPage() {
               key={link.href}
               href={link.href}
               className="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all hover:-translate-y-0.5"
-              style={{ border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              style={{ border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl" style={{ backgroundColor: '#fdf3e8' }}>
-                  <link.icon className="w-6 h-6" style={{ color: '#e6964d' }} />
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#f0f0ec' }}>
+                  <link.icon className="w-6 h-6" style={{ color: '#7ecfc0' }} />
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1 group-hover:text-[#e6964d] transition-colors" style={{ color: '#2b2b2b' }}>
+                  <h3 className="font-semibold mb-1 group-hover:text-[#7ecfc0] transition-colors" style={{ color: '#2b2b2b' }}>
                     {link.label}
                   </h3>
                   <p className="text-sm" style={{ color: '#888' }}>{link.desc}</p>
@@ -288,7 +288,7 @@ export default function DashboardPage() {
 
         {/* Recent Activity */}
         {activity.length > 0 && (
-          <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Recent Activity</h2>
             <div className="space-y-3">
               {activity.map(item => (

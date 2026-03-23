@@ -24,10 +24,10 @@ export default function LoadingSpinner({ fullScreen = true, size = 'md', message
         className="animate-spin"
         aria-label="Loading"
       >
-        <circle cx="12" cy="12" r="10" stroke="#e6e6dd" strokeWidth="3" />
+        <circle cx="12" cy="12" r="10" stroke="#f0f0ec" strokeWidth="3" />
         <path
           d="M12 2 A10 10 0 0 1 22 12"
-          stroke="#e6964d"
+          stroke="#7ecfc0"
           strokeWidth="3"
           strokeLinecap="round"
         />
@@ -43,7 +43,7 @@ export default function LoadingSpinner({ fullScreen = true, size = 'md', message
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: '#e6e6dd' }}
+      style={{ backgroundColor: '#f0f0ec' }}
     >
       {spinner}
     </div>

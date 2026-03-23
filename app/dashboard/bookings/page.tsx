@@ -44,11 +44,11 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; d
     label: 'Active — Campaign Running', description: 'Your campaign is live',
   },
   pop_pending: {
-    bg: '#fef3e8', text: '#e6964d',
+    bg: '#f0f8f5', text: '#7ecfc0',
     label: 'POP Submitted — Review Required', description: 'Proof of placement awaiting your approval',
   },
   pop_review: {
-    bg: '#fef3e8', text: '#e6964d',
+    bg: '#f0f8f5', text: '#7ecfc0',
     label: 'POP Submitted — Review Required', description: 'Review the proof of placement',
   },
   completed: {
@@ -101,22 +101,22 @@ function StatusTimeline({ status }: { status: string }) {
               <div
                 className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
                 style={{
-                  backgroundColor: i <= current ? '#e6964d' : '#e8e8e0',
-                  border: `2px solid ${i <= current ? '#e6964d' : '#d4d4c9'}`,
+                  backgroundColor: i <= current ? '#7ecfc0' : '#e8e8e0',
+                  border: `2px solid ${i <= current ? '#7ecfc0' : '#e0e0d8'}`,
                 }}
               >
                 {i < current && (
                   <CheckCircle className="w-2.5 h-2.5" style={{ color: '#fff' }} />
                 )}
               </div>
-              <span className="text-xs" style={{ color: i <= current ? '#e6964d' : '#aaa', whiteSpace: 'nowrap' }}>
+              <span className="text-xs" style={{ color: i <= current ? '#7ecfc0' : '#aaa', whiteSpace: 'nowrap' }}>
                 {step.label}
               </span>
             </div>
             {i < TIMELINE_STEPS.length - 1 && (
               <div
                 className="flex-1 h-0.5 mb-4 mx-1"
-                style={{ backgroundColor: i < current ? '#e6964d' : '#e8e8e0' }}
+                style={{ backgroundColor: i < current ? '#7ecfc0' : '#e8e8e0' }}
               />
             )}
           </div>
@@ -192,8 +192,8 @@ export default function BookingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
@@ -208,7 +208,7 @@ export default function BookingsPage() {
     : 0
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -228,7 +228,7 @@ export default function BookingsPage() {
         {/* Host earnings summary */}
         {isHost && completed.length > 0 && (
           <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
-            style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <div className="p-3 rounded-xl" style={{ backgroundColor: '#f0fdf4' }}>
               <DollarSign className="w-6 h-6" style={{ color: '#16a34a' }} />
             </div>
@@ -242,8 +242,8 @@ export default function BookingsPage() {
         )}
 
         {bookings.length === 0 ? (
-          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <ClipboardList className="w-12 h-12 mx-auto mb-4" style={{ color: '#d4d4c9' }} />
+          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <ClipboardList className="w-12 h-12 mx-auto mb-4" style={{ color: '#e0e0d8' }} />
             <h2 className="text-lg font-semibold mb-2" style={{ color: '#2b2b2b' }}>
               {isHost ? 'No bookings yet' : 'No campaigns yet'}
             </h2>
@@ -255,7 +255,7 @@ export default function BookingsPage() {
             <Link
               href={isHost ? '/dashboard/create-listing' : '/marketplace'}
               className="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff' }}
             >
               {isHost ? 'Create a Listing' : 'Browse Marketplace'}
             </Link>
@@ -352,7 +352,7 @@ function BookingCard({
     : null
 
   return (
-    <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+    <div className="rounded-2xl p-5" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
       {/* Top row */}
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="flex-1 min-w-0">
@@ -426,7 +426,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}/pop`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: '#fef3e8', border: '1px solid #fde8c8', color: '#e6964d' }}
+            style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: '#7ecfc0' }}
           >
             <Upload className="w-3.5 h-3.5" />
             Upload POP
@@ -438,7 +438,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}/pop-review`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: '#fef3e8', border: '1px solid #fde8c8', color: '#e6964d' }}
+            style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: '#7ecfc0' }}
           >
             <CheckCircle className="w-3.5 h-3.5" />
             Review POP
@@ -449,7 +449,7 @@ function BookingCard({
         <Link
           href={`/dashboard/messages/${booking.id}`}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-          style={{ border: '1px solid #d4d4c9', color: '#555' }}
+          style={{ border: '1px solid #e0e0d8', color: '#555' }}
         >
           <MessageSquare className="w-3.5 h-3.5" />
           Message
@@ -460,7 +460,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}/review`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ border: '1px solid #e6964d', color: '#e6964d' }}
+            style={{ border: '1px solid #7ecfc0', color: '#7ecfc0' }}
           >
             <Star className="w-3.5 h-3.5" />
             Leave Review
@@ -472,7 +472,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}/receipt`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ border: '1px solid #d4d4c9', color: '#555' }}
+            style={{ border: '1px solid #e0e0d8', color: '#555' }}
           >
             <Receipt className="w-3.5 h-3.5" />
             Receipt

@@ -141,16 +141,16 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col pt-16" style={{ height: '100vh', backgroundColor: '#e6e6dd' }}>
+    <div className="flex flex-col pt-16" style={{ height: '100vh', backgroundColor: '#f0f0ec' }}>
       {/* Header */}
-      <div className="flex items-center gap-4 px-6 py-4" style={{ backgroundColor: '#fff', borderBottom: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      <div className="flex items-center gap-4 px-6 py-4" style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
         <Link href="/dashboard/messages" className="hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -174,8 +174,8 @@ export default function ChatPage() {
                 <div
                   className="max-w-xs rounded-2xl px-4 py-3 text-sm"
                   style={isMe
-                    ? { backgroundColor: '#e6964d', color: '#fff', borderBottomRightRadius: '4px' }
-                    : { backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #d4d4c9', borderBottomLeftRadius: '4px' }
+                    ? { backgroundColor: '#ef4135', color: '#fff', borderBottomRightRadius: '4px' }
+                    : { backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #e0e0d8', borderBottomLeftRadius: '4px' }
                   }
                 >
                   {msg.image_url && (
@@ -206,13 +206,13 @@ export default function ChatPage() {
       )}
 
       {/* Input */}
-      <div className="px-6 py-4" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9' }}>
+      <div className="px-6 py-4" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8' }}>
         <form onSubmit={sendMessage} className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-70"
-            style={{ backgroundColor: '#f4f4f0', color: '#888' }}
+            style={{ backgroundColor: '#f8f8f5', color: '#888' }}
           >
             <ImageIcon className="w-5 h-5" />
           </button>
@@ -223,13 +223,13 @@ export default function ChatPage() {
             onChange={e => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             className="flex-1 rounded-2xl px-4 py-2.5 text-sm focus:outline-none"
-            style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
+            style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
           />
           <button
             type="submit"
             disabled={(!newMessage.trim() && !imageFile) || sending}
             className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors disabled:opacity-40"
-            style={{ backgroundColor: '#e6964d', color: '#fff' }}
+            style={{ backgroundColor: '#ef4135', color: '#fff' }}
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>

@@ -122,15 +122,15 @@ export default function ProfilePage() {
   }
 
   const inputStyle = {
-    backgroundColor: '#f4f4f0',
-    border: '1px solid #d4d4c9',
+    backgroundColor: '#f8f8f5',
+    border: '1px solid #e0e0d8',
     color: '#2b2b2b',
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
@@ -144,7 +144,7 @@ export default function ProfilePage() {
     : 'U'
 
   return (
-    <div className="min-h-screen pt-20 px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -158,7 +158,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Card */}
-        <div className="rounded-2xl p-8 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-8 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           {/* Avatar */}
           <div className="flex items-center gap-6 mb-8">
             <div className="relative">
@@ -167,12 +167,12 @@ export default function ProfilePage() {
                   src={profile.avatar_url}
                   alt={profile.full_name}
                   className="w-20 h-20 rounded-full object-cover"
-                  style={{ border: '3px solid #e6964d' }}
+                  style={{ border: '3px solid #7ecfc0' }}
                 />
               ) : (
                 <div
                   className="w-20 h-20 rounded-full flex items-center justify-center text-xl font-bold"
-                  style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d', border: '3px solid #e6964d' }}
+                  style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0', border: '3px solid #7ecfc0' }}
                 >
                   {initials}
                 </div>
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingPhoto}
                 className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#e6964d', color: '#fff', border: '2px solid #fff' }}
+                style={{ backgroundColor: '#ef4135', color: '#fff', border: '2px solid #fff' }}
               >
                 {uploadingPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
               </button>
@@ -198,7 +198,7 @@ export default function ProfilePage() {
               <p className="text-sm mb-1" style={{ color: '#888' }}>{profile?.email}</p>
               <span
                 className="inline-block text-xs font-semibold px-3 py-1 rounded-full capitalize"
-                style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d' }}
+                style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}
               >
                 {profile?.role}
               </span>
@@ -208,21 +208,21 @@ export default function ProfilePage() {
           {/* Info rows */}
           <div className="grid grid-cols-2 gap-4 mb-8 p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
             <div className="flex items-center gap-3">
-              <Mail className="w-4 h-4 flex-shrink-0" style={{ color: '#e6964d' }} />
+              <Mail className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
               <div>
                 <p className="text-xs font-medium" style={{ color: '#aaa' }}>Email</p>
                 <p className="text-sm" style={{ color: '#2b2b2b' }}>{profile?.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <User className="w-4 h-4 flex-shrink-0" style={{ color: '#e6964d' }} />
+              <User className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
               <div>
                 <p className="text-xs font-medium" style={{ color: '#aaa' }}>Role</p>
                 <p className="text-sm capitalize" style={{ color: '#2b2b2b' }}>{profile?.role}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: '#e6964d' }} />
+              <Calendar className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
               <div>
                 <p className="text-xs font-medium" style={{ color: '#aaa' }}>Member Since</p>
                 <p className="text-sm" style={{ color: '#2b2b2b' }}>{memberSince}</p>
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                 type="submit"
                 disabled={saving}
                 className="flex-1 font-semibold py-3 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#e6964d', color: '#fff' }}
+                style={{ backgroundColor: '#ef4135', color: '#fff' }}
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Changes
@@ -281,7 +281,7 @@ export default function ProfilePage() {
               <Link
                 href={`/profile/${profile?.id}`}
                 className="px-5 py-3 rounded-xl font-medium text-sm flex items-center hover:opacity-80 transition-opacity"
-                style={{ border: '1px solid #d4d4c9', color: '#555', backgroundColor: '#fff' }}
+                style={{ border: '1px solid #e0e0d8', color: '#555', backgroundColor: '#fff' }}
               >
                 View Public Profile
               </Link>

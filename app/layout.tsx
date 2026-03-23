@@ -86,7 +86,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geist.variable} font-sans antialiased`}
-        style={{ backgroundColor: '#e6e6dd', color: '#2b2b2b' }}
+        style={{ backgroundColor: '#f0f0ec', color: '#2b2b2b' }}
       >
         <Navbar />
         <GlobalToastContainer />

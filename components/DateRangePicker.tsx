@@ -3,7 +3,7 @@
 /**
  * DateRangePicker — Phase 5b
  * Pure React date range picker, no external dependencies.
- * Brand colors: burnt orange #e6964d, cream #e6e6dd, charcoal #2b2b2b
+ * Brand colors: mint #7ecfc0, cream #f0f0ec, charcoal #2b2b2b
  *
  * Usage:
  *   <DateRangePicker
@@ -101,7 +101,7 @@ function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, onS
           return (
             <div
               key={ds}
-              style={{ backgroundColor: inRange ? 'rgba(230,150,77,0.13)' : 'transparent' }}
+              style={{ backgroundColor: inRange ? 'rgba(126,207,192,0.13)' : 'transparent' }}
             >
               <button
                 type="button"
@@ -110,16 +110,16 @@ function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, onS
                 onMouseEnter={() => onHover(ds)}
                 className="w-full h-9 flex items-center justify-center text-xs rounded-full transition-colors"
                 style={{
-                  backgroundColor: (isStart || isEnd) ? '#e6964d' : undefined,
+                  backgroundColor: (isStart || isEnd) ? '#7ecfc0' : undefined,
                   color: disabled
                     ? '#d0d0c8'
                     : (isStart || isEnd)
                       ? '#fff'
                       : isToday
-                        ? '#e6964d'
+                        ? '#7ecfc0'
                         : '#2b2b2b',
                   fontWeight: (isStart || isEnd || isToday) ? '600' : '400',
-                  border: isToday && !isStart && !isEnd ? '1px solid #e6964d' : 'none',
+                  border: isToday && !isStart && !isEnd ? '1px solid #7ecfc0' : 'none',
                   cursor: disabled ? 'not-allowed' : 'pointer',
                 }}
               >
@@ -253,10 +253,10 @@ export default function DateRangePicker({
       />
 
       {/* Range summary row */}
-      <div className="mt-3 pt-3 min-h-[28px]" style={{ borderTop: '1px solid #f0f0e8' }}>
+      <div className="mt-3 pt-3 min-h-[28px]" style={{ borderTop: '1px solid #f0f0ec' }}>
         {rangeLabel ? (
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium" style={{ color: '#e6964d' }}>
+            <span className="text-xs font-medium" style={{ color: '#7ecfc0' }}>
               {rangeLabel}
             </span>
             <button
@@ -294,8 +294,8 @@ export default function DateRangePicker({
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-left transition-colors"
         style={{
-          backgroundColor: '#f4f4f0',
-          border: open ? '1px solid #e6964d' : '1px solid #d4d4c9',
+          backgroundColor: '#f8f8f5',
+          border: open ? '1px solid #7ecfc0' : '1px solid #e0e0d8',
           color: startDate ? '#2b2b2b' : '#aaa',
         }}
       >

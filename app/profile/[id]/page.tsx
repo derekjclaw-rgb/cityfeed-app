@@ -45,8 +45,8 @@ function StarDisplay({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'l
         <Star
           key={n}
           className={s}
-          fill={n <= Math.round(rating) ? '#e6964d' : 'none'}
-          style={{ color: n <= Math.round(rating) ? '#e6964d' : '#d4d4c9' }}
+          fill={n <= Math.round(rating) ? '#debb73' : 'none'}
+          style={{ color: n <= Math.round(rating) ? '#7ecfc0' : '#e0e0d8' }}
         />
       ))}
     </div>
@@ -147,20 +147,20 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#e6964d' }} />
+          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#7ecfc0' }} />
           <h2 className="text-xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Profile Not Found</h2>
           <p className="text-sm mb-6" style={{ color: '#888' }}>This profile doesn&apos;t exist or has been removed.</p>
-          <Link href="/marketplace" className="text-sm font-medium" style={{ color: '#e6964d' }}>
+          <Link href="/marketplace" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>
             Browse Marketplace
           </Link>
         </div>
@@ -180,10 +180,10 @@ export default function PublicProfilePage() {
     : 'U'
 
   return (
-    <div className="min-h-screen pt-20 px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-3xl mx-auto">
         {/* Profile Header Card */}
-        <div className="rounded-2xl p-8 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-8 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
@@ -192,12 +192,12 @@ export default function PublicProfilePage() {
                   src={profile.avatar_url}
                   alt={displayName}
                   className="w-24 h-24 rounded-full object-cover"
-                  style={{ border: '3px solid #e6964d' }}
+                  style={{ border: '3px solid #7ecfc0' }}
                 />
               ) : (
                 <div
                   className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold"
-                  style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d', border: '3px solid #e6964d' }}
+                  style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0', border: '3px solid #7ecfc0' }}
                 >
                   {initials}
                 </div>
@@ -210,7 +210,7 @@ export default function PublicProfilePage() {
                 <h1 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>{displayName}</h1>
                 <span
                   className="text-xs font-semibold px-3 py-1 rounded-full capitalize"
-                  style={{ backgroundColor: isHost ? 'rgba(230,150,77,0.15)' : 'rgba(43,43,43,0.08)', color: isHost ? '#e6964d' : '#2b2b2b' }}
+                  style={{ backgroundColor: isHost ? 'rgba(126,207,192,0.15)' : 'rgba(43,43,43,0.08)', color: isHost ? '#7ecfc0' : '#2b2b2b' }}
                 >
                   {isHost ? 'Host' : 'Advertiser'}
                 </span>
@@ -245,7 +245,7 @@ export default function PublicProfilePage() {
               <button
                 onClick={handleContactHost}
                 className="flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#e6964d', color: '#fff' }}
+                style={{ backgroundColor: '#ef4135', color: '#fff' }}
               >
                 <MessageSquare className="w-4 h-4" />
                 {isHost ? 'Contact Host' : 'Send Message'}
@@ -281,7 +281,7 @@ export default function PublicProfilePage() {
 
         {/* Active Listings (hosts only) */}
         {isHost && listings.length > 0 && (
-          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <h2 className="font-bold text-lg mb-4" style={{ color: '#2b2b2b' }}>Active Listings</h2>
             <div className="space-y-3">
               {listings.map(listing => (
@@ -291,7 +291,7 @@ export default function PublicProfilePage() {
                   className="flex items-center gap-3 p-3 rounded-xl hover:opacity-80 transition-opacity"
                   style={{ backgroundColor: '#f8f8f5', border: '1px solid #ececea' }}
                 >
-                  <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: '#e6964d' }} />
+                  <MapPin className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
                   <div>
                     <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>{listing.title}</p>
                     <p className="text-xs" style={{ color: '#888' }}>{listing.city}, {listing.state}</p>
@@ -303,7 +303,7 @@ export default function PublicProfilePage() {
         )}
 
         {/* Reviews */}
-        <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-bold text-lg" style={{ color: '#2b2b2b' }}>
               Reviews {reviews.length > 0 && (
@@ -320,7 +320,7 @@ export default function PublicProfilePage() {
 
           {reviews.length === 0 ? (
             <div className="text-center py-8">
-              <Star className="w-10 h-10 mx-auto mb-3" style={{ color: '#d4d4c9' }} />
+              <Star className="w-10 h-10 mx-auto mb-3" style={{ color: '#e0e0d8' }} />
               <p className="text-sm" style={{ color: '#888' }}>No reviews yet.</p>
             </div>
           ) : (
@@ -331,7 +331,7 @@ export default function PublicProfilePage() {
                     {review.reviewer_avatar ? (
                       <img src={review.reviewer_avatar} alt={review.reviewer_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                     ) : (
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: 'rgba(230,150,77,0.15)', color: '#e6964d' }}>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}>
                         {review.reviewer_name.charAt(0)}
                       </div>
                     )}

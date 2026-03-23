@@ -23,9 +23,9 @@ interface Listing {
 }
 
 const STATUS_STYLES: Record<string, React.CSSProperties> = {
-  pending: { backgroundColor: '#fef9f0', color: '#c4763a', border: '1px solid #fde8c4' },
-  active: { backgroundColor: 'rgba(230,150,77,0.1)', color: '#e6964d', border: '1px solid rgba(230,150,77,0.3)' },
-  inactive: { backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #d4d4c9' },
+  pending: { backgroundColor: '#f0f8f5', color: '#2b6b5e', border: '1px solid #e8f5f3' },
+  active: { backgroundColor: 'rgba(126,207,192,0.1)', color: '#7ecfc0', border: '1px solid rgba(126,207,192,0.3)' },
+  inactive: { backgroundColor: '#f8f8f5', color: '#888', border: '1px solid #e0e0d8' },
   rejected: { backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' },
 }
 
@@ -109,14 +109,14 @@ export default function MyListingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -129,7 +129,7 @@ export default function MyListingsPage() {
           <Link
             href="/dashboard/create-listing"
             className="inline-flex items-center gap-2 font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors text-sm"
-            style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.3)' }}
+            style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.3)' }}
           >
             <Plus className="w-4 h-4" />
             Create new listing
@@ -153,9 +153,9 @@ export default function MyListingsPage() {
 
         {listings.length === 0 ? (
           /* Empty state */
-          <div className="rounded-2xl p-16 text-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(230,150,77,0.12)' }}>
-              <MapPin className="w-7 h-7" style={{ color: '#e6964d' }} />
+          <div className="rounded-2xl p-16 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: 'rgba(126,207,192,0.12)' }}>
+              <MapPin className="w-7 h-7" style={{ color: '#7ecfc0' }} />
             </div>
             <h2 className="text-xl font-semibold mb-2" style={{ color: '#2b2b2b' }}>You haven&apos;t listed any spaces yet.</h2>
             <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: '#888' }}>
@@ -164,7 +164,7 @@ export default function MyListingsPage() {
             <Link
               href="/dashboard/create-listing"
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-colors"
-              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.3)' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.3)' }}
             >
               <Plus className="w-4 h-4" />
               Create your first listing
@@ -176,12 +176,12 @@ export default function MyListingsPage() {
               <div
                 key={listing.id}
                 className="rounded-2xl overflow-hidden transition-shadow hover:shadow-md"
-                style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
               >
                 {/* Image placeholder */}
-                <div className="h-40 relative" style={{ backgroundColor: '#e6e6dd' }}>
+                <div className="h-40 relative" style={{ backgroundColor: '#f0f0ec' }}>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <MapPin className="w-8 h-8" style={{ color: '#d4d4c9' }} />
+                    <MapPin className="w-8 h-8" style={{ color: '#e0e0d8' }} />
                   </div>
                   <div className="absolute top-3 right-3">
                     <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={STATUS_STYLES[listing.status] ?? STATUS_STYLES.pending}>
@@ -199,7 +199,7 @@ export default function MyListingsPage() {
                         <MoreVertical className="w-4 h-4" style={{ color: '#555' }} />
                       </button>
                       {openMenuId === listing.id && (
-                        <div className="absolute left-0 top-10 w-40 rounded-xl shadow-lg z-10 overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+                        <div className="absolute left-0 top-10 w-40 rounded-xl shadow-lg z-10 overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
                           <Link
                             href={`/marketplace/${listing.id}`}
                             className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
@@ -248,7 +248,7 @@ export default function MyListingsPage() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm" style={{ color: '#e6964d' }}>${listing.price_per_day}/day</span>
+                    <span className="font-bold text-sm" style={{ color: '#7ecfc0' }}>${listing.price_per_day}/day</span>
                     <div className="flex items-center gap-1 text-xs" style={{ color: '#888' }}>
                       <Eye className="w-3 h-3" />
                       {listing.daily_impressions?.toLocaleString() ?? 0} impr/day

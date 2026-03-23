@@ -113,19 +113,19 @@ export default function CancelBookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (error && !booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#e6964d' }} />
+          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#7ecfc0' }} />
           <p className="text-sm mb-4" style={{ color: '#888' }}>{error}</p>
-          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#e6964d' }}>Back to Bookings</Link>
+          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>Back to Bookings</Link>
         </div>
       </div>
     )
@@ -133,7 +133,7 @@ export default function CancelBookingPage() {
 
   if (cancelled) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
             <CheckCircle className="w-8 h-8" style={{ color: '#16a34a' }} />
@@ -151,7 +151,7 @@ export default function CancelBookingPage() {
           <Link
             href="/dashboard/bookings"
             className="inline-block px-6 py-3 rounded-xl font-semibold text-sm"
-            style={{ backgroundColor: '#e6964d', color: '#fff' }}
+            style={{ backgroundColor: '#ef4135', color: '#fff' }}
           >
             Back to Bookings
           </Link>
@@ -165,7 +165,7 @@ export default function CancelBookingPage() {
     : 0
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-lg mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/dashboard/bookings" className="hover:opacity-70" style={{ color: '#888' }}>
@@ -177,7 +177,7 @@ export default function CancelBookingPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl p-6 mb-4" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-6 mb-4" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           {/* Booking summary */}
           <div className="mb-6 pb-6" style={{ borderBottom: '1px solid #f0f0ea' }}>
             <h3 className="font-semibold mb-3" style={{ color: '#2b2b2b' }}>Booking Summary</h3>
@@ -208,7 +208,7 @@ export default function CancelBookingPage() {
           {/* Refund info */}
           <div className="mb-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: '#2b2b2b' }}>
-              <Info className="w-4 h-4" style={{ color: '#e6964d' }} />
+              <Info className="w-4 h-4" style={{ color: '#7ecfc0' }} />
               Refund Policy
             </h3>
             <div className="space-y-2">
@@ -221,16 +221,16 @@ export default function CancelBookingPage() {
                   key={condition}
                   className="flex items-start gap-3 p-3 rounded-xl"
                   style={{
-                    backgroundColor: current ? '#fef3e8' : '#f8f8f5',
-                    border: `1px solid ${current ? '#fde8c8' : '#e8e8e0'}`,
+                    backgroundColor: current ? '#f0f8f5' : '#f8f8f5',
+                    border: `1px solid ${current ? '#d0ede9' : '#e8e8e0'}`,
                   }}
                 >
-                  <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: current ? '#e6964d' : '#aaa' }} />
+                  <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: current ? '#7ecfc0' : '#aaa' }} />
                   <div>
-                    <p className="text-xs font-semibold" style={{ color: current ? '#e6964d' : '#888' }}>{condition}</p>
+                    <p className="text-xs font-semibold" style={{ color: current ? '#7ecfc0' : '#888' }}>{condition}</p>
                     <p className="text-xs" style={{ color: current ? '#2b2b2b' : '#aaa' }}>{result}</p>
                   </div>
-                  {current && <span className="ml-auto text-xs font-bold" style={{ color: '#e6964d' }}>← Applies</span>}
+                  {current && <span className="ml-auto text-xs font-bold" style={{ color: '#7ecfc0' }}>← Applies</span>}
                 </div>
               ))}
             </div>
@@ -256,7 +256,7 @@ export default function CancelBookingPage() {
               rows={3}
               placeholder="Let us know why you're cancelling..."
               className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
-              style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
+              style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
             />
           </div>
 
@@ -272,7 +272,7 @@ export default function CancelBookingPage() {
             <Link
               href="/dashboard/bookings"
               className="flex-1 text-center py-3 rounded-xl font-semibold text-sm hover:opacity-80 transition-opacity"
-              style={{ border: '1px solid #d4d4c9', color: '#555' }}
+              style={{ border: '1px solid #e0e0d8', color: '#555' }}
             >
               Keep Booking
             </Link>

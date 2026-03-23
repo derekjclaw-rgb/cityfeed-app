@@ -120,19 +120,19 @@ export default function ReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (error && !booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#e6964d' }} />
+          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#7ecfc0' }} />
           <p className="text-sm mb-4" style={{ color: '#888' }}>{error}</p>
-          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#e6964d' }}>Back to Bookings</Link>
+          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>Back to Bookings</Link>
         </div>
       </div>
     )
@@ -140,7 +140,7 @@ export default function ReviewPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
             <CheckCircle className="w-8 h-8" style={{ color: '#16a34a' }} />
@@ -150,7 +150,7 @@ export default function ReviewPage() {
           <Link
             href="/dashboard/bookings"
             className="inline-block px-6 py-3 rounded-xl font-semibold text-sm"
-            style={{ backgroundColor: '#e6964d', color: '#fff' }}
+            style={{ backgroundColor: '#ef4135', color: '#fff' }}
           >
             Back to Bookings
           </Link>
@@ -161,12 +161,12 @@ export default function ReviewPage() {
 
   if (alreadyReviewed) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center max-w-sm">
           <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#16a34a' }} />
           <h2 className="text-xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Already Reviewed</h2>
           <p className="text-sm mb-6" style={{ color: '#888' }}>You&apos;ve already submitted a review for this booking.</p>
-          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#e6964d' }}>Back to Bookings</Link>
+          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>Back to Bookings</Link>
         </div>
       </div>
     )
@@ -176,7 +176,7 @@ export default function ReviewPage() {
   const reviewLabel = isReviewingHost ? 'Rate the Host' : 'Rate the Advertiser'
 
   return (
-    <div className="min-h-screen pt-20 px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -189,7 +189,7 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Star Rating */}
             <div>
@@ -206,8 +206,8 @@ export default function ReviewPage() {
                   >
                     <Star
                       className="w-8 h-8"
-                      fill={n <= (hoverRating || rating) ? '#e6964d' : 'none'}
-                      style={{ color: n <= (hoverRating || rating) ? '#e6964d' : '#d4d4c9' }}
+                      fill={n <= (hoverRating || rating) ? '#7ecfc0' : 'none'}
+                      style={{ color: n <= (hoverRating || rating) ? '#7ecfc0' : '#e0e0d8' }}
                     />
                   </button>
                 ))}
@@ -228,7 +228,7 @@ export default function ReviewPage() {
                 rows={5}
                 placeholder="Share your experience with this booking — was communication good? Did everything go smoothly?"
                 className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
-                style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
+                style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
               />
               <p className="text-xs mt-1" style={{ color: '#aaa' }}>{comment.length}/500 characters</p>
             </div>
@@ -246,7 +246,7 @@ export default function ReviewPage() {
               type="submit"
               disabled={submitting || rating === 0}
               className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff' }}
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               Submit Review

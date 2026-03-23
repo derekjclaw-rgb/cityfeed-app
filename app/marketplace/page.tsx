@@ -113,7 +113,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
     <Link href={`/marketplace/${listing.id}`} className="block">
       <div
         className={`group bg-white rounded-2xl overflow-hidden transition-all ${compact ? '' : 'hover:-translate-y-1'}`}
-        style={{ border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+        style={{ border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
         onMouseEnter={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
         onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
       >
@@ -138,7 +138,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
             </div>
           )}
           <div className="absolute bottom-3 right-3">
-            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#e6964d' }}>
+            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#ef4135' }}>
               ${listing.price_per_day}/day
             </span>
           </div>
@@ -158,7 +158,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
           {!compact && listing.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {listing.tags.slice(0, 2).map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
+                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f8f8f5', color: '#888', border: '1px solid #e0e0d8' }}>
                   {tag}
                 </span>
               ))}
@@ -168,12 +168,12 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
           {/* Rating + CTA */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+              <Star className="w-3.5 h-3.5 fill-[#debb73]" style={{ color: '#debb73' }} />
               <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating > 0 ? listing.rating : 'New'}</span>
               {!compact && listing.review_count > 0 && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
             </div>
             {!compact && (
-              <span className="text-xs font-medium" style={{ color: '#e6964d' }}>View details →</span>
+              <span className="text-xs font-medium" style={{ color: '#7ecfc0' }}>View details →</span>
             )}
           </div>
         </div>
@@ -208,7 +208,7 @@ function MapView({ listings }: { listings: Listing[] }) {
       map.on('load', () => {
         listings.forEach((listing) => {
           const el = document.createElement('div')
-          el.innerHTML = `<div style="background:#e6964d;color:white;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(230,150,77,0.4);border:2px solid white;font-family:system-ui,sans-serif;">$${listing.price_per_day}</div>`
+          el.innerHTML = `<div style="background:#ef4135;color:white;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(239,65,53,0.4);border:2px solid white;font-family:system-ui,sans-serif;">$${listing.price_per_day}</div>`
           el.addEventListener('click', () => setSelectedListing(listing))
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
@@ -221,7 +221,7 @@ function MapView({ listings }: { listings: Listing[] }) {
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
       {selectedListing && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
           <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
           <div className="p-4">
             <div className="flex items-start justify-between gap-2">
@@ -235,8 +235,8 @@ function MapView({ listings }: { listings: Listing[] }) {
               {selectedListing.city}, {selectedListing.state}
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-bold text-sm" style={{ color: '#e6964d' }}>${selectedListing.price_per_day}/day</span>
-              <Link href={`/marketplace/${selectedListing.id}`} className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90" style={{ backgroundColor: '#e6964d' }}>
+              <span className="font-bold text-sm" style={{ color: '#ef4135' }}>${selectedListing.price_per_day}/day</span>
+              <Link href={`/marketplace/${selectedListing.id}`} className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90" style={{ backgroundColor: '#ef4135' }}>
                 View listing →
               </Link>
             </div>
@@ -328,7 +328,7 @@ export default function MarketplacePage() {
   }, [allListings, usingRealData, search, selectedCategory, sortBy])
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="pt-16 max-w-7xl mx-auto px-6 pb-20">
         {/* Header */}
         <div className="py-10">
@@ -348,7 +348,7 @@ export default function MarketplacePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none"
-              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#2b2b2b', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
             />
             {search && (
               <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#888' }}>
@@ -362,18 +362,18 @@ export default function MarketplacePage() {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
             >
               <option value="rating">Top rated</option>
               <option value="price_asc">Price: Low to high</option>
               <option value="price_desc">Price: High to low</option>
             </select>
           </div>
-          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <button
               onClick={() => setViewMode('grid')}
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-              style={viewMode === 'grid' ? { backgroundColor: '#e6964d', color: '#fff' } : { color: '#888' }}
+              style={viewMode === 'grid' ? { backgroundColor: '#ef4135', color: '#fff' } : { color: '#888' }}
             >
               <LayoutGrid className="w-4 h-4" />
               <span className="hidden sm:inline">Grid</span>
@@ -381,7 +381,7 @@ export default function MarketplacePage() {
             <button
               onClick={() => setViewMode('map')}
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-              style={viewMode === 'map' ? { backgroundColor: '#e6964d', color: '#fff' } : { color: '#888' }}
+              style={viewMode === 'map' ? { backgroundColor: '#ef4135', color: '#fff' } : { color: '#888' }}
             >
               <Map className="w-4 h-4" />
               <span className="hidden sm:inline">Map</span>
@@ -396,7 +396,7 @@ export default function MarketplacePage() {
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
               className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-              style={selectedCategory === cat.value ? { backgroundColor: '#e6964d', color: '#fff' } : { backgroundColor: '#fff', color: '#555', border: '1px solid #d4d4c9' }}
+              style={selectedCategory === cat.value ? { backgroundColor: '#ef4135', color: '#fff' } : { backgroundColor: '#fff', color: '#555', border: '1px solid #e0e0d8' }}
             >
               {cat.label}
             </button>
@@ -424,7 +424,7 @@ export default function MarketplacePage() {
             <div className="text-center py-24">
               <div className="text-4xl mb-4">🗺️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No placements found. Try a different search or check back soon.</h3>
-              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
+              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
                 Clear filters
               </button>
             </div>
@@ -433,13 +433,13 @@ export default function MarketplacePage() {
           /* Map view — stacks vertically on mobile, side-by-side on lg */
           <div className="flex flex-col lg:flex-row gap-5 lg:h-[680px]">
             {/* Map first on mobile (full width), sidebar on desktop */}
-            <div className="w-full lg:hidden rounded-2xl overflow-hidden shadow-sm" style={{ height: '320px', border: '1px solid #d4d4c9' }}>
+            <div className="w-full lg:hidden rounded-2xl overflow-hidden shadow-sm" style={{ height: '320px', border: '1px solid #e0e0d8' }}>
               <MapView listings={filtered} />
             </div>
             <div className="w-full lg:w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
               {filtered.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
             </div>
-            <div className="hidden lg:block flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #d4d4c9' }}>
+            <div className="hidden lg:block flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #e0e0d8' }}>
               <MapView listings={filtered} />
             </div>
           </div>

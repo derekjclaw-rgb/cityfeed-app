@@ -67,13 +67,13 @@ function ListingCard({ listing }: { listing: Listing }) {
             </span>
           </div>
           <div className="absolute bottom-3 right-3">
-            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#e6964d' }}>
+            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#ef4135' }}>
               ${listing.price_per_day}/day
             </span>
           </div>
         </div>
         <div className="p-5">
-          <h3 className="font-semibold leading-snug mb-2 line-clamp-2 text-sm transition-colors group-hover:text-[#e6964d]" style={{ color: '#2b2b2b' }}>
+          <h3 className="font-semibold leading-snug mb-2 line-clamp-2 text-sm transition-colors group-hover:text-[#7ecfc0]" style={{ color: '#2b2b2b' }}>
             {listing.title}
           </h3>
           <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#888' }}>
@@ -83,7 +83,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           {listing.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {listing.tags.slice(0, 2).map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f4f4f0', color: '#888', border: '1px solid #e0e0d8' }}>
+                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f8f8f5', color: '#888', border: '1px solid #e0e0d8' }}>
                   {tag}
                 </span>
               ))}
@@ -91,11 +91,11 @@ function ListingCard({ listing }: { listing: Listing }) {
           )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-[#e6964d]" style={{ color: '#e6964d' }} />
+              <Star className="w-3.5 h-3.5 fill-[#debb73]" style={{ color: '#debb73' }} />
               <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating > 0 ? listing.rating : 'New'}</span>
               {listing.review_count > 0 && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
             </div>
-            <span className="text-xs font-medium" style={{ color: '#e6964d' }}>View details →</span>
+            <span className="text-xs font-medium" style={{ color: '#7ecfc0' }}>View details →</span>
           </div>
         </div>
       </div>
@@ -159,13 +159,13 @@ export default function HomePage() {
   }, [featuredListings, search, selectedCategory])
 
   return (
-    <div style={{ backgroundColor: '#e6e6dd' }}>
+    <div style={{ backgroundColor: '#f0f0ec' }}>
       {/* Hero */}
       <section className="pt-28 pb-6 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 leading-[1.1]" style={{ color: '#2b2b2b' }}>
             Advertise on{' '}
-            <span style={{ color: '#e6964d' }}>your terms</span>
+            <span style={{ color: '#ef4135' }}>your terms</span>
           </h1>
           <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
             A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no long-term contracts, no agency middlemen.
@@ -174,7 +174,7 @@ export default function HomePage() {
             <Link
               href="/marketplace"
               className="group inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105 shadow-lg"
-              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
             >
               Find Ad Space
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -182,7 +182,7 @@ export default function HomePage() {
             <Link
               href={isLoggedIn ? '/dashboard/create-listing' : '/signup?role=host'}
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105"
-              style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >
               List Your Space
             </Link>
@@ -191,7 +191,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-3 px-4 sm:px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+      <section className="py-3 px-4 sm:px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
         <div className="max-w-5xl mx-auto grid grid-cols-4 gap-2 sm:gap-16 text-center">
           {[
             { value: '2,400+', label: 'Active placements' },
@@ -200,7 +200,7 @@ export default function HomePage() {
             { value: '48hr', label: 'Avg. booking time' },
           ].map((stat) => (
             <div key={stat.label}>
-              <div className="text-base sm:text-xl font-bold" style={{ color: '#e6964d' }}>{stat.value}</div>
+              <div className="text-base sm:text-xl font-bold" style={{ color: '#7ecfc0' }}>{stat.value}</div>
               <div className="text-[10px] sm:text-xs" style={{ color: '#888' }}>{stat.label}</div>
             </div>
           ))}
@@ -208,9 +208,9 @@ export default function HomePage() {
       </section>
 
       {/* Search + Filter */}
-      <section className="py-6 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: '#e6e6dd' }}>
+      <section className="py-6 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden" style={{ border: '1px solid #d4d4c9' }}>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-hidden" style={{ border: '1px solid #e0e0d8' }}>
             <div className="flex flex-col md:flex-row gap-3 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
@@ -220,14 +220,14 @@ export default function HomePage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none"
-                  style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
+                  style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
                 />
               </div>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-                style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b', minWidth: 0 }}
+                style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b', minWidth: 0 }}
               >
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
@@ -245,7 +245,7 @@ export default function HomePage() {
               <Link
                 href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}
                 className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 w-full sm:w-auto"
-                style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 2px 8px rgba(230,150,77,0.3)' }}
+                style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 2px 8px rgba(239,65,53,0.3)' }}
               >
                 <Search className="w-4 h-4" />
                 Search
@@ -256,18 +256,18 @@ export default function HomePage() {
       </section>
 
       {/* Placements Grid */}
-      <section className="pb-20 px-4 sm:px-6" style={{ backgroundColor: '#e6e6dd' }}>
+      <section className="pb-20 px-4 sm:px-6" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
               {filtered.length > 0 ? `${filtered.length} placements available` : 'No placements found'}
             </h2>
-            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
               <button
                 onClick={() => setViewMode('grid')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
-                  backgroundColor: viewMode === 'grid' ? '#e6964d' : 'transparent',
+                  backgroundColor: viewMode === 'grid' ? '#7ecfc0' : 'transparent',
                   color: viewMode === 'grid' ? '#fff' : '#888',
                 }}
               >
@@ -278,7 +278,7 @@ export default function HomePage() {
                 onClick={() => setViewMode('map')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={{
-                  backgroundColor: viewMode === 'map' ? '#e6964d' : 'transparent',
+                  backgroundColor: viewMode === 'map' ? '#7ecfc0' : 'transparent',
                   color: viewMode === 'map' ? '#fff' : '#888',
                 }}
               >
@@ -299,21 +299,21 @@ export default function HomePage() {
                   <div className="lg:w-1/3 space-y-3 max-h-[600px] overflow-y-auto pr-2">
                     {filtered.map(listing => (
                       <Link key={listing.id} href={`/marketplace/${listing.id}`} className="block group">
-                        <div className="flex gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all" style={{ border: '1px solid #d4d4c9' }}>
+                        <div className="flex gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all" style={{ border: '1px solid #e0e0d8' }}>
                           <div className={`w-20 h-20 rounded-lg bg-gradient-to-br ${listing.image_placeholder} flex-shrink-0`} />
                           <div className="min-w-0">
-                            <div className="text-sm font-semibold truncate group-hover:text-[#e6964d]" style={{ color: '#2b2b2b' }}>{listing.title}</div>
+                            <div className="text-sm font-semibold truncate group-hover:text-[#7ecfc0]" style={{ color: '#2b2b2b' }}>{listing.title}</div>
                             <div className="text-xs flex items-center gap-1 mt-1" style={{ color: '#888' }}>
                               <MapPin className="w-3 h-3" />{listing.city}, {listing.state}
                             </div>
-                            <div className="text-sm font-bold mt-1" style={{ color: '#e6964d' }}>${listing.price_per_day}/day</div>
+                            <div className="text-sm font-bold mt-1" style={{ color: '#ef4135' }}>${listing.price_per_day}/day</div>
                           </div>
                         </div>
                       </Link>
                     ))}
                   </div>
                   {/* Map */}
-                  <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid #d4d4c9' }}>
+                  <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid #e0e0d8' }}>
                     <iframe
                       width="100%"
                       height="100%"
@@ -325,7 +325,7 @@ export default function HomePage() {
                 </div>
               )}
               <div className="text-center">
-                <Link href="/marketplace" className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: '#e6964d' }}>
+                <Link href="/marketplace" className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: '#7ecfc0' }}>
                   View all placements →
                 </Link>
               </div>
@@ -335,7 +335,7 @@ export default function HomePage() {
               <div className="text-4xl mb-4">🗺️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
               <p className="text-sm mb-6" style={{ color: '#888' }}>Try a different search or category</p>
-              <button onClick={() => { setSearch(''); setSelectedCategory('All Types') }} className="text-sm font-medium" style={{ color: '#e6964d' }}>
+              <button onClick={() => { setSearch(''); setSelectedCategory('All Types') }} className="text-sm font-medium" style={{ color: '#7ecfc0' }}>
                 Clear filters
               </button>
             </div>

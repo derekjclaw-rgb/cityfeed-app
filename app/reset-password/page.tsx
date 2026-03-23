@@ -41,9 +41,9 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="w-full max-w-md text-center">
-          <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+          <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
             <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#22c55e' }} />
             <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Password updated</h1>
             <p className="text-sm" style={{ color: '#888' }}>Redirecting you to login...</p>
@@ -54,9 +54,9 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="w-full max-w-md">
-        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
           <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Set new password</h1>
           <p className="text-sm mb-8" style={{ color: '#888' }}>Enter your new password below.</p>
 
@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
                   className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none"
-                  style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
+                  style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
                 />
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your password"
                   className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none"
-                  style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
+                  style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
                 />
               </div>
             </div>
@@ -101,7 +101,7 @@ export default function ResetPasswordPage() {
               type="submit"
               disabled={loading}
               className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
-              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff' }}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Update password

@@ -6,7 +6,7 @@ import { MapPin, CheckCircle, TrendingUp, Users, Shield, Zap, ArrowRight } from 
  */
 export default function HowItWorksPage() {
   return (
-    <div style={{ backgroundColor: '#e6e6dd' }}>
+    <div style={{ backgroundColor: '#f0f0ec' }}>
       {/* Hero */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
@@ -20,10 +20,10 @@ export default function HowItWorksPage() {
       </section>
 
       {/* For Advertisers */}
-      <section className="py-20 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+      <section className="py-20 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-4" style={{ backgroundColor: 'rgba(230,150,77,0.12)', color: '#e6964d' }}>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-4" style={{ backgroundColor: 'rgba(126,207,192,0.12)', color: '#7ecfc0' }}>
               For Advertisers
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#2b2b2b' }}>Book a placement in minutes</h2>
@@ -57,13 +57,13 @@ export default function HowItWorksPage() {
               <div
                 key={item.step}
                 className="relative p-8 rounded-2xl"
-                style={{ backgroundColor: '#e6e6dd', border: '1px solid #d4d4c9' }}
+                style={{ backgroundColor: '#f0f0ec', border: '1px solid #e0e0d8' }}
               >
                 <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#ddddd4' }}>
                   {item.step}
                 </div>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(230,150,77,0.15)' }}>
-                  <item.icon className="w-5 h-5" style={{ color: '#e6964d' }} />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(126,207,192,0.15)' }}>
+                  <item.icon className="w-5 h-5" style={{ color: '#7ecfc0' }} />
                 </div>
                 <h3 className="text-lg font-semibold mb-3" style={{ color: '#2b2b2b' }}>{item.title}</h3>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: '#555' }}>{item.desc}</p>
@@ -76,7 +76,7 @@ export default function HowItWorksPage() {
             <Link
               href="/marketplace"
               className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-base hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
             >
               Browse placements
               <ArrowRight className="w-5 h-5" />
@@ -89,7 +89,7 @@ export default function HowItWorksPage() {
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-6" style={{ backgroundColor: 'rgba(230,150,77,0.12)', color: '#e6964d' }}>
+            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', color: '#7ecfc0' }}>
               <Users className="w-3 h-3" />
               For Hosts
             </div>
@@ -108,7 +108,7 @@ export default function HowItWorksPage() {
                 'Submit proof of posting through the dashboard',
               ].map((item) => (
                 <li key={item} className="flex items-center gap-3 text-sm" style={{ color: '#555' }}>
-                  <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#e6964d' }} />
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
                   {item}
                 </li>
               ))}
@@ -116,7 +116,7 @@ export default function HowItWorksPage() {
             <Link
               href="/signup?role=host"
               className="mt-10 inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-colors"
-              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
             >
               Start listing today
               <ArrowRight className="w-4 h-4" />
@@ -125,9 +125,9 @@ export default function HowItWorksPage() {
 
           {/* Visual */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+            <div className="aspect-square rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
               <div className="text-center">
-                <div className="text-7xl font-black mb-4" style={{ color: '#f0f0e8' }}>$$$</div>
+                <div className="text-7xl font-black mb-4" style={{ color: '#f0f0ec' }}>$$$</div>
                 <div className="text-sm" style={{ color: '#888' }}>Your space, earning for you</div>
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* Trust Blocks */}
-      <section className="py-16 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+      <section className="py-16 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>Built on trust</h2>
@@ -148,8 +148,8 @@ export default function HowItWorksPage() {
               { icon: Zap, title: 'Instant booking', desc: 'No back-and-forth. Book a placement in under 5 minutes, any time of day.' },
             ].map((item) => (
               <div key={item.title} className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(230,150,77,0.12)' }}>
-                  <item.icon className="w-6 h-6" style={{ color: '#e6964d' }} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(126,207,192,0.12)' }}>
+                  <item.icon className="w-6 h-6" style={{ color: '#7ecfc0' }} />
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>{item.title}</h3>
@@ -164,19 +164,19 @@ export default function HowItWorksPage() {
       {/* Dual CTA */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-          <div className="p-8 rounded-2xl text-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+          <div className="p-8 rounded-2xl text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
             <h3 className="text-xl font-bold mb-3" style={{ color: '#2b2b2b' }}>I want to advertise</h3>
             <p className="text-sm mb-6" style={{ color: '#555' }}>Browse thousands of real-world ad placements and book in minutes.</p>
             <Link
               href="/signup"
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff' }}
             >
               Create free account
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="p-8 rounded-2xl text-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+          <div className="p-8 rounded-2xl text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
             <h3 className="text-xl font-bold mb-3" style={{ color: '#2b2b2b' }}>I have space to list</h3>
             <p className="text-sm mb-6" style={{ color: '#555' }}>Start earning from your storefront, parking lot, fleet, or event space.</p>
             <Link

@@ -40,16 +40,16 @@ function LoginForm() {
   }
 
   const inputStyle = {
-    backgroundColor: '#f4f4f0',
-    border: '1px solid #d4d4c9',
+    backgroundColor: '#f8f8f5',
+    border: '1px solid #e0e0d8',
     color: '#2b2b2b',
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
           <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Welcome back</h1>
           <p className="text-sm mb-6" style={{ color: '#888' }}>Sign in to your account</p>
 
@@ -120,7 +120,7 @@ function LoginForm() {
               type="submit"
               disabled={loading}
               className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Sign in
@@ -138,7 +138,7 @@ function LoginForm() {
         {/* Sign up link */}
         <p className="text-center text-sm mt-6" style={{ color: '#888' }}>
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium transition-opacity hover:opacity-80" style={{ color: '#e6964d' }}>
+          <Link href="/signup" className="font-medium transition-opacity hover:opacity-80" style={{ color: '#7ecfc0' }}>
             Create one free
           </Link>
         </p>
@@ -149,7 +149,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#e6e6dd' }}><Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0f0ec' }}><Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} /></div>}>
       <LoginForm />
     </Suspense>
   )

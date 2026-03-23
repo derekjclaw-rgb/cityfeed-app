@@ -37,9 +37,9 @@ const VARIANT_STYLES: Record<ToastVariant, { bg: string; border: string; color: 
     Icon: XCircle,
   },
   info: {
-    bg: '#fef9f0',
-    border: '#fde8c4',
-    color: '#e6964d',
+    bg: '#f0f8f5',
+    border: '#e8f5f3',
+    color: '#7ecfc0',
     Icon: Info,
   },
 }

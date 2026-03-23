@@ -6,7 +6,7 @@ import { MapPin, CheckCircle, TrendingUp, ArrowRight } from 'lucide-react'
  */
 export default function AboutPage() {
   return (
-    <div style={{ backgroundColor: '#e6e6dd' }}>
+    <div style={{ backgroundColor: '#f0f0ec' }}>
       {/* Hero */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-3xl mx-auto text-center">
@@ -51,13 +51,13 @@ export default function AboutPage() {
               <div
                 key={item.step}
                 className="relative p-8 rounded-2xl"
-                style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
               >
-                <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#f0f0e8' }}>
+                <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#f0f0ec' }}>
                   {item.step}
                 </div>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(230,150,77,0.12)' }}>
-                  <item.icon className="w-5 h-5" style={{ color: '#e6964d' }} />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(126,207,192,0.12)' }}>
+                  <item.icon className="w-5 h-5" style={{ color: '#7ecfc0' }} />
                 </div>
                 <h3 className="text-lg font-semibold mb-3" style={{ color: '#2b2b2b' }}>{item.title}</h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#555' }}>{item.desc}</p>
@@ -68,7 +68,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission */}
-      <section className="py-20 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', borderBottom: '1px solid #d4d4c9' }}>
+      <section className="py-20 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-6" style={{ color: '#2b2b2b' }}>Our mission</h2>
           <p className="text-lg leading-relaxed mb-6" style={{ color: '#555' }}>
@@ -90,7 +90,7 @@ export default function AboutPage() {
             <Link
               href="/marketplace"
               className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
             >
               Browse placements
               <ArrowRight className="w-5 h-5" />
@@ -98,7 +98,7 @@ export default function AboutPage() {
             <Link
               href="/how-it-works"
               className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #d4d4c9' }}
+              style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #e0e0d8' }}
             >
               How it works in detail
             </Link>

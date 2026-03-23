@@ -147,25 +147,25 @@ function BookPageInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (!listing) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center">
           <p className="text-sm mb-4" style={{ color: '#888' }}>Listing not found</p>
-          <Link href="/marketplace" className="text-sm font-medium" style={{ color: '#e6964d' }}>← Back to marketplace</Link>
+          <Link href="/marketplace" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>← Back to marketplace</Link>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-lg mx-auto px-6 py-8">
         <Link href={`/marketplace/${listingId}`} className="flex items-center gap-2 text-sm mb-8 hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -182,7 +182,7 @@ function BookPageInner() {
           </div>
         )}
 
-        <div className="rounded-2xl p-6 space-y-4 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div className="rounded-2xl p-6 space-y-4 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
           <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Select dates</h2>
           <DateRangePicker
             startDate={startDate}
@@ -193,7 +193,7 @@ function BookPageInner() {
         </div>
 
         {days > 0 && (
-          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Price breakdown</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between" style={{ color: '#555' }}>
@@ -204,7 +204,7 @@ function BookPageInner() {
                 <span>Buyer fee (7%)</span>
                 <span>${buyerFee.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between font-bold text-base pt-3" style={{ borderTop: '1px solid #d4d4c9', color: '#2b2b2b' }}>
+              <div className="flex justify-between font-bold text-base pt-3" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
                 <span>Total due today</span>
                 <span>${total.toLocaleString()}</span>
               </div>
@@ -216,7 +216,7 @@ function BookPageInner() {
           onClick={handleCheckout}
           disabled={!startDate || !endDate || days < 1 || submitting}
           className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base mb-4"
-          style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 4px 16px rgba(230,150,77,0.35)' }}
+          style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
         >
           {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
           {submitting ? 'Redirecting to payment...' : days > 0 ? `Confirm & Pay $${total.toLocaleString()}` : 'Select dates to continue'}
@@ -231,7 +231,7 @@ function BookPageInner() {
       {/* Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-md rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
                 {authMode === 'login' ? 'Sign in to continue' : 'Create an account'}
@@ -243,21 +243,21 @@ function BookPageInner() {
               {authMode === 'signup' && (
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: '#555' }}>Full name</label>
-                  <input type="text" required value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your name" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+                  <input type="text" required value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your name" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }} />
                 </div>
               )}
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: '#555' }}>Email</label>
-                <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+                <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: '#555' }}>Password</label>
-                <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+                <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }} />
               </div>
 
               {authError && <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2">{authError}</p>}
 
-              <button type="submit" disabled={authLoading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
+              <button type="submit" disabled={authLoading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
                 {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {authMode === 'login' ? 'Sign in' : 'Create account'}
               </button>
@@ -265,7 +265,7 @@ function BookPageInner() {
 
             <p className="text-center text-sm mt-4" style={{ color: '#888' }}>
               {authMode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-              <button onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }} className="font-medium" style={{ color: '#e6964d' }}>
+              <button onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }} className="font-medium" style={{ color: '#7ecfc0' }}>
                 {authMode === 'login' ? 'Sign up' : 'Sign in'}
               </button>
             </p>
@@ -279,8 +279,8 @@ function BookPageInner() {
 export default function BookPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     }>
       <BookPageInner />

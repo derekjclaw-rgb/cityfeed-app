@@ -77,14 +77,14 @@ export default function SavedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/dashboard" className="hover:opacity-70" style={{ color: '#888' }}>
@@ -97,8 +97,8 @@ export default function SavedPage() {
         </div>
 
         {saved.length === 0 ? (
-          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <Heart className="w-12 h-12 mx-auto mb-4" style={{ color: '#d4d4c9' }} />
+          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <Heart className="w-12 h-12 mx-auto mb-4" style={{ color: '#e0e0d8' }} />
             <h2 className="text-lg font-semibold mb-2" style={{ color: '#2b2b2b' }}>No saved listings yet</h2>
             <p className="text-sm mb-6" style={{ color: '#888' }}>
               Browse the marketplace and tap the heart icon to save listings for later.
@@ -106,7 +106,7 @@ export default function SavedPage() {
             <Link
               href="/marketplace"
               className="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#e6964d', color: '#fff' }}
+              style={{ backgroundColor: '#ef4135', color: '#fff' }}
             >
               Browse Marketplace
             </Link>
@@ -117,7 +117,7 @@ export default function SavedPage() {
               <div
                 key={item.id}
                 className="rounded-2xl overflow-hidden"
-                style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
               >
                 {/* Image */}
                 <div className="relative aspect-video" style={{ backgroundColor: '#f0f0ea' }}>
@@ -125,7 +125,7 @@ export default function SavedPage() {
                     <img src={item.listing_image} alt={item.listing_title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <MapPin className="w-8 h-8" style={{ color: '#d4d4c9' }} />
+                      <MapPin className="w-8 h-8" style={{ color: '#e0e0d8' }} />
                     </div>
                   )}
                   {/* Unsave button */}
@@ -135,7 +135,7 @@ export default function SavedPage() {
                     style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
                     title="Remove from saved"
                   >
-                    <Heart className="w-4 h-4 fill-current" style={{ color: '#e6964d' }} />
+                    <Heart className="w-4 h-4 fill-current" style={{ color: '#7ecfc0' }} />
                   </button>
                 </div>
 
@@ -145,7 +145,7 @@ export default function SavedPage() {
                     <h3 className="font-semibold text-sm leading-tight" style={{ color: '#2b2b2b' }}>
                       {item.listing_title}
                     </h3>
-                    <span className="text-xs font-semibold whitespace-nowrap" style={{ color: '#e6964d' }}>
+                    <span className="text-xs font-semibold whitespace-nowrap" style={{ color: '#7ecfc0' }}>
                       ${item.listing_price}/day
                     </span>
                   </div>
@@ -158,7 +158,7 @@ export default function SavedPage() {
                   <Link
                     href={`/marketplace/${item.listing_id}`}
                     className="block w-full text-center py-2 rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: '#fdf3e8', color: '#e6964d' }}
+                    style={{ backgroundColor: '#f0f0ec', color: '#7ecfc0' }}
                   >
                     View Listing
                   </Link>

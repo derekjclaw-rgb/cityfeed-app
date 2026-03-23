@@ -76,7 +76,7 @@ const ACCEPTED_MIME = [
 function FileIcon({ type, name }: { type: string; name: string }) {
   const ext = name.split('.').pop()?.toLowerCase() ?? ''
   if (type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
-    return <Image className="w-5 h-5" style={{ color: '#e6964d' }} />
+    return <Image className="w-5 h-5" style={{ color: '#7ecfc0' }} />
   }
   if (type.startsWith('video/') || ext === 'mp4') {
     return <Film className="w-5 h-5" style={{ color: '#8b5cf6' }} />
@@ -186,7 +186,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSecti
   const canUpload = !isHost && ['confirmed', 'active', 'pop_pending', 'pop_review'].includes(bookingStatus)
 
   return (
-    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold" style={{ color: '#2b2b2b' }}>
@@ -225,8 +225,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSecti
         <div
           className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-5"
           style={{
-            borderColor: isDragging ? '#e6964d' : '#d4d4c9',
-            backgroundColor: isDragging ? 'rgba(230,150,77,0.05)' : 'transparent',
+            borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
+            backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
           }}
           onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
           onDragLeave={() => setIsDragging(false)}
@@ -235,14 +235,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSecti
         >
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#e6964d' }} />
+              <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#7ecfc0' }} />
               <p className="text-sm" style={{ color: '#888' }}>Uploading...</p>
             </div>
           ) : (
             <>
-              <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: isDragging ? '#e6964d' : '#ccc' }} />
+              <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
               <p className="text-sm font-medium mb-1" style={{ color: '#2b2b2b' }}>
-                Drag & drop or <span style={{ color: '#e6964d' }}>click to browse</span>
+                Drag & drop or <span style={{ color: '#7ecfc0' }}>click to browse</span>
               </p>
               <p className="text-xs" style={{ color: '#aaa' }}>
                 Accepted formats: {ACCEPTED_FORMATS.join(', ')} · Max 100MB per file
@@ -271,7 +271,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSecti
       {/* Files list */}
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#e6964d' }} />
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#7ecfc0' }} />
         </div>
       ) : hasFiles ? (
         <div className="space-y-2">
@@ -279,7 +279,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSecti
             <div
               key={file.path}
               className="flex items-center gap-3 px-4 py-3 rounded-xl"
-              style={{ backgroundColor: '#f4f4f0', border: '1px solid #e0e0d8' }}
+              style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
             >
               <FileIcon type={file.type} name={file.name} />
               <div className="flex-1 min-w-0">
@@ -326,8 +326,8 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
   pending: { bg: '#fef9ec', text: '#b45309', label: 'Pending Review' },
   confirmed: { bg: '#eff6ff', text: '#1d4ed8', label: 'Confirmed' },
   active: { bg: '#f0fdf4', text: '#16a34a', label: 'Active — Live' },
-  pop_pending: { bg: '#fef3e8', text: '#e6964d', label: 'POP Submitted' },
-  pop_review: { bg: '#fef3e8', text: '#e6964d', label: 'POP Review' },
+  pop_pending: { bg: '#f0f8f5', text: '#7ecfc0', label: 'POP Submitted' },
+  pop_review: { bg: '#f0f8f5', text: '#7ecfc0', label: 'POP Review' },
   completed: { bg: '#f0fdf4', text: '#16a34a', label: 'Completed ✓' },
   cancelled: { bg: '#fef2f2', text: '#dc2626', label: 'Cancelled' },
   disputed: { bg: '#fef2f2', text: '#dc2626', label: 'Disputed' },
@@ -389,31 +389,31 @@ export default function BookingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#e6964d' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     )
   }
 
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center">
           <p className="text-sm mb-4" style={{ color: '#888' }}>Booking not found</p>
-          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#e6964d' }}>← Back to bookings</Link>
+          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>← Back to bookings</Link>
         </div>
       </div>
     )
   }
 
   const isHost = currentUserId === booking.host_id
-  const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f4f4f0', text: '#888', label: booking.status }
+  const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
   const days = booking.start_date && booking.end_date
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#e6e6dd' }}>
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
         <Link href="/dashboard/bookings" className="flex items-center gap-2 text-sm mb-8 hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -437,7 +437,7 @@ export default function BookingDetailPage() {
 
         <div className="space-y-4">
           {/* Booking details card */}
-          <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Booking Details</h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
               {[
@@ -453,7 +453,7 @@ export default function BookingDetailPage() {
               ))}
             </div>
             {listing?.production_time && (
-              <div className="mt-4 pt-4 text-sm" style={{ borderTop: '1px solid #f0f0e8' }}>
+              <div className="mt-4 pt-4 text-sm" style={{ borderTop: '1px solid #f0f0ec' }}>
                 <span style={{ color: '#aaa' }}>Production window: </span>
                 <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.production_time}</span>
               </div>
@@ -462,9 +462,9 @@ export default function BookingDetailPage() {
 
           {/* Delivery instructions (physical placements) */}
           {listing?.delivery_instructions && (
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <Package className="w-4 h-4" style={{ color: '#e6964d' }} />
+                <Package className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                 <h2 className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Delivery Instructions</h2>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: '#555' }}>
@@ -487,14 +487,14 @@ export default function BookingDetailPage() {
             <Link
               href={`/dashboard/bookings/${bookingId}/receipt`}
               className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
+              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
             >
               View Receipt
             </Link>
             <Link
               href={`/dashboard/messages/${bookingId}`}
               className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-              style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
+              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
             >
               Messages
             </Link>
@@ -502,7 +502,7 @@ export default function BookingDetailPage() {
               <Link
                 href={`/dashboard/bookings/${bookingId}/review`}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-                style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
               >
                 Leave Review
               </Link>
