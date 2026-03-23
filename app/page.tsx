@@ -111,9 +111,14 @@ export default function HomePage() {
   const [endDate, setEndDate] = useState('')
   const [featuredListings, setFeaturedListings] = useState<Listing[]>(MOCK_LISTINGS.slice(0, 6))
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
+    // Check if user is logged in
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setIsLoggedIn(true)
+    })
     supabase
       .from('listings')
       .select('*')
@@ -175,7 +180,7 @@ export default function HomePage() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
-              href="/signup?role=host"
+              href={isLoggedIn ? '/dashboard/create-listing' : '/signup?role=host'}
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105"
               style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
             >

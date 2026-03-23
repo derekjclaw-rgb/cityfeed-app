@@ -189,7 +189,11 @@ export default function DashboardPage() {
     { href: '/dashboard/profile', label: 'My Profile', desc: 'Edit your public profile', icon: User },
   ]
 
-  const links = isHost ? hostLinks : advertiserLinks
+  // Show host links for hosts, advertiser links + "List Your Space" for advertisers
+  const links = isHost ? hostLinks : [
+    ...advertiserLinks,
+    { href: '/dashboard/create-listing', label: 'List Your Space', desc: 'Got ad space? Start earning', icon: PlusCircle },
+  ]
 
   return (
     <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#e6e6dd' }}>
