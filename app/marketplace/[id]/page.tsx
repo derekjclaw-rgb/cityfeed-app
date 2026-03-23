@@ -297,7 +297,7 @@ export default function ListingDetailPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
-          <div className="lg:col-span-2 space-y-8 order-2 lg:order-1">
+          <div className="lg:col-span-2 space-y-8 order-1">
             {/* Photo gallery */}
             {listing.images.length > 0 ? (
               <div className="space-y-3">
@@ -431,12 +431,32 @@ export default function ListingDetailPage() {
             </div>
           </div>
 
-          {/* Booking widget — appears first on mobile, sidebar on desktop */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
+          {/* Booking widget — hidden on mobile, sticky sidebar on desktop */}
+          <div className="hidden lg:block lg:col-span-1 order-2">
             <BookingWidget listing={listing} />
           </div>
         </div>
       </div>
+
+      {/* Mobile sticky CTA ribbon */}
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 px-4 py-3" style={{ backgroundColor: '#fff', borderTop: '1px solid #d4d4c9', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold" style={{ color: '#e6964d' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
+            <div className="text-xs" style={{ color: '#888' }}>Min. {listing.min_days} days</div>
+          </div>
+          <a
+            href={`/marketplace/${listing.id}/book`}
+            className="font-semibold px-6 py-3 rounded-xl text-sm"
+            style={{ backgroundColor: '#e6964d', color: '#fff', boxShadow: '0 2px 8px rgba(230,150,77,0.3)' }}
+          >
+            Book Now
+          </a>
+        </div>
+      </div>
+
+      {/* Bottom padding on mobile for sticky CTA */}
+      <div className="h-20 lg:hidden" />
     </div>
   )
 }
