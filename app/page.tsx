@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { MapPin, Search, Star, ArrowRight, Calendar } from 'lucide-react'
+import { MapPin, Search, Star, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from './marketplace/page'
 import type { Listing } from './marketplace/page'
+import DateRangePicker from '@/components/DateRangePicker'
 
 const CATEGORIES = [
   'All Types',
@@ -226,21 +227,14 @@ export default function HomePage() {
               </select>
             </div>
             <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="min-w-0">
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Start date (optional)</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                    <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-xl pl-10 pr-2 py-3 text-xs sm:text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b', maxWidth: '100%' }} />
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>End date (optional)</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                    <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-xl pl-10 pr-2 py-3 text-xs sm:text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b', maxWidth: '100%' }} />
-                  </div>
-                </div>
+              <div className="min-w-0">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Dates (optional)</label>
+                <DateRangePicker
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
+                  placeholder="Pick start & end date"
+                />
               </div>
               <Link
                 href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}

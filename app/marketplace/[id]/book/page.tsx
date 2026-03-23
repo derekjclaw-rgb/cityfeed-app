@@ -6,9 +6,10 @@
 import { useState, useMemo, useEffect, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Shield, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Shield, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../../page'
+import DateRangePicker from '@/components/DateRangePicker'
 
 function BookPageInner() {
   const params = useParams()
@@ -114,8 +115,6 @@ function BookPageInner() {
     }
   }
 
-  const today = new Date().toISOString().split('T')[0]
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#e6e6dd' }}>
@@ -153,36 +152,14 @@ function BookPageInner() {
           </div>
         )}
 
-        <div className="rounded-2xl p-6 space-y-5 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div className="rounded-2xl p-6 space-y-4 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
           <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Select dates</h2>
-          <div>
-            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Start Date</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-              <input
-                type="date"
-                min={today}
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
-                style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>End Date</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-              <input
-                type="date"
-                min={startDate || today}
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
-                style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }}
-              />
-            </div>
-          </div>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
+            placeholder="Pick start & end date"
+          />
         </div>
 
         {days > 0 && (

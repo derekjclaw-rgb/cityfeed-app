@@ -1,7 +1,19 @@
 'use client'
 
 /**
- * Create Listing Page — Phase 3: real Supabase insert + photo upload
+ * Create Listing Page — Phase 5b: Creative Specs + Delivery Instructions
+ *
+ * IMPORTANT — Run this migration before deploying:
+ * -- alter table public.listings add column if not exists daily_traffic integer default 0;
+ * -- alter table public.listings add column if not exists delivery_instructions text;
+ * -- alter table public.listings add column if not exists creative_formats text[];
+ * -- alter table public.listings add column if not exists creative_dimensions text;
+ * -- alter table public.listings add column if not exists creative_max_file_size text;
+ * -- alter table public.listings add column if not exists creative_video_duration text;
+ * -- alter table public.listings add column if not exists creative_audio_allowed boolean default false;
+ * -- alter table public.listings add column if not exists creative_loop_count integer;
+ * -- alter table public.listings add column if not exists creative_host_prints boolean default false;
+ * -- alter table public.listings add column if not exists creative_print_cost numeric;
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -31,6 +43,11 @@ interface UploadedPhoto {
   error?: string
 }
 
+const CREATIVE_FORMATS = ['PDF', 'JPG', 'PNG', 'MP4', 'HTML5', 'AI', 'PSD']
+const DIGITAL_CATEGORIES = ['digital_billboards', 'outdoor_digital', 'display_on_premise']
+const isDigital = (cat: string) => DIGITAL_CATEGORIES.includes(cat) ||
+  cat.toLowerCase().includes('digital') || cat.toLowerCase().includes('display')
+
 interface FormData {
   title: string
   description: string
@@ -48,6 +65,17 @@ interface FormData {
   max_days: string
   buy_now_enabled: boolean
   content_restrictions: string
+  // Delivery
+  delivery_instructions: string
+  // Creative specs
+  creative_formats: string[]
+  creative_dimensions: string
+  creative_max_file_size: string
+  creative_video_duration: string
+  creative_audio_allowed: boolean
+  creative_loop_count: string
+  creative_host_prints: boolean
+  creative_print_cost: string
 }
 
 function FormField({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
@@ -90,6 +118,15 @@ export default function CreateListingPage() {
     max_days: '90',
     buy_now_enabled: false,
     content_restrictions: '',
+    delivery_instructions: '',
+    creative_formats: [],
+    creative_dimensions: '',
+    creative_max_file_size: '25MB',
+    creative_video_duration: '15s',
+    creative_audio_allowed: false,
+    creative_loop_count: '',
+    creative_host_prints: false,
+    creative_print_cost: '',
   })
 
   useEffect(() => {
@@ -104,8 +141,20 @@ export default function CreateListingPage() {
     })
   }, [router])
 
-  function set(field: keyof FormData, value: string | boolean) {
+  function set(field: keyof FormData, value: string | boolean | string[]) {
     setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  function toggleFormat(fmt: string) {
+    setForm(prev => {
+      const has = prev.creative_formats.includes(fmt)
+      return {
+        ...prev,
+        creative_formats: has
+          ? prev.creative_formats.filter(f => f !== fmt)
+          : [...prev.creative_formats, fmt],
+      }
+    })
   }
 
   const addFiles = useCallback((files: FileList | null) => {
@@ -208,6 +257,20 @@ export default function CreateListingPage() {
       content_restrictions: form.content_restrictions,
       images: imageUrls,
       status: 'active',
+      // Delivery
+      delivery_instructions: form.delivery_instructions || null,
+      // Creative specs
+      creative_formats: form.creative_formats.length > 0 ? form.creative_formats : null,
+      creative_dimensions: form.creative_dimensions || null,
+      creative_max_file_size: form.creative_max_file_size || null,
+      ...(isDigital(form.category) ? {
+        creative_video_duration: form.creative_video_duration || null,
+        creative_audio_allowed: form.creative_audio_allowed,
+        creative_loop_count: form.creative_loop_count ? parseInt(form.creative_loop_count) : null,
+      } : {
+        creative_host_prints: form.creative_host_prints,
+        creative_print_cost: form.creative_host_prints && form.creative_print_cost ? parseFloat(form.creative_print_cost) : null,
+      }),
     })
 
     if (insertError) {
@@ -246,7 +309,7 @@ export default function CreateListingPage() {
               View my listings
             </Link>
             <button
-              onClick={() => { setSuccess(false); setPhotos([]); setForm({ title: '', description: '', category: 'digital_billboards', address: '', city: '', state: '', zip: '', dimensions: '', daily_impressions: '', daily_traffic: '', production_time: '3-5 business days', price_per_day: '', min_days: '7', max_days: '90', buy_now_enabled: false, content_restrictions: '' }) }}
+              onClick={() => { setSuccess(false); setPhotos([]); setForm({ title: '', description: '', category: 'digital_billboards', address: '', city: '', state: '', zip: '', dimensions: '', daily_impressions: '', daily_traffic: '', production_time: '3-5 business days', price_per_day: '', min_days: '7', max_days: '90', buy_now_enabled: false, content_restrictions: '', delivery_instructions: '', creative_formats: [], creative_dimensions: '', creative_max_file_size: '25MB', creative_video_duration: '15s', creative_audio_allowed: false, creative_loop_count: '', creative_host_prints: false, creative_print_cost: '' }) }}
               className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm"
               style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', color: '#555' }}
             >
@@ -437,6 +500,119 @@ export default function CreateListingPage() {
             <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Content restrictions</h2>
             <FormField label="What content will you NOT accept?" hint="e.g. No adult content, tobacco, competing brands">
               <textarea value={form.content_restrictions} onChange={e => set('content_restrictions', e.target.value)} placeholder="List any content types or brands you will not display..." rows={3} className={`${inputClass} resize-none`} style={inputStyle} />
+            </FormField>
+          </div>
+
+          {/* Creative Specifications */}
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <div>
+              <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Creative specifications</h2>
+              <p className="text-xs mt-1" style={{ color: '#aaa' }}>Help advertisers prepare the right files for your placement.</p>
+            </div>
+
+            {/* Accepted file formats */}
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#555' }}>Accepted file formats</label>
+              <div className="flex flex-wrap gap-2">
+                {CREATIVE_FORMATS.map(fmt => {
+                  const checked = form.creative_formats.includes(fmt)
+                  return (
+                    <button
+                      key={fmt}
+                      type="button"
+                      onClick={() => toggleFormat(fmt)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                      style={{
+                        backgroundColor: checked ? '#e6964d' : '#f4f4f0',
+                        color: checked ? '#fff' : '#555',
+                        border: checked ? '1px solid #e6964d' : '1px solid #d4d4c9',
+                      }}
+                    >
+                      {fmt}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Dimensions + max file size */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Preferred dimensions" hint={'e.g. "1920x1080" or "24x36 inches"'}>
+                <input type="text" value={form.creative_dimensions} onChange={e => set('creative_dimensions', e.target.value)} placeholder="1920x1080" className={inputClass} style={inputStyle} />
+              </FormField>
+              <FormField label="Max file size">
+                <select value={form.creative_max_file_size} onChange={e => set('creative_max_file_size', e.target.value)} className={`${inputClass} cursor-pointer`} style={inputStyle}>
+                  {['5MB', '10MB', '25MB', '50MB', '100MB'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </FormField>
+            </div>
+
+            {/* Digital-only specs */}
+            {isDigital(form.category) && (
+              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0e8' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#e6964d' }}>Digital placement options</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Video duration">
+                    <select value={form.creative_video_duration} onChange={e => set('creative_video_duration', e.target.value)} className={`${inputClass} cursor-pointer`} style={inputStyle}>
+                      {['10s', '15s', '30s', '60s'].map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </FormField>
+                  <FormField label="Loop count" hint="0 = infinite">
+                    <input type="number" value={form.creative_loop_count} onChange={e => set('creative_loop_count', e.target.value)} placeholder="0" min="0" className={inputClass} style={inputStyle} />
+                  </FormField>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => set('creative_audio_allowed', !form.creative_audio_allowed)}
+                    className="relative w-11 h-6 rounded-full transition-colors"
+                    style={{ backgroundColor: form.creative_audio_allowed ? '#e6964d' : '#d4d4c9' }}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.creative_audio_allowed ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                  <div>
+                    <div className="text-sm font-medium" style={{ color: '#555' }}>Audio allowed</div>
+                    <div className="text-xs" style={{ color: '#aaa' }}>Advertiser may include audio in their creative</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Static-only specs */}
+            {!isDigital(form.category) && (
+              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0e8' }}>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#e6964d' }}>Physical placement options</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => set('creative_host_prints', !form.creative_host_prints)}
+                    className="relative w-11 h-6 rounded-full transition-colors"
+                    style={{ backgroundColor: form.creative_host_prints ? '#e6964d' : '#d4d4c9' }}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.creative_host_prints ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                  <div>
+                    <div className="text-sm font-medium" style={{ color: '#555' }}>Host provides printing</div>
+                    <div className="text-xs" style={{ color: '#aaa' }}>You will handle printing for the advertiser</div>
+                  </div>
+                </div>
+                {form.creative_host_prints && (
+                  <FormField label="Additional printing cost (USD)" hint="Added to total at checkout">
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#888' }}>$</span>
+                      <input type="number" value={form.creative_print_cost} onChange={e => set('creative_print_cost', e.target.value)} placeholder="150" min="0" step="0.01" className={`${inputClass} pl-8`} style={inputStyle} />
+                    </div>
+                  </FormField>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Delivery Instructions */}
+          <div className="rounded-2xl p-6" style={cardStyle}>
+            <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Delivery instructions</h2>
+            <FormField label="Shipping or drop-off instructions" hint="For physical placements, provide shipping address or drop-off instructions (optional)">
+              <textarea value={form.delivery_instructions} onChange={e => set('delivery_instructions', e.target.value)} placeholder="e.g. Ship to: 123 Main St, Las Vegas NV 89109. Attn: Marketing Dept. Materials must arrive 5 days before campaign start." rows={4} className={`${inputClass} resize-none`} style={inputStyle} />
             </FormField>
           </div>
 

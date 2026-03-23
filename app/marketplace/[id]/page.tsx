@@ -8,10 +8,11 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   MapPin, Star, Eye, Car, Ruler, Clock, ArrowLeft,
-  Calendar, ChevronRight, Shield, CheckCircle, Loader2
+  ChevronRight, Shield, CheckCircle, Loader2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../page'
+import DateRangePicker from '@/components/DateRangePicker'
 
 const CATEGORY_MAP: Record<string, string> = {
   digital_billboards: 'Digital Billboards',
@@ -34,6 +35,17 @@ const GRADIENT_POOL = [
   'from-blue-100 to-blue-200',
   'from-red-100 to-red-200',
 ]
+
+interface CreativeSpecs {
+  formats?: string[]
+  dimensions?: string
+  max_file_size?: string
+  video_duration?: string
+  audio_allowed?: boolean
+  loop_count?: number
+  host_prints?: boolean
+  print_cost?: number
+}
 
 interface ListingData {
   id: string
@@ -58,6 +70,7 @@ interface ListingData {
   rating: number
   review_count: number
   host_id?: string
+  creative_specs?: CreativeSpecs
 }
 
 interface HostData {
@@ -112,29 +125,20 @@ function BookingWidget({ listing }: { listing: ListingData }) {
     router.push(`/marketplace/${listing.id}/book?start=${startDate}&end=${endDate}&days=${days}&total=${total}`)
   }
 
-  const today = new Date().toISOString().split('T')[0]
-
   return (
     <div className="rounded-2xl p-6 lg:sticky lg:top-24" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 8px rgba(0,0,0,0.07)' }}>
       <div className="flex items-baseline gap-1 mb-6">
         <span className="text-3xl font-bold" style={{ color: '#2b2b2b' }}>${listing.price_per_day}</span>
         <span className="text-sm" style={{ color: '#888' }}>/day</span>
       </div>
-      <div className="space-y-3 mb-5">
-        <div>
-          <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Start Date</label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-            <input type="date" min={today} value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none" style={{ border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>End Date</label>
-          <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-            <input type="date" min={startDate || today} value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none" style={{ border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
-          </div>
-        </div>
+      <div className="mb-5">
+        <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Select Dates</label>
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
+          placeholder="Pick start & end date"
+        />
       </div>
       {days > 0 && (
         <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f4f4f0', border: '1px solid #e0e0d8' }}>
@@ -212,6 +216,16 @@ export default function ListingDetailPage() {
           rating: 0,
           review_count: 0,
           host_id: row.host_id,
+          creative_specs: (row.creative_formats || row.creative_dimensions || row.creative_max_file_size) ? {
+            formats: row.creative_formats,
+            dimensions: row.creative_dimensions,
+            max_file_size: row.creative_max_file_size,
+            video_duration: row.creative_video_duration,
+            audio_allowed: row.creative_audio_allowed,
+            loop_count: row.creative_loop_count,
+            host_prints: row.creative_host_prints,
+            print_cost: row.creative_print_cost,
+          } : undefined,
         }
         setListing(l)
 
@@ -400,6 +414,60 @@ export default function ListingDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Creative Specs */}
+            {listing.creative_specs && (
+              <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <h2 className="text-lg font-semibold mb-4" style={{ color: '#2b2b2b' }}>Creative specs</h2>
+                <div className="space-y-3 text-sm">
+                  {listing.creative_specs.formats && listing.creative_specs.formats.length > 0 && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Accepted formats</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.formats.join(', ')}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.dimensions && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Preferred dimensions</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.dimensions}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.max_file_size && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Max file size</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.max_file_size}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.video_duration && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Video duration</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.video_duration}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.audio_allowed !== undefined && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Audio</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.audio_allowed ? 'Allowed' : 'Not allowed'}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.loop_count !== undefined && listing.creative_specs.loop_count !== null && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Loop count</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.loop_count === 0 ? 'Infinite' : listing.creative_specs.loop_count}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.host_prints && (
+                    <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0e8' }}>
+                      <span style={{ color: '#888' }}>Printing</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>
+                        Host provides printing
+                        {listing.creative_specs.print_cost ? ` (+$${listing.creative_specs.print_cost})` : ''}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Host card */}
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
