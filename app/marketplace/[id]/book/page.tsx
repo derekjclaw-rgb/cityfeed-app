@@ -22,6 +22,13 @@ function BookPageInner() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authName, setAuthName] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   // Pre-fill from query params if coming from listing detail
   const [startDate, setStartDate] = useState(searchParams.get('start') ?? '')
@@ -30,13 +37,11 @@ function BookPageInner() {
   useEffect(() => {
     const supabase = createClient()
 
-    // Auth check
+    // Check auth silently — don't redirect
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push(`/login?redirect=/marketplace/${listingId}/book`)
-        return
+      if (data.user) {
+        setUserId(data.user.id)
       }
-      setUserId(data.user.id)
     })
 
     // Load listing — try Supabase first, fall back to mock data
@@ -78,8 +83,33 @@ function BookPageInner() {
     return { days, subtotal, buyerFee, total: subtotal + buyerFee }
   }, [startDate, endDate, listing])
 
+  async function handleAuthSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setAuthLoading(true)
+    setAuthError('')
+    const supabase = createClient()
+
+    if (authMode === 'login') {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword })
+      if (error) { setAuthError(error.message); setAuthLoading(false); return }
+      setUserId(data.user?.id ?? null)
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email: authEmail,
+        password: authPassword,
+        options: { data: { full_name: authName, role: 'advertiser' } }
+      })
+      if (error) { setAuthError(error.message); setAuthLoading(false); return }
+      setUserId(data.user?.id ?? null)
+    }
+    setAuthLoading(false)
+    setShowAuthModal(false)
+  }
+
   async function handleCheckout() {
-    if (!userId || !listing || days < 1) return
+    if (!listing || days < 1) return
+    // If not logged in, show auth modal instead of redirecting
+    if (!userId) { setShowAuthModal(true); return }
     setSubmitting(true)
     setError('')
 
@@ -197,6 +227,51 @@ function BookPageInner() {
           Secured by Stripe · 7-day cancellation policy
         </div>
       </div>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
+                {authMode === 'login' ? 'Sign in to continue' : 'Create an account'}
+              </h2>
+              <button onClick={() => setShowAuthModal(false)} className="text-xl" style={{ color: '#888' }}>✕</button>
+            </div>
+
+            <form onSubmit={handleAuthSubmit} className="space-y-4">
+              {authMode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#555' }}>Full name</label>
+                  <input type="text" required value={authName} onChange={e => setAuthName(e.target.value)} placeholder="Your name" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: '#555' }}>Email</label>
+                <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: '#555' }}>Password</label>
+                <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none" style={{ backgroundColor: '#f4f4f0', border: '1px solid #d4d4c9', color: '#2b2b2b' }} />
+              </div>
+
+              {authError && <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2">{authError}</p>}
+
+              <button type="submit" disabled={authLoading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#e6964d', color: '#fff' }}>
+                {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {authMode === 'login' ? 'Sign in' : 'Create account'}
+              </button>
+            </form>
+
+            <p className="text-center text-sm mt-4" style={{ color: '#888' }}>
+              {authMode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+              <button onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }} className="font-medium" style={{ color: '#e6964d' }}>
+                {authMode === 'login' ? 'Sign up' : 'Sign in'}
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
