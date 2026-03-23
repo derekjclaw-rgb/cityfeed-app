@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { MapPin, Search, Star, ArrowRight } from 'lucide-react'
+import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from './marketplace/page'
 import type { Listing } from './marketplace/page'
@@ -110,6 +110,7 @@ export default function HomePage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [featuredListings, setFeaturedListings] = useState<Listing[]>(MOCK_LISTINGS.slice(0, 6))
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
 
   useEffect(() => {
     const supabase = createClient()
@@ -256,12 +257,68 @@ export default function HomePage() {
             <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
               {filtered.length > 0 ? `${filtered.length} placements available` : 'No placements found'}
             </h2>
+            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#fff', border: '1px solid #d4d4c9' }}>
+              <button
+                onClick={() => setViewMode('grid')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  backgroundColor: viewMode === 'grid' ? '#e6964d' : 'transparent',
+                  color: viewMode === 'grid' ? '#fff' : '#888',
+                }}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={{
+                  backgroundColor: viewMode === 'map' ? '#e6964d' : 'transparent',
+                  color: viewMode === 'map' ? '#fff' : '#888',
+                }}
+              >
+                <Map className="w-3.5 h-3.5" />
+                Map
+              </button>
+            </div>
           </div>
           {filtered.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                  {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
+                </div>
+              ) : (
+                <div className="flex flex-col lg:flex-row gap-4 mb-8">
+                  {/* Listing sidebar */}
+                  <div className="lg:w-1/3 space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                    {filtered.map(listing => (
+                      <Link key={listing.id} href={`/marketplace/${listing.id}`} className="block group">
+                        <div className="flex gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all" style={{ border: '1px solid #d4d4c9' }}>
+                          <div className={`w-20 h-20 rounded-lg bg-gradient-to-br ${listing.image_placeholder} flex-shrink-0`} />
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold truncate group-hover:text-[#e6964d]" style={{ color: '#2b2b2b' }}>{listing.title}</div>
+                            <div className="text-xs flex items-center gap-1 mt-1" style={{ color: '#888' }}>
+                              <MapPin className="w-3 h-3" />{listing.city}, {listing.state}
+                            </div>
+                            <div className="text-sm font-bold mt-1" style={{ color: '#e6964d' }}>${listing.price_per_day}/day</div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  {/* Map */}
+                  <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid #d4d4c9' }}>
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      src={`https://api.mapbox.com/styles/v1/mapbox/light-v11.html?title=false&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&zoomwheel=true&fresh=true#11/${filtered[0]?.lat ?? 36.17}/${filtered[0]?.lng ?? -115.14}`}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="text-center">
                 <Link href="/marketplace" className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: '#e6964d' }}>
                   View all placements →
