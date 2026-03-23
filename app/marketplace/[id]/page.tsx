@@ -49,6 +49,7 @@ interface ListingData {
   max_days: number
   dimensions?: string
   daily_impressions: number
+  daily_traffic: number
   production_time?: string
   content_restrictions?: string
   images: string[]
@@ -202,6 +203,7 @@ export default function ListingDetailPage() {
           max_days: row.max_days ?? 365,
           dimensions: row.dimensions,
           daily_impressions: row.daily_impressions ?? 0,
+          daily_traffic: row.daily_traffic ?? 0,
           production_time: row.production_time,
           content_restrictions: row.content_restrictions,
           images: row.images ?? [],
@@ -239,6 +241,7 @@ export default function ListingDetailPage() {
             max_days: details.max_days,
             dimensions: details.dimensions,
             daily_impressions: mock.daily_impressions,
+            daily_traffic: Math.round(mock.daily_impressions * 1.8),
             production_time: details.production_time,
             content_restrictions: details.content_restrictions,
             images: [],
