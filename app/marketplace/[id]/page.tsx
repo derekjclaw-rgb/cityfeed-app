@@ -356,7 +356,7 @@ export default function ListingDetailPage() {
             {/* Stats grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { icon: Eye, label: 'Daily Impressions', value: listing.daily_impressions > 0 ? listing.daily_impressions.toLocaleString() : 'N/A' },
+                { icon: Eye, label: 'Est. Daily Impressions', value: listing.daily_impressions > 0 ? listing.daily_impressions.toLocaleString() : 'N/A' },
                 { icon: Car, label: 'Daily Traffic', value: listing.daily_impressions > 0 ? Math.round(listing.daily_impressions * 0.6).toLocaleString() : 'N/A' },
                 { icon: Ruler, label: 'Dimensions', value: listing.dimensions ?? 'N/A' },
                 { icon: Clock, label: 'Production', value: listing.production_time ?? 'N/A' },

@@ -387,7 +387,7 @@ export default function CreateListingPage() {
               <input type="text" value={form.dimensions} onChange={e => set('dimensions', e.target.value)} placeholder="14ft × 48ft" className={inputClass} style={inputStyle} />
             </FormField>
             <div className="grid grid-cols-2 gap-4">
-              <FormField label="Daily impressions" hint="Estimated daily views">
+              <FormField label="Estimated daily impressions" hint="Approximate daily views">
                 <input type="number" value={form.daily_impressions} onChange={e => set('daily_impressions', e.target.value)} placeholder="15000" min="0" className={inputClass} style={inputStyle} />
               </FormField>
               <FormField label="Daily traffic" hint="Vehicles or pedestrians">
@@ -423,7 +423,7 @@ export default function CreateListingPage() {
                 className="relative w-11 h-6 rounded-full transition-colors"
                 style={{ backgroundColor: form.buy_now_enabled ? '#e6964d' : '#d4d4c9' }}
               >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.buy_now_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${form.buy_now_enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </button>
               <div>
                 <div className="text-sm font-medium" style={{ color: '#555' }}>Enable Buy Now</div>
