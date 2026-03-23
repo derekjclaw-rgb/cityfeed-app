@@ -150,7 +150,7 @@ export default function ReviewPage() {
           <Link
             href="/dashboard/bookings"
             className="inline-block px-6 py-3 rounded-xl font-semibold text-sm"
-            style={{ backgroundColor: '#ef4135', color: '#fff' }}
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
           >
             Back to Bookings
           </Link>
@@ -246,7 +246,7 @@ export default function ReviewPage() {
               type="submit"
               disabled={submitting || rating === 0}
               className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#ef4135', color: '#fff' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               Submit Review

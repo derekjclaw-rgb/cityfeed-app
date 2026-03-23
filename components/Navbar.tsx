@@ -189,7 +189,7 @@ export default function Navbar() {
               <Link
                 href="/signup"
                 className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: '#ef4135', color: '#fff' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
               >
                 Sign Up
               </Link>
@@ -252,7 +252,7 @@ export default function Navbar() {
                 <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium" style={{ color: '#f0f0ec' }}>
                   Login
                 </Link>
-                <Link href="/signup" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-semibold px-4 rounded-lg text-center mt-2" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
+                <Link href="/signup" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-semibold px-4 rounded-lg text-center mt-2" style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
                   Sign Up
                 </Link>
               </>

@@ -204,7 +204,7 @@ function StripeOnboardingContent() {
                 onClick={handleConnect}
                 disabled={connecting}
                 className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ backgroundColor: '#ef4135', color: '#fff' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
               >
                 {connecting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {connecting ? 'Redirecting to Stripe...' : 'Connect Your Bank Account'}

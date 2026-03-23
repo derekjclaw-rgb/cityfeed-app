@@ -255,7 +255,7 @@ export default function BookingsPage() {
             <Link
               href={isHost ? '/dashboard/create-listing' : '/marketplace'}
               className="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#ef4135', color: '#fff' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
               {isHost ? 'Create a Listing' : 'Browse Marketplace'}
             </Link>

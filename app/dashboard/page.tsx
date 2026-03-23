@@ -230,7 +230,7 @@ export default function DashboardPage() {
             <Link
               href="/dashboard/stripe-onboarding"
               className="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#ef4135', color: '#fff' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
               Set Up ⚠️
             </Link>

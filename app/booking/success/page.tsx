@@ -42,7 +42,7 @@ function SuccessPageInner() {
           <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#7ecfc0' }} />
         ) : (
           <>
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '2px solid rgba(239,65,53,0.3)' }}>
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '2px solid rgba(222,187,115,0.3)' }}>
               <CheckCircle className="w-10 h-10" style={{ color: '#7ecfc0' }} />
             </div>
             <h1 className="text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Booking confirmed!</h1>
@@ -65,7 +65,7 @@ function SuccessPageInner() {
                   </div>
                   <div className="flex justify-between">
                     <span>Total paid</span>
-                    <span className="font-semibold" style={{ color: '#ef4135' }}>${booking.total_amount.toLocaleString()}</span>
+                    <span className="font-semibold" style={{ color: '#debb73' }}>${booking.total_amount.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Status</span>
@@ -79,7 +79,7 @@ function SuccessPageInner() {
               <Link
                 href="/dashboard"
                 className="font-semibold px-6 py-3 rounded-xl hover:opacity-90 text-sm"
-                style={{ backgroundColor: '#ef4135', color: '#fff' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
               >
                 Go to dashboard
               </Link>

@@ -297,7 +297,7 @@ export default function CreateListingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#f0f0ec' }}>
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '1px solid rgba(239,65,53,0.3)' }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '1px solid rgba(222,187,115,0.3)' }}>
             <CheckCircle className="w-8 h-8" style={{ color: '#7ecfc0' }} />
           </div>
           <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Listing submitted!</h2>
@@ -305,7 +305,7 @@ export default function CreateListingPage() {
             Your listing is under review. We&apos;ll notify you once it&apos;s approved and live on the marketplace.
           </p>
           <div className="flex gap-3 justify-center">
-            <Link href="/dashboard/listings" className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
+            <Link href="/dashboard/listings" className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm" style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
               View my listings
             </Link>
             <button
@@ -620,7 +620,7 @@ export default function CreateListingPage() {
             type="submit"
             disabled={loading}
             className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
-            style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             {loading ? 'Submitting...' : 'Submit listing for review'}

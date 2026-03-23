@@ -106,7 +106,7 @@ export default function SavedPage() {
             <Link
               href="/marketplace"
               className="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#ef4135', color: '#fff' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
               Browse Marketplace
             </Link>

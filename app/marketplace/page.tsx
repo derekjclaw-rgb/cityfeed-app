@@ -138,7 +138,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
             </div>
           )}
           <div className="absolute bottom-3 right-3">
-            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#ef4135' }}>
+            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#debb73' }}>
               ${listing.price_per_day}/day
             </span>
           </div>
@@ -208,7 +208,7 @@ function MapView({ listings }: { listings: Listing[] }) {
       map.on('load', () => {
         listings.forEach((listing) => {
           const el = document.createElement('div')
-          el.innerHTML = `<div style="background:#ef4135;color:white;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(239,65,53,0.4);border:2px solid white;font-family:system-ui,sans-serif;">$${listing.price_per_day}</div>`
+          el.innerHTML = `<div style="background:#ef4135;color:white;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(222,187,115,0.4);border:2px solid white;font-family:system-ui,sans-serif;">$${listing.price_per_day}</div>`
           el.addEventListener('click', () => setSelectedListing(listing))
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
@@ -235,8 +235,8 @@ function MapView({ listings }: { listings: Listing[] }) {
               {selectedListing.city}, {selectedListing.state}
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-bold text-sm" style={{ color: '#ef4135' }}>${selectedListing.price_per_day}/day</span>
-              <Link href={`/marketplace/${selectedListing.id}`} className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90" style={{ backgroundColor: '#ef4135' }}>
+              <span className="font-bold text-sm" style={{ color: '#debb73' }}>${selectedListing.price_per_day}/day</span>
+              <Link href={`/marketplace/${selectedListing.id}`} className="text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-90" style={{ backgroundColor: '#debb73' }}>
                 View listing →
               </Link>
             </div>
@@ -373,7 +373,7 @@ export default function MarketplacePage() {
             <button
               onClick={() => setViewMode('grid')}
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-              style={viewMode === 'grid' ? { backgroundColor: '#ef4135', color: '#fff' } : { color: '#888' }}
+              style={viewMode === 'grid' ? { backgroundColor: '#debb73', color: '#2b2b2b' } : { color: '#888' }}
             >
               <LayoutGrid className="w-4 h-4" />
               <span className="hidden sm:inline">Grid</span>
@@ -381,7 +381,7 @@ export default function MarketplacePage() {
             <button
               onClick={() => setViewMode('map')}
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-              style={viewMode === 'map' ? { backgroundColor: '#ef4135', color: '#fff' } : { color: '#888' }}
+              style={viewMode === 'map' ? { backgroundColor: '#debb73', color: '#2b2b2b' } : { color: '#888' }}
             >
               <Map className="w-4 h-4" />
               <span className="hidden sm:inline">Map</span>
@@ -396,7 +396,7 @@ export default function MarketplacePage() {
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
               className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-              style={selectedCategory === cat.value ? { backgroundColor: '#ef4135', color: '#fff' } : { backgroundColor: '#fff', color: '#555', border: '1px solid #e0e0d8' }}
+              style={selectedCategory === cat.value ? { backgroundColor: '#debb73', color: '#2b2b2b' } : { backgroundColor: '#fff', color: '#555', border: '1px solid #e0e0d8' }}
             >
               {cat.label}
             </button>
@@ -424,7 +424,7 @@ export default function MarketplacePage() {
             <div className="text-center py-24">
               <div className="text-4xl mb-4">🗺️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No placements found. Try a different search or check back soon.</h3>
-              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
+              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90" style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
                 Clear filters
               </button>
             </div>

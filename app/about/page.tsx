@@ -90,7 +90,7 @@ export default function AboutPage() {
             <Link
               href="/marketplace"
               className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-lg hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
             >
               Browse placements
               <ArrowRight className="w-5 h-5" />

@@ -160,7 +160,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
         onClick={handleBook}
         disabled={!startDate || !endDate || days < 1}
         className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+        style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
       >
         Request to Book
         <ChevronRight className="w-4 h-4" />
@@ -510,13 +510,13 @@ export default function ListingDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 px-4 py-3" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold" style={{ color: '#ef4135' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
+            <div className="text-lg font-bold" style={{ color: '#debb73' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
             <div className="text-xs" style={{ color: '#888' }}>Min. {listing.min_days} days</div>
           </div>
           <a
             href={`/marketplace/${listing.id}/book`}
             className="font-semibold px-6 py-3 rounded-xl text-sm"
-            style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 2px 8px rgba(239,65,53,0.3)' }}
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
           >
             Book Now
           </a>

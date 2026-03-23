@@ -129,7 +129,7 @@ export default function MyListingsPage() {
           <Link
             href="/dashboard/create-listing"
             className="inline-flex items-center gap-2 font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors text-sm"
-            style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.3)' }}
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.3)' }}
           >
             <Plus className="w-4 h-4" />
             Create new listing
@@ -164,7 +164,7 @@ export default function MyListingsPage() {
             <Link
               href="/dashboard/create-listing"
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-colors"
-              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.3)' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.3)' }}
             >
               <Plus className="w-4 h-4" />
               Create your first listing

@@ -216,7 +216,7 @@ function BookPageInner() {
           onClick={handleCheckout}
           disabled={!startDate || !endDate || days < 1 || submitting}
           className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base mb-4"
-          style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+          style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
         >
           {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
           {submitting ? 'Redirecting to payment...' : days > 0 ? `Confirm & Pay $${total.toLocaleString()}` : 'Select dates to continue'}
@@ -257,7 +257,7 @@ function BookPageInner() {
 
               {authError && <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2">{authError}</p>}
 
-              <button type="submit" disabled={authLoading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#ef4135', color: '#fff' }}>
+              <button type="submit" disabled={authLoading} className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
                 {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 {authMode === 'login' ? 'Sign in' : 'Create account'}
               </button>

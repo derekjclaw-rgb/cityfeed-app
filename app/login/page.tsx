@@ -120,7 +120,7 @@ function LoginForm() {
               type="submit"
               disabled={loading}
               className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               Sign in

@@ -245,7 +245,7 @@ export default function PublicProfilePage() {
               <button
                 onClick={handleContactHost}
                 className="flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#ef4135', color: '#fff' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
               >
                 <MessageSquare className="w-4 h-4" />
                 {isHost ? 'Contact Host' : 'Send Message'}

@@ -151,7 +151,7 @@ export default function CancelBookingPage() {
           <Link
             href="/dashboard/bookings"
             className="inline-block px-6 py-3 rounded-xl font-semibold text-sm"
-            style={{ backgroundColor: '#ef4135', color: '#fff' }}
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
           >
             Back to Bookings
           </Link>

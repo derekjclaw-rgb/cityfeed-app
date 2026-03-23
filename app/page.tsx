@@ -67,7 +67,7 @@ function ListingCard({ listing }: { listing: Listing }) {
             </span>
           </div>
           <div className="absolute bottom-3 right-3">
-            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#ef4135' }}>
+            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#debb73' }}>
               ${listing.price_per_day}/day
             </span>
           </div>
@@ -165,7 +165,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 leading-[1.1]" style={{ color: '#2b2b2b' }}>
             Advertise on{' '}
-            <span style={{ color: '#ef4135' }}>your terms</span>
+            <span style={{ color: '#debb73' }}>your terms</span>
           </h1>
           <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
             A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no long-term contracts, no agency middlemen.
@@ -174,7 +174,7 @@ export default function HomePage() {
             <Link
               href="/marketplace"
               className="group inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105 shadow-lg"
-              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
             >
               Find Ad Space
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -245,7 +245,7 @@ export default function HomePage() {
               <Link
                 href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}
                 className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 w-full sm:w-auto"
-                style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 2px 8px rgba(239,65,53,0.3)' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
               >
                 <Search className="w-4 h-4" />
                 Search
@@ -306,7 +306,7 @@ export default function HomePage() {
                             <div className="text-xs flex items-center gap-1 mt-1" style={{ color: '#888' }}>
                               <MapPin className="w-3 h-3" />{listing.city}, {listing.state}
                             </div>
-                            <div className="text-sm font-bold mt-1" style={{ color: '#ef4135' }}>${listing.price_per_day}/day</div>
+                            <div className="text-sm font-bold mt-1" style={{ color: '#debb73' }}>${listing.price_per_day}/day</div>
                           </div>
                         </div>
                       </Link>

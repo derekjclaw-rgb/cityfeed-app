@@ -86,7 +86,7 @@ export default function MessagesPage() {
             <Link
               href="/marketplace"
               className="font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90"
-              style={{ backgroundColor: '#ef4135', color: '#fff' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
               Browse listings
             </Link>
@@ -112,7 +112,7 @@ export default function MessagesPage() {
                     <p className="text-xs truncate" style={{ color: '#888' }}>{thread.last_message}</p>
                   </div>
                   {thread.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: '#ef4135' }}>
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: '#debb73' }}>
                       {thread.unread}
                     </div>
                   )}

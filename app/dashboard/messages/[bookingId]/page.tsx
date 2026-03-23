@@ -174,7 +174,7 @@ export default function ChatPage() {
                 <div
                   className="max-w-xs rounded-2xl px-4 py-3 text-sm"
                   style={isMe
-                    ? { backgroundColor: '#ef4135', color: '#fff', borderBottomRightRadius: '4px' }
+                    ? { backgroundColor: '#debb73', color: '#2b2b2b', borderBottomRightRadius: '4px' }
                     : { backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #e0e0d8', borderBottomLeftRadius: '4px' }
                   }
                 >
@@ -229,7 +229,7 @@ export default function ChatPage() {
             type="submit"
             disabled={(!newMessage.trim() && !imageFile) || sending}
             className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-colors disabled:opacity-40"
-            style={{ backgroundColor: '#ef4135', color: '#fff' }}
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
           >
             {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </button>

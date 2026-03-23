@@ -76,7 +76,7 @@ export default function HowItWorksPage() {
             <Link
               href="/marketplace"
               className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-base hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
             >
               Browse placements
               <ArrowRight className="w-5 h-5" />
@@ -116,7 +116,7 @@ export default function HowItWorksPage() {
             <Link
               href="/signup?role=host"
               className="mt-10 inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-colors"
-              style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
             >
               Start listing today
               <ArrowRight className="w-4 h-4" />
@@ -170,7 +170,7 @@ export default function HowItWorksPage() {
             <Link
               href="/signup"
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#ef4135', color: '#fff' }}
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
               Create free account
               <ArrowRight className="w-4 h-4" />

@@ -181,7 +181,7 @@ export default function ProfilePage() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingPhoto}
                 className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#ef4135', color: '#fff', border: '2px solid #fff' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b', border: '2px solid #fff' }}
               >
                 {uploadingPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <Camera className="w-3 h-3" />}
               </button>
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                 type="submit"
                 disabled={saving}
                 className="flex-1 font-semibold py-3 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#ef4135', color: '#fff' }}
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
               >
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Changes

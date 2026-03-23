@@ -72,7 +72,7 @@ function SignupForm() {
   if (success) {
     return (
       <div className="text-center">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '1px solid rgba(239,65,53,0.3)' }}>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '1px solid rgba(222,187,115,0.3)' }}>
           <Check className="w-8 h-8" style={{ color: '#7ecfc0' }} />
         </div>
         <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Check your email</h2>
@@ -197,7 +197,7 @@ function SignupForm() {
           type="submit"
           disabled={loading}
           className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          style={{ backgroundColor: '#ef4135', color: '#fff', boxShadow: '0 4px 16px rgba(239,65,53,0.35)' }}
+          style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Create account
