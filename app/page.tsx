@@ -10,8 +10,8 @@ import DateRangePicker from '@/components/DateRangePicker'
 
 const CATEGORIES = [
   'All Types',
-  'Digital Billboards',
-  'Static Billboards',
+  'Digital Billboard',
+  'Static Billboard',
   'Transit',
   'Outdoor Static',
   'Outdoor Digital',
@@ -21,11 +21,12 @@ const CATEGORIES = [
   'Experiential',
   'Street Furniture',
   'Unique',
+  'Other',
 ]
 
 const CATEGORY_MAP: Record<string, string> = {
-  digital_billboards: 'Digital Billboards',
-  static_billboards: 'Static Billboards',
+  digital_billboards: 'Digital Billboard',
+  static_billboards: 'Static Billboard',
   transit: 'Transit',
   outdoor_static: 'Outdoor Static',
   outdoor_digital: 'Outdoor Digital',
@@ -35,6 +36,7 @@ const CATEGORY_MAP: Record<string, string> = {
   experiential: 'Experiential',
   street_furniture: 'Street Furniture',
   unique: 'Unique',
+  other: 'Other',
 }
 
 const GRADIENT_POOL = [
@@ -335,7 +337,7 @@ export default function HomePage() {
               <div className="text-4xl mb-4">🗺️</div>
               <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
               <p className="text-sm mb-6" style={{ color: '#888' }}>Try a different search or category</p>
-              <button onClick={() => { setSearch(''); setSelectedCategory('All Types') }} className="text-sm font-medium" style={{ color: '#7ecfc0' }}>
+              <button onClick={() => { setSearch(''); setSelectedCategory('All Types') }} className="text-sm font-medium" style={{ color: '#7ecfc0' }} type="button">
                 Clear filters
               </button>
             </div>

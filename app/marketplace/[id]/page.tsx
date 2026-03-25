@@ -15,8 +15,8 @@ import { MOCK_LISTINGS } from '../page'
 import DateRangePicker from '@/components/DateRangePicker'
 
 const CATEGORY_MAP: Record<string, string> = {
-  digital_billboards: 'Digital Billboards',
-  static_billboards: 'Static Billboards',
+  digital_billboards: 'Digital Billboard',
+  static_billboards: 'Static Billboard',
   transit: 'Transit',
   outdoor_static: 'Outdoor Static',
   outdoor_digital: 'Outdoor Digital',
@@ -26,6 +26,7 @@ const CATEGORY_MAP: Record<string, string> = {
   experiential: 'Experiential',
   street_furniture: 'Street Furniture',
   unique: 'Unique',
+  other: 'Other',
 }
 
 const GRADIENT_POOL = [

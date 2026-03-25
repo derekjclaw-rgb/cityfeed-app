@@ -37,8 +37,8 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  digital_billboards: 'Digital Billboards',
-  static_billboards: 'Static Billboards',
+  digital_billboards: 'Digital Billboard',
+  static_billboards: 'Static Billboard',
   transit: 'Transit',
   outdoor_static: 'Outdoor Static',
   outdoor_digital: 'Outdoor Digital',

@@ -31,11 +31,11 @@ export interface Listing {
 
 // ─── Mock data (fallback) ──────────────────────────────────────────────────────
 export const MOCK_LISTINGS: Listing[] = [
-  { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'Digital Billboards', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'], lat: 36.1699, lng: -115.1398, daily_impressions: 45000 },
+  { id: '1', title: 'Downtown Digital Billboard — Las Vegas Blvd', category: 'Digital Billboard', city: 'Las Vegas', state: 'NV', price_per_day: 450, rating: 4.9, review_count: 23, image_placeholder: 'from-purple-100 to-purple-200', tags: ['High traffic', 'LED', '24/7'], lat: 36.1699, lng: -115.1398, daily_impressions: 45000 },
   { id: '2', title: 'Coffee Shop Window Wrap — Arts District', category: 'Outdoor Static', city: 'Los Angeles', state: 'CA', price_per_day: 85, rating: 4.7, review_count: 11, image_placeholder: 'from-amber-100 to-amber-200', tags: ['Street-level', 'High foot traffic'], lat: 34.0522, lng: -118.2437, daily_impressions: 3200 },
   { id: '3', title: 'Food Truck Fleet Wraps — 5 Vehicles', category: 'Human-Based', city: 'Austin', state: 'TX', price_per_day: 200, rating: 4.8, review_count: 17, image_placeholder: 'from-orange-100 to-orange-200', tags: ['Mobile', 'Event-ready'], lat: 30.2672, lng: -97.7431, daily_impressions: 12000 },
   { id: '4', title: 'Indoor Digital Screen — Union Square Mall', category: 'Display On-Premise', city: 'San Francisco', state: 'CA', price_per_day: 320, rating: 4.6, review_count: 8, image_placeholder: 'from-blue-100 to-blue-200', tags: ['Indoor', '4K display', 'Loop ads'], lat: 37.7749, lng: -122.4194, daily_impressions: 28000 },
-  { id: '5', title: 'Parking Lot Billboard — 15k Daily Impressions', category: 'Static Billboards', city: 'Chicago', state: 'IL', price_per_day: 380, rating: 4.9, review_count: 31, image_placeholder: 'from-red-100 to-red-200', tags: ['Verified traffic', 'Highway adjacent'], lat: 41.8781, lng: -87.6298, daily_impressions: 15000 },
+  { id: '5', title: 'Parking Lot Billboard — 15k Daily Impressions', category: 'Static Billboard', city: 'Chicago', state: 'IL', price_per_day: 380, rating: 4.9, review_count: 31, image_placeholder: 'from-red-100 to-red-200', tags: ['Verified traffic', 'Highway adjacent'], lat: 41.8781, lng: -87.6298, daily_impressions: 15000 },
   { id: '6', title: 'Boutique Storefront Banner — SoHo Block', category: 'Outdoor Static', city: 'New York', state: 'NY', price_per_day: 150, rating: 4.5, review_count: 14, image_placeholder: 'from-pink-100 to-pink-200', tags: ['Fashion district', 'Pedestrian'], lat: 40.7128, lng: -74.0060, daily_impressions: 8000 },
   { id: '7', title: 'Bus Stop Shelter — Metro Line 12', category: 'Transit', city: 'Seattle', state: 'WA', price_per_day: 120, rating: 4.7, review_count: 6, image_placeholder: 'from-teal-100 to-teal-200', tags: ['Transit', 'High volume'], lat: 47.6062, lng: -122.3321, daily_impressions: 9500 },
   { id: '8', title: 'Rooftop LED Screen — Midtown East', category: 'Outdoor Digital', city: 'New York', state: 'NY', price_per_day: 680, rating: 5.0, review_count: 4, image_placeholder: 'from-indigo-100 to-indigo-200', tags: ['Premium', 'Times Square adjacent'], lat: 40.7549, lng: -73.9840, daily_impressions: 60000 },
@@ -45,8 +45,8 @@ export const MOCK_LISTINGS: Listing[] = [
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const CATEGORIES = [
   { value: 'all', label: 'All types' },
-  { value: 'Digital Billboards', label: 'Digital Billboards' },
-  { value: 'Static Billboards', label: 'Static Billboards' },
+  { value: 'Digital Billboard', label: 'Digital Billboard' },
+  { value: 'Static Billboard', label: 'Static Billboard' },
   { value: 'Transit', label: 'Transit' },
   { value: 'Outdoor Static', label: 'Outdoor Static' },
   { value: 'Outdoor Digital', label: 'Outdoor Digital' },
@@ -56,11 +56,12 @@ const CATEGORIES = [
   { value: 'Experiential', label: 'Experiential' },
   { value: 'Street Furniture', label: 'Street Furniture' },
   { value: 'Unique', label: 'Unique' },
+  { value: 'Other', label: 'Other' },
 ]
 
 const CATEGORY_MAP: Record<string, string> = {
-  digital_billboards: 'Digital Billboards',
-  static_billboards: 'Static Billboards',
+  digital_billboards: 'Digital Billboard',
+  static_billboards: 'Static Billboard',
   transit: 'Transit',
   outdoor_static: 'Outdoor Static',
   outdoor_digital: 'Outdoor Digital',
@@ -70,6 +71,7 @@ const CATEGORY_MAP: Record<string, string> = {
   experiential: 'Experiential',
   street_furniture: 'Street Furniture',
   unique: 'Unique',
+  other: 'Other',
 }
 
 const GRADIENT_POOL = [
