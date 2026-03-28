@@ -51,12 +51,11 @@ export default function AboutPage() {
               <div
                 key={item.step}
                 className="relative p-8 rounded-2xl"
-                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                style={{ backgroundColor: '#fff', border: '1.5px solid #debb73', boxShadow: '0 1px 4px rgba(222,187,115,0.18)' }}
               >
-                <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#f0f0ec' }}>
+                <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#E63946', opacity: 0.12 }}>
                   {item.step}
                 </div>
-                <div className="text-xs font-black tracking-widest mb-3" style={{ color: '#E63946' }}>{item.step}</div>
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(126,207,192,0.12)' }}>
                   <item.icon className="w-5 h-5" style={{ color: '#7ecfc0' }} />
                 </div>
