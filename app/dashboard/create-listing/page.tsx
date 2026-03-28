@@ -85,7 +85,7 @@ interface FormData {
   zip: string
   dimensions: string
   daily_impressions: string
-  daily_traffic: string
+  illuminated: boolean
   production_time: string
   price_per_day: string
   min_days: string
@@ -118,7 +118,7 @@ const INITIAL_FORM: FormData = {
   zip: '',
   dimensions: '',
   daily_impressions: '',
-  daily_traffic: '',
+  illuminated: false,
   production_time: '3 days',
   price_per_day: '',
   min_days: '7',
@@ -339,7 +339,8 @@ export default function CreateListingPage() {
       lng,
       dimensions: form.dimensions,
       daily_impressions: parseInt(form.daily_impressions) || 0,
-      daily_traffic: parseInt(form.daily_traffic) || 0,
+      // NOTE: DB migration needed — alter table public.listings add column if not exists illuminated boolean default null;
+      illuminated: form.illuminated,
       production_time: form.production_time,
       price_per_day: parseFloat(form.price_per_day) || 0,
       min_days: parseInt(form.min_days) || 1,
@@ -724,20 +725,14 @@ export default function CreateListingPage() {
                   style={inputStyle}
                 />
               </FormField>
-              <FormField
-                label="Estimated daily traffic"
-                hint="Vehicles or pedestrians passing by"
-              >
-                <input
-                  type="number"
-                  value={form.daily_traffic}
-                  onChange={e => set('daily_traffic', e.target.value)}
-                  placeholder="8000"
-                  min="0"
-                  className={inputClass}
-                  style={inputStyle}
+              <div className="flex flex-col justify-center pt-1">
+                <Toggle
+                  value={form.illuminated}
+                  onChange={v => set('illuminated', v)}
+                  label="Illuminated?"
+                  hint={form.illuminated ? 'Yes — lit at night' : 'No — not lit at night'}
                 />
-              </FormField>
+              </div>
             </div>
             <FormField
               label="Production time"

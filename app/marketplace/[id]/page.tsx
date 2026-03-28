@@ -7,7 +7,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  MapPin, Star, Eye, Car, Ruler, Clock, ArrowLeft,
+  MapPin, Star, Eye, Lightbulb, Ruler, Clock, ArrowLeft,
   ChevronRight, Shield, CheckCircle, Loader2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -63,6 +63,7 @@ interface ListingData {
   dimensions?: string
   daily_impressions: number
   daily_traffic: number
+  illuminated?: boolean | null
   production_time?: string
   content_restrictions?: string
   images: string[]
@@ -209,6 +210,8 @@ export default function ListingDetailPage() {
           dimensions: row.dimensions,
           daily_impressions: row.daily_impressions ?? 0,
           daily_traffic: row.daily_traffic ?? 0,
+          // NOTE: DB migration needed — alter table public.listings add column if not exists illuminated boolean default null;
+          illuminated: row.illuminated ?? null,
           production_time: row.production_time,
           content_restrictions: row.content_restrictions,
           images: row.images ?? [],
@@ -375,7 +378,7 @@ export default function ListingDetailPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { icon: Eye, label: 'Est. Daily Impressions', value: listing.daily_impressions > 0 ? listing.daily_impressions.toLocaleString() : 'N/A' },
-                { icon: Car, label: 'Est. Daily Traffic', value: listing.daily_traffic > 0 ? listing.daily_traffic.toLocaleString() : (listing.daily_impressions > 0 ? Math.round(listing.daily_impressions * 1.8).toLocaleString() : 'N/A') },
+                { icon: Lightbulb, label: 'Illuminated', value: listing.illuminated === true ? 'Yes' : listing.illuminated === false ? 'No' : 'N/A' },
                 { icon: Ruler, label: 'Dimensions', value: listing.dimensions ?? 'N/A' },
                 { icon: Clock, label: 'Production', value: listing.production_time ?? 'N/A' },
               ].map((stat) => (

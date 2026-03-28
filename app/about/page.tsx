@@ -56,6 +56,7 @@ export default function AboutPage() {
                 <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#f0f0ec' }}>
                   {item.step}
                 </div>
+                <div className="text-xs font-black tracking-widest mb-3" style={{ color: '#E63946' }}>{item.step}</div>
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(126,207,192,0.12)' }}>
                   <item.icon className="w-5 h-5" style={{ color: '#7ecfc0' }} />
                 </div>

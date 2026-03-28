@@ -37,8 +37,9 @@ export default function Navbar() {
         .eq('id', data.user.id)
         .single()
 
-      const fullName = profile?.full_name || data.user.email || 'User'
-      const firstName = fullName.split(' ')[0]
+      // Only use name from profile — never fall back to email as display name
+      const fullName = profile?.full_name ?? ''
+      const firstName = fullName.split(' ')[0].trim() || ''
 
       setUser({
         email: data.user.email ?? undefined,
@@ -119,13 +120,15 @@ export default function Navbar() {
               >
                 {/* Avatar */}
                 {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.firstName} className="w-7 h-7 rounded-full object-cover" />
+                  <img src={user.avatarUrl} alt={user.firstName || 'Profile'} className="w-7 h-7 rounded-full object-cover" />
                 ) : (
                   <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.2)', color: '#7ecfc0' }}>
-                    {initials}
+                    {user.firstName ? initials : <User className="w-4 h-4" />}
                   </div>
                 )}
-                <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
+                {user.firstName && (
+                  <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
+                )}
                 <ChevronDown className="w-4 h-4" style={{ color: '#888', transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </button>
 
@@ -137,7 +140,7 @@ export default function Navbar() {
                 >
                   <div className="px-4 py-3" style={{ borderBottom: '1px solid #f0f0ea' }}>
                     <p className="text-xs font-medium" style={{ color: '#aaa' }}>Signed in as</p>
-                    <p className="text-sm font-semibold truncate" style={{ color: '#2b2b2b' }}>{user.firstName}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: '#2b2b2b' }}>{user.firstName || user.email || 'you'}</p>
                   </div>
                   <div className="py-1">
                     <Link
@@ -226,13 +229,15 @@ export default function Navbar() {
               <>
                 <div className="flex items-center gap-3 py-2 mb-2">
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.firstName} className="w-8 h-8 rounded-full object-cover" />
+                    <img src={user.avatarUrl} alt={user.firstName || 'Profile'} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.2)', color: '#7ecfc0' }}>
-                      {initials}
+                      {user.firstName ? initials : <User className="w-4 h-4" />}
                     </div>
                   )}
-                  <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
+                  {user.firstName && (
+                    <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
+                  )}
                 </div>
                 <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
                   <LayoutDashboard className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Dashboard

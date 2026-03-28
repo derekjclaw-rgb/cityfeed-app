@@ -172,7 +172,7 @@ export default function HowItWorksPage() {
               className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all"
               style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
             >
-              Create free account
+              Create account
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
