@@ -47,6 +47,11 @@ interface Listing {
   state: string
   production_time?: string
   delivery_instructions?: string
+  creative_formats?: string[]
+  creative_dimensions?: string
+  creative_max_file_size?: string
+  creative_video_duration?: string
+  creative_audio_allowed?: boolean
 }
 
 interface CollateralFile {
@@ -423,7 +428,7 @@ export default function BookingDetailPage() {
       if (bk.listing_id) {
         const { data: lst } = await supabase
           .from('listings')
-          .select('id, title, category, city, state, production_time, delivery_instructions')
+          .select('id, title, category, city, state, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed')
           .eq('id', bk.listing_id)
           .single()
         if (lst) setListing(lst)
@@ -517,6 +522,46 @@ export default function BookingDetailPage() {
               <p className="text-sm leading-relaxed" style={{ color: '#555' }}>
                 {listing.delivery_instructions}
               </p>
+            </div>
+          )}
+
+          {/* Creative specs — shown when booking is confirmed+ */}
+          {['confirmed', 'active', 'pop_pending', 'pop_review', 'completed'].includes(booking.status) &&
+            (listing?.creative_formats?.length || listing?.creative_dimensions || listing?.creative_max_file_size) && (
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Requirements</h2>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {listing?.creative_formats && listing.creative_formats.length > 0 && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>Accepted Formats</p>
+                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_formats.join(', ')}</p>
+                  </div>
+                )}
+                {listing?.creative_dimensions && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>Dimensions</p>
+                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_dimensions}</p>
+                  </div>
+                )}
+                {listing?.creative_max_file_size && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>Max File Size</p>
+                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_max_file_size}</p>
+                  </div>
+                )}
+                {listing?.creative_video_duration && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>Video Duration</p>
+                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_video_duration}</p>
+                  </div>
+                )}
+                {listing?.creative_audio_allowed !== undefined && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>Audio</p>
+                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

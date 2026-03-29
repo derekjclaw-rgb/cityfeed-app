@@ -58,11 +58,18 @@ function StatCard({ label, value, icon: Icon, prefix = '', color = '#7ecfc0' }: 
   )
 }
 
+interface ActionBanner {
+  message: string
+  href: string
+  cta: string
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [activity, setActivity] = useState<Activity[]>([])
+  const [actionBanner, setActionBanner] = useState<ActionBanner | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -152,6 +159,70 @@ export default function DashboardPage() {
           href: `/dashboard/bookings`,
         }))
         setActivity(acts)
+
+        // Action banner — find the most pressing pending action
+        try {
+          if (isHost) {
+            // Host: pending booking approval?
+            const { data: pendingBooking } = await supabase
+              .from('bookings')
+              .select('id, listings(title)')
+              .eq('host_id', user.id)
+              .eq('status', 'pending')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single()
+            if (pendingBooking) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const title = (pendingBooking as any).listings?.title ?? 'a listing'
+              setActionBanner({ message: `New booking request for "${title}"`, href: `/dashboard/bookings`, cta: 'Review Now' })
+            } else {
+              // Host: collateral uploaded (confirmed booking without pop yet)?
+              const { data: collateralBooking } = await supabase
+                .from('bookings')
+                .select('id, listings(title)')
+                .eq('host_id', user.id)
+                .eq('status', 'confirmed')
+                .order('updated_at', { ascending: false })
+                .limit(1)
+                .single()
+              if (collateralBooking) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const title = (collateralBooking as any).listings?.title ?? 'a booking'
+                setActionBanner({ message: `Creative may be ready for "${title}" — check the booking`, href: `/dashboard/bookings/${collateralBooking.id}`, cta: 'View Booking' })
+              }
+            }
+          } else {
+            // Advertiser: confirmed booking but needs creative upload?
+            const { data: confirmedBooking } = await supabase
+              .from('bookings')
+              .select('id, listings(title)')
+              .eq('advertiser_id', user.id)
+              .eq('status', 'confirmed')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single()
+            if (confirmedBooking) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const title = (confirmedBooking as any).listings?.title ?? 'your listing'
+              setActionBanner({ message: `Upload your creative for "${title}"`, href: `/dashboard/bookings/${confirmedBooking.id}`, cta: 'Upload Creative' })
+            } else {
+              // Advertiser: POP to review?
+              const { data: popBooking } = await supabase
+                .from('bookings')
+                .select('id, listings(title)')
+                .eq('advertiser_id', user.id)
+                .in('status', ['pop_pending', 'pop_review'])
+                .limit(1)
+                .single()
+              if (popBooking) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const title = (popBooking as any).listings?.title ?? 'your listing'
+                setActionBanner({ message: `Review proof of posting for "${title}"`, href: `/dashboard/bookings/${popBooking.id}`, cta: 'Review Now' })
+              }
+            }
+          }
+        } catch { /* action banner is non-critical */ }
       } catch {
         // Stats fetch failed silently
       }
@@ -217,8 +288,56 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* StockX-style action banner — persistent until action completed */}
+        {actionBanner && (
+          <Link href={actionBanner.href}>
+            <div className="rounded-xl px-5 py-4 mb-6 flex items-center justify-between gap-4 hover:opacity-90 transition-opacity cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #debb73, #c9a55f)', boxShadow: '0 4px 16px rgba(222,187,115,0.4)' }}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: '#2b2b2b' }} />
+                <p className="text-sm font-semibold truncate" style={{ color: '#2b2b2b' }}>{actionBanner.message}</p>
+              </div>
+              <span className="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap" style={{ backgroundColor: '#2b2b2b', color: '#debb73' }}>
+                {actionBanner.cta} →
+              </span>
+            </div>
+          </Link>
+        )}
+
+        {/* First-time host onboarding banner */}
+        {isHost && stats && stats.listings === 0 && (
+          <div className="rounded-2xl p-6 mb-6" style={{
+            background: 'linear-gradient(135deg, rgba(126,207,192,0.1), rgba(222,187,115,0.1))',
+            border: '1px solid rgba(126,207,192,0.3)'
+          }}>
+            <div className="flex items-start gap-4">
+              <div className="text-3xl flex-shrink-0">🏙️</div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold mb-1" style={{ color: '#2b2b2b' }}>Welcome to City Feed!</h2>
+                <p className="text-sm mb-4" style={{ color: '#555' }}>
+                  Let&apos;s get your first listing live. It takes about 5 minutes to list your ad space.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/dashboard/create-listing"
+                    className="font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                  >
+                    Create Your First Listing →
+                  </Link>
+                  <Link href="/dashboard/stripe-onboarding"
+                    className="font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
+                  >
+                    Set Up Payouts
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Stripe Connect Banner — host without connected account */}
-        {isHost && profile && !profile.stripe_connected && (
+        {isHost && stats && stats.listings > 0 && profile && !profile.stripe_connected && (
           <div className="rounded-2xl p-4 mb-6 flex items-center gap-4" style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9' }}>
             <div className="p-2.5 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(126,207,192,0.15)' }}>
               <CreditCard className="w-5 h-5" style={{ color: '#7ecfc0' }} />

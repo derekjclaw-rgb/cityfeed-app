@@ -106,10 +106,35 @@ function BookPageInner() {
     setShowAuthModal(false)
   }
 
+  // Min/max validation
+  const tooShort = listing && listing.min_days && days > 0 && days < listing.min_days
+  const tooLong = listing && listing.max_days && days > 0 && days > listing.max_days
+  const daysError = tooShort
+    ? `Minimum booking is ${listing!.min_days} days`
+    : tooLong
+    ? `Maximum booking is ${listing!.max_days} days`
+    : null
+
   async function handleCheckout() {
     if (!listing || days < 1) return
+    if (daysError) { setError(daysError); return }
     // If not logged in, show auth modal instead of redirecting
     if (!userId) { setShowAuthModal(true); return }
+
+    // Date availability check — prevent double-booking
+    const supabase = createClient()
+    const { data: conflicts } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('listing_id', listingId)
+      .in('status', ['pending', 'confirmed', 'active'])
+      .lte('start_date', endDate)
+      .gte('end_date', startDate)
+
+    if (conflicts && conflicts.length > 0) {
+      setError('These dates overlap with an existing booking. Please choose different dates.')
+      return
+    }
     setSubmitting(true)
     setError('')
 
@@ -183,13 +208,21 @@ function BookPageInner() {
         )}
 
         <div className="rounded-2xl p-6 space-y-4 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-          <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Select dates</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Select dates</h2>
+            {listing.min_days && listing.min_days > 1 && (
+              <span className="text-xs" style={{ color: '#888' }}>Min {listing.min_days} days</span>
+            )}
+          </div>
           <DateRangePicker
             startDate={startDate}
             endDate={endDate}
             onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
             placeholder="Pick start & end date"
           />
+          {daysError && days > 0 && (
+            <p className="text-xs font-medium" style={{ color: '#E63946' }}>{daysError}</p>
+          )}
         </div>
 
         {days > 0 && (
@@ -214,7 +247,7 @@ function BookPageInner() {
 
         <button
           onClick={handleCheckout}
-          disabled={!startDate || !endDate || days < 1 || submitting}
+          disabled={!startDate || !endDate || days < 1 || submitting || !!daysError}
           className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base mb-4"
           style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
         >
