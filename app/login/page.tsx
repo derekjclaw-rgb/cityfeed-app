@@ -4,7 +4,7 @@
  * Login page — Supabase email/password auth
  * Handles ?confirmed=true message after email verification
  */
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
@@ -15,6 +15,14 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') || '/dashboard'
   const confirmed = searchParams.get('confirmed') === 'true'
+
+  // Redirect if already signed in
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace(redirectTo)
+    })
+  }, [router, redirectTo])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
