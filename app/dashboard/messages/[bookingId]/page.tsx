@@ -23,30 +23,53 @@ function formatName(fullName: string): string {
 // ─── Booking Progress Bar ─────────────────────────────────────────────────────
 
 const PROGRESS_STEPS = [
-  { label: 'Booked', statuses: ['pending_payment', 'pending', 'confirmed'] },
-  { label: 'Creative Uploaded', statuses: ['active'] },
-  { label: 'Ad Live (POP)', statuses: ['pop_pending', 'pop_review'] },
-  { label: 'Completed', statuses: ['completed'] },
+  { label: 'Booked' },
+  { label: 'Creative Uploaded' },
+  { label: 'Ad Live' },
+  { label: 'Completed' },
 ]
 
-function getProgressStep(status: string): number {
-  for (let i = PROGRESS_STEPS.length - 1; i >= 0; i--) {
-    if (PROGRESS_STEPS[i].statuses.includes(status)) return i
+/**
+ * Returns the current step index (0-3) and whether the "Ad Live" step is actively live.
+ * Ad Live = status is completed AND today < end_date (campaign still running)
+ * Completed = status is completed AND today >= end_date
+ */
+function getProgressInfo(status: string, endDate?: string | null): { step: number; isAdLive: boolean } {
+  const now = new Date()
+  const end = endDate ? new Date(endDate) : null
+
+  if (status === 'completed') {
+    if (end && now < end) return { step: 2, isAdLive: true } // Ad Live (campaign running)
+    return { step: 3, isAdLive: false } // Completed
   }
-  return 0
+  if (['pop_pending', 'pop_review'].includes(status)) return { step: 2, isAdLive: false }
+  if (status === 'active') return { step: 1, isAdLive: false }
+  return { step: 0, isAdLive: false }
 }
 
-function BookingProgressBar({ status }: { status: string }) {
+function BookingProgressBar({ status, endDate }: { status: string; endDate?: string | null }) {
   if (status === 'cancelled' || status === 'disputed') return null
-  const currentStep = getProgressStep(status)
+  const { step: currentStep, isAdLive } = getProgressInfo(status, endDate)
 
   return (
     <div className="px-6 py-3" style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec' }}>
+      <style>{`
+        @keyframes pulse-green {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6), 0 0 0 3px rgba(34, 197, 94, 0.2); }
+          50% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0), 0 0 0 3px rgba(34, 197, 94, 0.35); }
+        }
+      `}</style>
       <div className="flex items-center gap-0">
         {PROGRESS_STEPS.map((step, i) => {
           const isCompleted = i < currentStep
           const isCurrent = i === currentStep
+          const isLive = isCurrent && i === 2 && isAdLive // "Ad Live" step, actively running
           const isLast = i === PROGRESS_STEPS.length - 1
+
+          // Color logic
+          const dotColor = isLive ? '#22c55e' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#e0e0d8'
+          const labelColor = isLive ? '#16a34a' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#bbb'
+          const lineColor = i < currentStep ? '#7ecfc0' : '#e0e0d8'
 
           return (
             <div key={step.label} className="flex items-center flex-1 last:flex-none">
@@ -55,32 +78,27 @@ function BookingProgressBar({ status }: { status: string }) {
                 <div
                   className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all"
                   style={{
-                    backgroundColor: isCompleted
-                      ? '#7ecfc0'
-                      : isCurrent
-                        ? '#debb73'
-                        : '#e0e0d8',
-                    boxShadow: isCurrent ? '0 0 0 3px rgba(222,187,115,0.25)' : 'none',
+                    backgroundColor: dotColor,
+                    animation: isLive ? 'pulse-green 1.8s ease-in-out infinite' : 'none',
+                    boxShadow: isCurrent && !isLive ? '0 0 0 3px rgba(222,187,115,0.25)' : 'none',
                   }}
                 />
                 <span
                   className="text-xs whitespace-nowrap absolute top-4"
                   style={{
-                    color: isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#bbb',
-                    fontWeight: isCurrent ? '600' : '400',
+                    color: labelColor,
+                    fontWeight: (isCurrent || isLive) ? '600' : '400',
                     fontSize: '10px',
                   }}
                 >
-                  {step.label}
+                  {step.label}{isLive ? ' 🟢' : ''}
                 </span>
               </div>
               {/* Connector line */}
               {!isLast && (
                 <div
                   className="h-px flex-1 mx-1 transition-all"
-                  style={{
-                    backgroundColor: i < currentStep ? '#7ecfc0' : '#e0e0d8',
-                  }}
+                  style={{ backgroundColor: lineColor }}
                 />
               )}
             </div>
@@ -308,6 +326,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const [bookingTitle, setBookingTitle] = useState('Conversation')
   const [bookingStatus, setBookingStatus] = useState('')
+  const [bookingEndDate, setBookingEndDate] = useState<string | null>(null)
   const [listingTitle, setListingTitle] = useState('')
   const [otherPartyName, setOtherPartyName] = useState('Other party')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -336,7 +355,7 @@ export default function ChatPage() {
       const { data: booking } = await supabase
         .from('bookings')
         .select(`
-          host_id, advertiser_id, status,
+          host_id, advertiser_id, status, end_date,
           listings(title),
           host:profiles!bookings_host_id_fkey(full_name),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
@@ -351,6 +370,7 @@ export default function ChatPage() {
         setBookingTitle(title)
         setListingTitle(title)
         setBookingStatus(b.status ?? '')
+        setBookingEndDate(b.end_date ?? null)
         setHostId(b.host_id)
 
         const isHost = uid === b.host_id
@@ -440,15 +460,26 @@ export default function ChatPage() {
       clearImage()
     }
 
-    await supabase.from('messages').insert({
+    const msgContent = newMessage.trim()
+    setNewMessage('')
+
+    const { data: inserted } = await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: userId,
       recipient_id: recipientId,
-      content: newMessage.trim(),
+      content: msgContent,
       image_url: imageUrl,
-    })
+    }).select().single()
 
-    setNewMessage('')
+    // Optimistically add to local state if realtime doesn't fire for the sender
+    if (inserted) {
+      setMessages(prev => {
+        // Avoid duplicates in case realtime already added it
+        if (prev.some(m => m.id === inserted.id)) return prev
+        return [...prev, inserted as Message]
+      })
+    }
+
     setSending(false)
   }
 
@@ -485,7 +516,7 @@ export default function ChatPage() {
 
       {/* Progress bar — below header */}
       {bookingStatus && (
-        <BookingProgressBar status={bookingStatus} />
+        <BookingProgressBar status={bookingStatus} endDate={bookingEndDate} />
       )}
 
       {/* Spacer for progress step labels */}

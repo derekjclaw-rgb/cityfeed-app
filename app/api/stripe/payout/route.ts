@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail } from '@/lib/email'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
@@ -84,6 +85,35 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
     }).then(({ error }) => {
       if (error) console.warn('[Payout] Log insert failed (table may not exist yet):', error.message)
+    })
+
+    // Notify host via email
+    const { data: hostProfile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', booking.host_id)
+      .single()
+
+    const listingTitle = (booking as Record<string, unknown> & { listings?: { title?: string } }).listings?.title ?? 'your listing'
+
+    if (hostProfile?.email) {
+      sendEmail({
+        type: 'pop_approved',
+        hostEmail: hostProfile.email,
+        listingTitle,
+        amount: payoutAmount / 100,
+      }).catch(err => console.warn('[Payout] Email notification failed:', err))
+    }
+
+    // Auto-message in chat to confirm payout initiated
+    const payoutMsg = `💰 Your payout of $${(payoutAmount / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} has been initiated for "${listingTitle}". Funds will arrive in 2–3 business days.`
+    await supabase.from('messages').insert({
+      booking_id,
+      sender_id: booking.advertiser_id,
+      recipient_id: booking.host_id,
+      content: payoutMsg,
+    }).then(({ error }) => {
+      if (error) console.warn('[Payout] Auto-message insert failed:', error.message)
     })
 
     return NextResponse.json({
