@@ -11,6 +11,14 @@ import { ArrowLeft, Send, Loader2, ImageIcon, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
+/** Format a full name as "First L." for privacy */
+function formatName(fullName: string): string {
+  if (!fullName) return 'Unknown'
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0).toUpperCase()}.`
+}
+
 interface Message {
   id: string
   booking_id: string
@@ -77,8 +85,8 @@ export default function ChatPage() {
         setRecipientId(recipient)
 
         const otherName = isHost
-          ? (b.advertiser?.full_name ?? 'Advertiser')
-          : (b.host?.full_name ?? 'Host')
+          ? formatName(b.advertiser?.full_name ?? 'Advertiser')
+          : formatName(b.host?.full_name ?? 'Host')
         setOtherPartyName(otherName)
       }
 

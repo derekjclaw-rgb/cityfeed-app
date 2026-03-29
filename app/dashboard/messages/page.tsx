@@ -19,6 +19,14 @@ interface Thread {
   status: string
 }
 
+/** Format a full name as "First L." for privacy */
+function formatName(fullName: string): string {
+  if (!fullName) return 'Unknown'
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0]
+  return `${parts[0]} ${parts[parts.length - 1].charAt(0).toUpperCase()}.`
+}
+
 export default function MessagesPage() {
   const router = useRouter()
   const [threads, setThreads] = useState<Thread[]>([])
@@ -55,8 +63,8 @@ export default function MessagesPage() {
           const unread = msgs.filter((m: { sender_id: string; read: boolean }) => m.sender_id !== userId && !m.read).length
 
           const otherParty = userId === b.host_id
-            ? (b.advertiser?.full_name ?? 'Advertiser')
-            : (b.host?.full_name ?? 'Host')
+            ? formatName(b.advertiser?.full_name ?? 'Advertiser')
+            : formatName(b.host?.full_name ?? 'Host')
 
           return {
             booking_id: b.id,

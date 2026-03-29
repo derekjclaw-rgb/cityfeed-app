@@ -20,6 +20,7 @@ interface Listing {
   status: string
   daily_impressions: number
   created_at: string
+  images?: string[]
 }
 
 const STATUS_STYLES: Record<string, React.CSSProperties> = {
@@ -171,76 +172,39 @@ export default function MyListingsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="space-y-4">
             {listings.map(listing => (
               <div
                 key={listing.id}
-                className="rounded-2xl overflow-hidden transition-shadow hover:shadow-md"
+                className="rounded-2xl overflow-visible transition-shadow hover:shadow-md flex items-center gap-4 p-4"
                 style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
               >
-                {/* Image placeholder */}
-                <div className="h-40 relative" style={{ backgroundColor: '#f0f0ec' }}>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <MapPin className="w-8 h-8" style={{ color: '#e0e0d8' }} />
+                {/* Thumbnail */}
+                {listing.images && listing.images.length > 0 ? (
+                  <img
+                    src={listing.images[0]}
+                    alt={listing.title}
+                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                    style={{ border: '1px solid #e0e0d8' }}
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f0f0ec', border: '1px solid #e0e0d8' }}>
+                    <MapPin className="w-6 h-6" style={{ color: '#ccc' }} />
                   </div>
-                  <div className="absolute top-3 right-3">
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={STATUS_STYLES[listing.status] ?? STATUS_STYLES.pending}>
+                )}
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <h3 className="font-semibold text-sm leading-snug line-clamp-1" style={{ color: '#2b2b2b' }}>
+                      {listing.title}
+                    </h3>
+                    <span className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full" style={STATUS_STYLES[listing.status] ?? STATUS_STYLES.pending}>
                       {STATUS_LABELS[listing.status] ?? listing.status}
                     </span>
                   </div>
-                  {/* Actions menu */}
-                  <div className="absolute top-3 left-3">
-                    <div className="relative">
-                      <button
-                        onClick={() => setOpenMenuId(openMenuId === listing.id ? null : listing.id)}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:opacity-80"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}
-                      >
-                        <MoreVertical className="w-4 h-4" style={{ color: '#555' }} />
-                      </button>
-                      {openMenuId === listing.id && (
-                        <div className="absolute left-0 top-10 w-40 rounded-xl shadow-lg z-10 overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-                          <Link
-                            href={`/marketplace/${listing.id}`}
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
-                            style={{ color: '#555' }}
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            View listing
-                          </Link>
-                          <button
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
-                            style={{ color: '#555' }}
-                            onClick={() => setOpenMenuId(null)}
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-red-50"
-                            style={{ color: '#dc2626' }}
-                            onClick={() => handleDelete(listing.id)}
-                            disabled={deletingId === listing.id}
-                          >
-                            {deletingId === listing.id
-                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              : <Trash2 className="w-3.5 h-3.5" />
-                            }
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
 
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-sm leading-snug mb-2 line-clamp-2" style={{ color: '#2b2b2b' }}>
-                    {listing.title}
-                  </h3>
-
-                  <div className="flex items-center gap-1 text-xs mb-3" style={{ color: '#888' }}>
+                  <div className="flex items-center gap-1 text-xs mb-2" style={{ color: '#888' }}>
                     <MapPin className="w-3 h-3" />
                     {listing.city}, {listing.state}
                     <span className="mx-1">·</span>
@@ -254,6 +218,49 @@ export default function MyListingsPage() {
                       {listing.daily_impressions?.toLocaleString() ?? 0} impr/day
                     </div>
                   </div>
+                </div>
+
+                {/* Actions menu */}
+                <div className="relative flex-shrink-0">
+                  <button
+                    onClick={() => setOpenMenuId(openMenuId === listing.id ? null : listing.id)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:opacity-80"
+                    style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+                  >
+                    <MoreVertical className="w-4 h-4" style={{ color: '#555' }} />
+                  </button>
+                  {openMenuId === listing.id && (
+                    <div className="absolute right-0 top-10 w-40 rounded-xl shadow-lg z-10 overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
+                      <Link
+                        href={`/marketplace/${listing.id}`}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
+                        style={{ color: '#555' }}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        View listing
+                      </Link>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
+                        style={{ color: '#555' }}
+                        onClick={() => setOpenMenuId(null)}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        Edit
+                      </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-red-50"
+                        style={{ color: '#dc2626' }}
+                        onClick={() => handleDelete(listing.id)}
+                        disabled={deletingId === listing.id}
+                      >
+                        {deletingId === listing.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />
+                        }
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

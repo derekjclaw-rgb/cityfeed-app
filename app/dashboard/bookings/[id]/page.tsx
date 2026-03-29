@@ -1,13 +1,14 @@
 'use client'
 
 /**
- * Booking Detail Page — Phase 5b
+ * Booking Detail Page — Phase 5b + UX Round 2
  *
  * Features:
  * - Full booking details
- * - Collateral upload flow (post-booking)
+ * - Collateral upload flow (post-booking) — explicit Upload button, success state, additional upload zone
  * - Delivery instructions (for physical placements)
- * - Host can view and download uploaded collateral
+ * - Host can view and force-download uploaded collateral
+ * - Host POP (proof of posting) upload flow
  *
  * IMPORTANT: Before using collateral uploads, create a Supabase Storage bucket:
  *   Bucket name: "booking-collateral"
@@ -20,7 +21,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Upload, FileText, Image, Film, Archive,
-  CheckCircle, Clock, Download, X, AlertCircle, Package
+  CheckCircle, Clock, Download, X, AlertCircle, Package, Camera
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -98,6 +99,25 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+// ─── Force download helper ─────────────────────────────────────────────────────
+
+async function forceDownload(url: string, filename: string) {
+  try {
+    const response = await fetch(url)
+    const blob = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100)
+  } catch {
+    window.open(url, '_blank')
+  }
+}
+
 // ─── Collateral Upload Section ─────────────────────────────────────────────────
 
 interface CollateralSectionProps {
@@ -111,11 +131,16 @@ interface CollateralSectionProps {
 
 function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertiserId, listingTitle }: CollateralSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [isDraggingAdditional, setIsDraggingAdditional] = useState(false)
+  const [uploadComplete, setUploadComplete] = useState(false)
+  const [showAdditional, setShowAdditional] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const additionalInputRef = useRef<HTMLInputElement>(null)
 
   const supabase = createClient()
   const folderPath = `bookings/${bookingId}`
@@ -127,7 +152,6 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       .list(folderPath, { sortBy: { column: 'created_at', order: 'desc' } })
 
     if (error) {
-      // Bucket may not exist yet — silently degrade
       console.warn('[Collateral] Storage list error:', error.message)
       setFiles([])
       setLoading(false)
@@ -155,36 +179,48 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
   useEffect(() => { loadFiles() }, [bookingId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleFiles = useCallback(async (incoming: FileList | null) => {
+  // Stage files only — don't upload yet
+  const handleStagedFiles = useCallback((incoming: FileList | null) => {
     if (!incoming || incoming.length === 0) return
-    setUploading(true)
-    setUploadError('')
-
+    const valid: File[] = []
+    const errors: string[] = []
     for (const file of Array.from(incoming)) {
       const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
       const isAllowed = ACCEPTED_MIME.includes(file.type) ||
         ['pdf', 'jpg', 'jpeg', 'png', 'mp4', 'ai', 'psd', 'zip'].includes(ext)
+      if (isAllowed) valid.push(file)
+      else errors.push(`"${file.name}" is not an accepted format`)
+    }
+    if (errors.length > 0) setUploadError(errors[0] + `. Allowed: ${ACCEPTED_FORMATS.join(', ')}`)
+    if (valid.length > 0) {
+      setUploadError('')
+      setPendingFiles(prev => [...prev, ...valid])
+    }
+  }, [])
 
-      if (!isAllowed) {
-        setUploadError(`"${file.name}" is not an accepted format. Allowed: ${ACCEPTED_FORMATS.join(', ')}`)
-        continue
-      }
+  // Actually upload the staged pending files
+  const handleUpload = useCallback(async () => {
+    if (pendingFiles.length === 0) return
+    setUploading(true)
+    setUploadError('')
 
+    for (const file of pendingFiles) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
       const { error } = await supabase.storage
         .from('booking-collateral')
         .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
-
       if (error) {
         setUploadError(error.message)
         console.error('[Collateral] Upload error:', error)
       }
     }
 
+    setPendingFiles([])
     setUploading(false)
+    setUploadComplete(true)
     await loadFiles()
 
-    // After successful upload (advertiser only), send auto-message to host + notification
+    // Notify host
     if (!isHost && hostId && advertiserId) {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -195,7 +231,6 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             recipient_id: hostId,
             content: `📎 Creative files have been uploaded for "${listingTitle ?? 'your listing'}"\n\nPlease review and begin setup when ready.`,
           })
-          // Notify host
           await supabase.from('notifications').insert({
             user_id: hostId,
             type: 'collateral_uploaded',
@@ -203,17 +238,10 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             body: `For "${listingTitle ?? 'booking'}"`,
             href: `/dashboard/bookings/${bookingId}`,
           })
-          // Email host
           const { data: hostProfile } = await supabase
-            .from('profiles')
-            .select('email, full_name')
-            .eq('id', hostId)
-            .single()
+            .from('profiles').select('email, full_name').eq('id', hostId).single()
           const { data: advProfile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', advertiserId)
-            .single()
+            .from('profiles').select('full_name').eq('id', advertiserId).single()
           if (hostProfile?.email) {
             await fetch('/api/email/send', {
               method: 'POST',
@@ -230,7 +258,21 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         }
       } catch { /* non-fatal */ }
     }
-  }, [folderPath, isHost, hostId, advertiserId, bookingId, listingTitle]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pendingFiles, folderPath, isHost, hostId, advertiserId, bookingId, listingTitle]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Upload additional files (after success state)
+  const handleAdditionalFiles = useCallback(async (incoming: FileList | null) => {
+    if (!incoming || incoming.length === 0) return
+    setUploading(true)
+    for (const file of Array.from(incoming)) {
+      const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      await supabase.storage.from('booking-collateral')
+        .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
+    }
+    setUploading(false)
+    setShowAdditional(false)
+    await loadFiles()
+  }, [folderPath]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function deleteFile(path: string) {
     const { error } = await supabase.storage.from('booking-collateral').remove([path])
@@ -239,6 +281,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
   const hasFiles = files.length > 0
   const canUpload = !isHost && ['confirmed', 'active', 'pop_pending', 'pop_review'].includes(bookingStatus)
+  // Show success state if upload was just completed OR if files already exist (returning to page)
+  const showSuccessState = canUpload && (uploadComplete || hasFiles)
 
   return (
     <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
@@ -260,58 +304,109 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         )}
       </div>
 
-      {/* Advertiser note */}
-      {!isHost && (
+      {/* Advertiser intro text — only before upload */}
+      {!isHost && !showSuccessState && (
         <p className="text-sm mb-5 leading-relaxed" style={{ color: '#555' }}>
           Please deliver your collateral within the production window listed on this placement.
           The host will begin setup once received.
         </p>
       )}
 
-      {/* Host note */}
+      {/* Host note — no files yet */}
       {isHost && !hasFiles && (
         <p className="text-sm mb-5" style={{ color: '#888' }}>
           The advertiser hasn&apos;t uploaded collateral yet. You&apos;ll be notified when files arrive.
         </p>
       )}
 
-      {/* Upload area — advertisers only */}
-      {canUpload && (
-        <div
-          className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-5"
-          style={{
-            borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
-            backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
-          }}
-          onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={e => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files) }}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          {uploading ? (
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#7ecfc0' }} />
-              <p className="text-sm" style={{ color: '#888' }}>Uploading...</p>
+      {/* ── ADVERTISER UPLOAD AREA (pre-upload) ─────────────────── */}
+      {canUpload && !showSuccessState && (
+        <>
+          <div
+            className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-4"
+            style={{
+              borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
+              backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
+            }}
+            onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={e => { e.preventDefault(); setIsDragging(false); handleStagedFiles(e.dataTransfer.files) }}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
+            <p className="text-sm font-medium mb-1" style={{ color: '#2b2b2b' }}>
+              Drag & drop or <span style={{ color: '#7ecfc0' }}>click to browse</span>
+            </p>
+            <p className="text-xs" style={{ color: '#aaa' }}>
+              Accepted formats: {ACCEPTED_FORMATS.join(', ')} · Max 100MB per file
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.mp4,.ai,.psd,.zip"
+              className="hidden"
+              onChange={e => handleStagedFiles(e.target.files)}
+            />
+          </div>
+
+          {/* Staged files preview */}
+          {pendingFiles.length > 0 && (
+            <div className="space-y-2 mb-4">
+              {pendingFiles.map((file, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                  style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+                >
+                  <FileIcon type={file.type} name={file.name} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: '#2b2b2b' }}>{file.name}</p>
+                    <p className="text-xs" style={{ color: '#aaa' }}>{formatBytes(file.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" style={{ color: '#aaa' }} />
+                  </button>
+                </div>
+              ))}
             </div>
-          ) : (
-            <>
-              <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
-              <p className="text-sm font-medium mb-1" style={{ color: '#2b2b2b' }}>
-                Drag & drop or <span style={{ color: '#7ecfc0' }}>click to browse</span>
-              </p>
-              <p className="text-xs" style={{ color: '#aaa' }}>
-                Accepted formats: {ACCEPTED_FORMATS.join(', ')} · Max 100MB per file
-              </p>
-            </>
           )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".pdf,.jpg,.jpeg,.png,.mp4,.ai,.psd,.zip"
-            className="hidden"
-            onChange={e => handleFiles(e.target.files)}
-          />
+
+          {/* Upload button — only shown when files are staged */}
+          {pendingFiles.length > 0 && (
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={uploading}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 mb-4"
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+            >
+              {uploading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
+              ) : (
+                <><Upload className="w-4 h-4" /> Upload {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''}</>
+              )}
+            </button>
+          )}
+        </>
+      )}
+
+      {/* ── SUCCESS STATE (after upload) ────────────────────────── */}
+      {showSuccessState && (
+        <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)' }}>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.12)' }}>
+              <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Collateral Updated ✅</p>
+              <p className="text-xs mt-0.5" style={{ color: '#555' }}>Host will get this live and send you proof of production</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -344,11 +439,20 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {file.url && (
+                {file.url && isHost && (
+                  <button
+                    type="button"
+                    onClick={() => forceDownload(file.url!, file.name)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4" style={{ color: '#888' }} />
+                  </button>
+                )}
+                {file.url && !isHost && (
                   <a
                     href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    download={file.name}
                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white transition-colors"
                     title="Download"
                   >
@@ -370,6 +474,231 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
           ))}
         </div>
       ) : null}
+
+      {/* "Forget something?" — subtle link after success state */}
+      {showSuccessState && (
+        <div className="mt-4">
+          {!showAdditional ? (
+            <button
+              type="button"
+              onClick={() => setShowAdditional(true)}
+              className="text-xs hover:underline underline-offset-2 transition-opacity"
+              style={{ color: '#aaa' }}
+            >
+              Forget something? Upload additional creative
+            </button>
+          ) : (
+            <div>
+              <div
+                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors"
+                style={{
+                  borderColor: isDraggingAdditional ? '#7ecfc0' : '#e0e0d8',
+                  backgroundColor: isDraggingAdditional ? 'rgba(126,207,192,0.05)' : 'transparent',
+                }}
+                onDragOver={e => { e.preventDefault(); setIsDraggingAdditional(true) }}
+                onDragLeave={() => setIsDraggingAdditional(false)}
+                onDrop={e => { e.preventDefault(); setIsDraggingAdditional(false); handleAdditionalFiles(e.dataTransfer.files) }}
+                onClick={() => additionalInputRef.current?.click()}
+              >
+                {uploading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#7ecfc0' }} />
+                    <span className="text-xs" style={{ color: '#888' }}>Uploading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 mx-auto mb-1.5" style={{ color: '#ccc' }} />
+                    <p className="text-xs" style={{ color: '#888' }}>
+                      Drop files or <span style={{ color: '#7ecfc0' }}>click to browse</span>
+                    </p>
+                  </>
+                )}
+                <input
+                  ref={additionalInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.mp4,.ai,.psd,.zip"
+                  className="hidden"
+                  onChange={e => handleAdditionalFiles(e.target.files)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAdditional(false)}
+                className="text-xs mt-2 hover:underline"
+                style={{ color: '#aaa' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── POP (Proof of Posting) Section — Host only ────────────────────────────────
+
+interface POPSectionProps {
+  bookingId: string
+  bookingStatus: string
+  isHost: boolean
+}
+
+function POPSection({ bookingId, bookingStatus, isHost }: POPSectionProps) {
+  const [files, setFiles] = useState<CollateralFile[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [error, setError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const supabase = createClient()
+  const folderPath = `pop/${bookingId}`
+
+  const alreadySubmitted = submitted || ['pop_pending', 'pop_review', 'completed'].includes(bookingStatus)
+
+  async function loadPOPFiles() {
+    const { data } = await supabase.storage.from('booking-collateral').list(folderPath)
+    if (!data || data.length === 0) return
+    const withUrls: CollateralFile[] = await Promise.all(
+      data.map(async (item) => {
+        const { data: urlData } = await supabase.storage
+          .from('booking-collateral')
+          .createSignedUrl(`${folderPath}/${item.name}`, 3600)
+        return {
+          name: item.name,
+          path: `${folderPath}/${item.name}`,
+          size: item.metadata?.size ?? 0,
+          type: item.metadata?.mimetype ?? '',
+          url: urlData?.signedUrl,
+        }
+      })
+    )
+    setFiles(withUrls)
+    if (withUrls.length > 0) setSubmitted(true)
+  }
+
+  useEffect(() => {
+    if (isHost) loadPOPFiles()
+  }, [bookingId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handlePOPUpload(incoming: FileList | null) {
+    if (!incoming || incoming.length === 0) return
+    setUploading(true)
+    setError('')
+
+    for (const file of Array.from(incoming)) {
+      const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+      const { error: uploadErr } = await supabase.storage
+        .from('booking-collateral')
+        .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
+      if (uploadErr) setError(uploadErr.message)
+    }
+
+    // Update booking status → pop_pending
+    await supabase.from('bookings').update({ status: 'pop_pending' }).eq('id', bookingId)
+
+    setUploading(false)
+    setSubmitted(true)
+    await loadPOPFiles()
+  }
+
+  if (!isHost) return null
+
+  // Only show for relevant statuses
+  const showStatuses = ['confirmed', 'active', 'pop_pending', 'pop_review', 'completed']
+  if (!showStatuses.includes(bookingStatus)) return null
+
+  if (alreadySubmitted) {
+    return (
+      <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.08)' }}>
+            <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Proof of Posting Submitted</p>
+            <p className="text-xs mt-0.5" style={{ color: '#888' }}>The advertiser will review and confirm completion</p>
+          </div>
+        </div>
+        {files.length > 0 && (
+          <div className="space-y-2 mt-4">
+            {files.map(f => (
+              <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+                <FileIcon type={f.type} name={f.name} />
+                <span className="text-sm flex-1 truncate" style={{ color: '#555' }}>{f.name}</span>
+                {f.url && (
+                  <button
+                    type="button"
+                    onClick={() => forceDownload(f.url!, f.name)}
+                    className="p-1.5 rounded hover:bg-white transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" style={{ color: '#888' }} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #7ecfc0', boxShadow: '0 4px 16px rgba(126,207,192,0.12)' }}>
+      <div className="flex items-start gap-3 mb-5">
+        <div className="p-2.5 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(126,207,192,0.1)' }}>
+          <Camera className="w-5 h-5" style={{ color: '#7ecfc0' }} />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Creative received — mark your ad as live</h2>
+          <p className="text-sm mt-1 leading-relaxed" style={{ color: '#555' }}>
+            Submit proof of posting to complete this campaign and unlock your payout.
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer mb-4 transition-colors"
+        style={{
+          borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
+          backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
+        }}
+        onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={e => { e.preventDefault(); setIsDragging(false); handlePOPUpload(e.dataTransfer.files) }}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        {uploading ? (
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+            <p className="text-sm" style={{ color: '#888' }}>Uploading proof...</p>
+          </div>
+        ) : (
+          <>
+            <Upload className="w-7 h-7 mx-auto mb-2" style={{ color: '#ccc' }} />
+            <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>Upload proof photos or video</p>
+            <p className="text-xs mt-1" style={{ color: '#aaa' }}>JPG, PNG, MP4 · Drag & drop or click to browse</p>
+          </>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,video/mp4"
+          className="hidden"
+          onChange={e => handlePOPUpload(e.target.files)}
+        />
+      </div>
+
+      {error && (
+        <p className="text-xs mb-3" style={{ color: '#dc2626' }}>{error}</p>
+      )}
+
+      <p className="text-xs" style={{ color: '#aaa' }}>
+        Your payout will be processed once the advertiser confirms the proof.
+      </p>
     </div>
   )
 }
@@ -467,6 +796,8 @@ export default function BookingDetailPage() {
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
 
+  const showCollateralSection = ['confirmed', 'active', 'pop_pending', 'pop_review', 'completed'].includes(booking.status)
+
   return (
     <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
@@ -515,7 +846,7 @@ export default function BookingDetailPage() {
             )}
           </div>
 
-          {/* Delivery instructions (physical placements) */}
+          {/* Delivery instructions */}
           {listing?.delivery_instructions && (
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div className="flex items-center gap-2 mb-3">
@@ -528,8 +859,8 @@ export default function BookingDetailPage() {
             </div>
           )}
 
-          {/* Creative specs — shown when booking is confirmed+ */}
-          {['confirmed', 'active', 'pop_pending', 'pop_review', 'completed'].includes(booking.status) &&
+          {/* Creative specs */}
+          {showCollateralSection &&
             (listing?.creative_formats?.length || listing?.creative_dimensions || listing?.creative_max_file_size) && (
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Requirements</h2>
@@ -568,8 +899,8 @@ export default function BookingDetailPage() {
             </div>
           )}
 
-          {/* Collateral upload — only for confirmed/active/etc. bookings */}
-          {['confirmed', 'active', 'pop_pending', 'pop_review', 'completed'].includes(booking.status) && (
+          {/* Collateral upload / view */}
+          {showCollateralSection && (
             <CollateralSection
               bookingId={bookingId}
               isHost={isHost}
@@ -577,6 +908,15 @@ export default function BookingDetailPage() {
               hostId={booking.host_id}
               advertiserId={booking.advertiser_id}
               listingTitle={listing?.title}
+            />
+          )}
+
+          {/* Host POP submission */}
+          {showCollateralSection && (
+            <POPSection
+              bookingId={bookingId}
+              bookingStatus={booking.status}
+              isHost={isHost}
             />
           )}
 
