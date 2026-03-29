@@ -21,20 +21,24 @@ export async function POST(req: NextRequest) {
 
     if (!isMockListing) {
       // Create a real booking record for real listings
+      // Look up the listing to get the host_id
+      const { data: listing } = await supabase
+        .from('listings')
+        .select('host_id')
+        .eq('id', listingId)
+        .single()
+
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
           listing_id: listingId,
           advertiser_id: userId,
+          host_id: listing?.host_id,
           start_date: startDate,
           end_date: endDate,
-          total_days: days,
-          price_per_day: pricePerDay,
-          subtotal: days * pricePerDay,
-          buyer_fee: Math.round(days * pricePerDay * 0.07),
-          seller_fee: Math.round(days * pricePerDay * 0.07),
-          total_amount: total,
-          status: 'pending_payment',
+          total_price: total,
+          platform_fee: Math.round(days * pricePerDay * 0.07 * 100) / 100,
+          status: 'pending',
         })
         .select('id')
         .single()
