@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail } from '@/lib/email'
 
 function getSupabase() {
   return createClient(
@@ -13,14 +12,10 @@ function getSupabase() {
  * Auto-approve POP submissions older than 72 hours.
  * Also sends 48-hour collateral reminders for confirmed bookings with no collateral.
  * Called by Vercel Cron every 6 hours, or manually for MVP.
- *
- * Phase 5b additions:
- * - Check for confirmed bookings created 48+ hours ago with no collateral uploaded
- * - Log collateral reminder events
- * - Wire to Resend when email provider is configured (see lib/email.ts)
  */
 export async function GET(req: NextRequest) {
   const supabase = getSupabase()
+
   // Validate cron secret for security
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
@@ -31,57 +26,80 @@ export async function GET(req: NextRequest) {
   try {
     const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
 
-    // Find POP submissions older than 72 hours that are still pending
-    const { data: pendingPOPs, error: fetchError } = await supabase
-      .from('pop_submissions')
-      .select('id, booking_id, created_at')
-      .eq('status', 'pending')
-      .lt('created_at', seventyTwoHoursAgo)
+    // Find bookings in pop_pending or pop_review status older than 72 hours
+    const { data: pendingBookings, error: fetchError } = await supabase
+      .from('bookings')
+      .select('id, host_id, advertiser_id, updated_at')
+      .in('status', ['pop_pending', 'pop_review'])
+      .lt('updated_at', seventyTwoHoursAgo)
 
     if (fetchError) {
       console.error('[AutoApprove] Fetch error:', fetchError)
       return NextResponse.json({ error: fetchError.message }, { status: 500 })
     }
 
-    if (!pendingPOPs || pendingPOPs.length === 0) {
+    if (!pendingBookings || pendingBookings.length === 0) {
       return NextResponse.json({ message: 'No pending POPs to auto-approve', count: 0 })
     }
 
     const results: Array<{ booking_id: string; status: string; error?: string }> = []
 
-    for (const pop of pendingPOPs) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'
+
+    for (const booking of pendingBookings) {
       try {
-        // Mark POP as auto-approved
-        await supabase
-          .from('pop_submissions')
-          .update({ status: 'approved', approved_at: new Date().toISOString() })
-          .eq('id', pop.id)
+        // Mark booking as completed
+        const { error: updateErr } = await supabase
+          .from('bookings')
+          .update({ status: 'completed' })
+          .eq('id', booking.id)
+
+        if (updateErr) {
+          console.error(`[AutoApprove] Failed to update booking ${booking.id}:`, updateErr)
+          results.push({ booking_id: booking.id, status: 'update_failed', error: updateErr.message })
+          continue
+        }
+
+        // Send notification to advertiser and host
+        await Promise.all([
+          supabase.from('notifications').insert({
+            user_id: booking.advertiser_id,
+            type: 'pop_auto_approved',
+            title: 'POP Auto-Approved',
+            body: 'Your campaign POP was automatically approved after 72 hours. The booking is now complete.',
+            href: `/dashboard/bookings/${booking.id}`,
+          }),
+          supabase.from('notifications').insert({
+            user_id: booking.host_id,
+            type: 'pop_auto_approved',
+            title: 'POP Auto-Approved',
+            body: 'Your proof of posting was automatically approved after 72 hours. Payout is being processed.',
+            href: `/dashboard/bookings/${booking.id}`,
+          }),
+        ])
 
         // Trigger payout
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'
         const payoutRes = await fetch(`${baseUrl}/api/stripe/payout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ booking_id: pop.booking_id }),
+          body: JSON.stringify({ booking_id: booking.id }),
         })
 
         const payoutData = await payoutRes.json()
         results.push({
-          booking_id: pop.booking_id,
-          status: payoutRes.ok ? 'paid_out' : 'payout_failed',
+          booking_id: booking.id,
+          status: payoutRes.ok ? 'auto_approved_paid' : 'auto_approved_payout_failed',
           error: payoutRes.ok ? undefined : payoutData.error,
         })
 
-        console.log(`[AutoApprove] Booking ${pop.booking_id}: ${payoutRes.ok ? 'auto-approved + paid' : 'auto-approved, payout failed'}`)
+        console.log(`[AutoApprove] Booking ${booking.id}: ${payoutRes.ok ? 'auto-approved + payout triggered' : 'auto-approved, payout failed'}`)
       } catch (err) {
-        console.error(`[AutoApprove] Error for booking ${pop.booking_id}:`, err)
-        results.push({ booking_id: pop.booking_id, status: 'error', error: String(err) })
+        console.error(`[AutoApprove] Error for booking ${booking.id}:`, err)
+        results.push({ booking_id: booking.id, status: 'error', error: String(err) })
       }
     }
 
-    // ── Phase 5b: 48-hour collateral reminders ─────────────────────────────────
-    // Find confirmed bookings that are 48+ hours old with no collateral uploaded.
-    // Wire to Resend when email provider is configured (see lib/email.ts).
+    // ── 48-hour collateral reminders ────────────────────────────────────────────
     const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
 
     const { data: confirmedBookings } = await supabase
@@ -93,52 +111,33 @@ export async function GET(req: NextRequest) {
     const collateralReminderResults: Array<{ booking_id: string; status: string }> = []
 
     if (confirmedBookings && confirmedBookings.length > 0) {
-      for (const booking of confirmedBookings) {
-        // Check if any collateral exists in Supabase Storage for this booking.
-        // Note: This requires the "booking-collateral" bucket to exist.
-        // If the bucket doesn't exist yet, this will gracefully skip.
+      for (const bk of confirmedBookings) {
         const { data: storageFiles, error: storageErr } = await supabase.storage
           .from('booking-collateral')
-          .list(`bookings/${booking.id}`, { limit: 1 })
+          .list(`bookings/${bk.id}`, { limit: 1 })
 
         const hasCollateral = !storageErr && storageFiles && storageFiles.length > 0
 
         if (!hasCollateral) {
-          // Get advertiser email for the reminder
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('email, full_name')
-            .eq('id', booking.advertiser_id)
-            .single()
-
-          const advertiserEmail = profile?.email ?? `advertiser:${booking.advertiser_id}`
-
-          // Get listing title
-          const { data: listing } = await supabase
-            .from('listings')
-            .select('title')
-            .eq('id', booking.listing_id)
-            .single()
-
-          // Log collateral reminder (wire to Resend when email provider is configured)
-          sendEmail({
+          // Send in-app notification as reminder
+          await supabase.from('notifications').insert({
+            user_id: bk.advertiser_id,
             type: 'collateral_reminder',
-            advertiserEmail,
-            listingTitle: listing?.title ?? `Listing ${booking.listing_id}`,
-            bookingId: booking.id,
-            campaignStartDate: new Date(booking.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            title: 'Upload Your Creative',
+            body: 'Your campaign starts soon — please upload your creative materials to keep the booking on track.',
+            href: `/dashboard/bookings/${bk.id}`,
           })
 
-          collateralReminderResults.push({ booking_id: booking.id, status: 'reminder_logged' })
+          collateralReminderResults.push({ booking_id: bk.id, status: 'reminder_sent' })
         }
       }
     }
 
-    console.log(`[AutoApprove] Collateral reminders checked: ${confirmedBookings?.length ?? 0} bookings, ${collateralReminderResults.length} reminders sent`)
+    console.log(`[AutoApprove] Collateral reminders: ${confirmedBookings?.length ?? 0} checked, ${collateralReminderResults.length} sent`)
 
     return NextResponse.json({
-      message: `Auto-approved ${pendingPOPs.length} POP submission(s)`,
-      count: pendingPOPs.length,
+      message: `Auto-approved ${pendingBookings.length} POP booking(s)`,
+      count: pendingBookings.length,
       results,
       collateral_reminders: collateralReminderResults.length,
     })

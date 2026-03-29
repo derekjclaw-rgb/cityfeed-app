@@ -107,11 +107,21 @@ const MOCK_DETAILS: Record<string, { description: string; dimensions: string; pr
 }
 
 // ─── Booking Widget ────────────────────────────────────────────────────────────
-function BookingWidget({ listing }: { listing: ListingData }) {
+interface BookingWidgetProps {
+  listing: ListingData
+  startDate?: string
+  endDate?: string
+  onDatesChange?: (start: string, end: string) => void
+}
+
+function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd, onDatesChange }: BookingWidgetProps) {
   const router = useRouter()
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [internalStart, setInternalStart] = useState('')
+  const [internalEnd, setInternalEnd] = useState('')
   const [bookedRanges, setBookedRanges] = useState<DisabledRange[]>([])
+
+  const startDate = externalStart !== undefined ? externalStart : internalStart
+  const endDate = externalEnd !== undefined ? externalEnd : internalEnd
 
   useEffect(() => {
     const supabase = createClient()
@@ -166,7 +176,14 @@ function BookingWidget({ listing }: { listing: ListingData }) {
         <DateRangePicker
           startDate={startDate}
           endDate={endDate}
-          onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
+          onChange={(start, end) => {
+            if (onDatesChange) {
+              onDatesChange(start, end)
+            } else {
+              setInternalStart(start)
+              setInternalEnd(end)
+            }
+          }}
           placeholder="Pick start & end date"
           disabledRanges={bookedRanges}
         />
@@ -212,6 +229,8 @@ export default function ListingDetailPage() {
   const [host, setHost] = useState<HostData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activePhoto, setActivePhoto] = useState(0)
+  const [selectedStart, setSelectedStart] = useState('')
+  const [selectedEnd, setSelectedEnd] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -534,7 +553,12 @@ export default function ListingDetailPage() {
 
           {/* Booking widget — hidden on mobile, sticky sidebar on desktop */}
           <div className="hidden lg:block lg:col-span-1 order-2">
-            <BookingWidget listing={listing} />
+            <BookingWidget
+              listing={listing}
+              startDate={selectedStart}
+              endDate={selectedEnd}
+              onDatesChange={(s, e) => { setSelectedStart(s); setSelectedEnd(e) }}
+            />
           </div>
         </div>
       </div>
@@ -546,13 +570,15 @@ export default function ListingDetailPage() {
             <div className="text-lg font-bold" style={{ color: '#debb73' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
             <div className="text-xs" style={{ color: '#888' }}>Min. {listing.min_days} days</div>
           </div>
-          <a
-            href={`/marketplace/${listing.id}/book`}
+          <Link
+            href={selectedStart && selectedEnd
+              ? `/marketplace/${listing.id}/book?start=${selectedStart}&end=${selectedEnd}`
+              : `/marketplace/${listing.id}/book`}
             className="font-semibold px-6 py-3 rounded-xl text-sm"
             style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
           >
             Book Now
-          </a>
+          </Link>
         </div>
       </div>
 

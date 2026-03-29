@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
-        id, total_price, status, stripe_payment_intent_id,
+        id, total_price, platform_fee, status, stripe_payment_intent_id,
         host_id, advertiser_id,
         host:profiles!bookings_host_id_fkey(stripe_account_id, full_name),
         listings(title)
@@ -39,10 +39,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Host has not connected Stripe account' }, { status: 400 })
     }
 
-    // Calculate payout: total - 7% seller fee
+    // Calculate payout: subtotal (pre-buyer-fee) - 7% seller fee
+    // total_price = subtotal + buyer_fee (both are 7% of subtotal)
+    // So subtotal = total_price - platform_fee
     const totalAmount = booking.total_price ?? 0
-    const sellerFee = Math.round(totalAmount * 0.07 * 100) // cents
-    const payoutAmount = Math.round(totalAmount * 100) - sellerFee // cents
+    const buyerFee = (booking as Record<string, unknown> & { platform_fee?: number }).platform_fee ?? Math.round(totalAmount / 1.07 * 0.07 * 100) / 100
+    const subtotal = totalAmount - buyerFee
+    const sellerFee = Math.round(subtotal * 0.07 * 100) // cents (7% of subtotal only)
+    const payoutAmount = Math.round(subtotal * 100) - sellerFee // cents
 
     if (payoutAmount <= 0) {
       return NextResponse.json({ error: 'Payout amount too low' }, { status: 400 })

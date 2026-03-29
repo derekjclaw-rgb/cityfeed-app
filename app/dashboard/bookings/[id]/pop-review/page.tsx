@@ -114,6 +114,21 @@ export default function POPReviewPage() {
       return
     }
 
+    // Trigger payout to host
+    try {
+      const payoutRes = await fetch('/api/stripe/payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId }),
+      })
+      if (!payoutRes.ok) {
+        const payoutData = await payoutRes.json()
+        console.error('[POPReview] Payout failed:', payoutData.error)
+      }
+    } catch (payoutErr) {
+      console.error('[POPReview] Payout request failed:', payoutErr)
+    }
+
     // Auto-message
     await supabase.from('messages').insert({
       booking_id: bookingId,

@@ -111,7 +111,8 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All Types')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [featuredListings, setFeaturedListings] = useState<Listing[]>(MOCK_LISTINGS.slice(0, 6))
+  const showMockData = process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === 'true'
+  const [featuredListings, setFeaturedListings] = useState<Listing[]>(showMockData ? MOCK_LISTINGS.slice(0, 6) : [])
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
@@ -148,7 +149,10 @@ export default function HomePage() {
             }))
           )
         }
-        // else: keep mock data
+        // else: keep mock data only if explicitly enabled
+        else if (!showMockData) {
+          setFeaturedListings([])
+        }
       })
   }, [])
 

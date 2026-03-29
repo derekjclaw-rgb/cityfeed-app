@@ -484,7 +484,7 @@ function BookingCard({
         {/* Host: POP upload prompt for active campaigns */}
         {showPOPPrompt && (
           <Link
-            href={`/dashboard/bookings/${booking.id}/pop`}
+            href={`/dashboard/bookings/${booking.id}#pop`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
             style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: '#7ecfc0' }}
           >

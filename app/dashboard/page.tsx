@@ -237,7 +237,7 @@ function DashboardContent() {
       if (isHost) {
         const [listingsRes, bookingsRes, messagesRes, popRes] = await Promise.all([
           supabase.from('listings').select('id, title, city, state, status, images, price_per_day, category', { count: 'exact' }).eq('host_id', uid).eq('status', 'active'),
-          supabase.from('bookings').select('id, total_price, status').eq('host_id', uid).in('status', ['active', 'confirmed', 'pending']),
+          supabase.from('bookings').select('id, total_price, payout_amount, status').eq('host_id', uid).in('status', ['active', 'confirmed', 'pending', 'completed']),
           supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid),
           supabase.from('bookings').select('id', { count: 'exact' }).eq('host_id', uid).eq('status', 'pop_pending'),
         ])
@@ -251,7 +251,11 @@ function DashboardContent() {
         setHostListings((allListings ?? []) as HostListing[])
 
         const earnings = bookingsRes.data?.reduce((sum, b) => {
-          if (b.status === 'confirmed' || b.status === 'active') return sum + (b.total_price || 0) * 0.93
+          // Only count completed bookings as real earnings
+          if (b.status === 'completed') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return sum + ((b as any).payout_amount ?? (b.total_price || 0) * 0.93)
+          }
           return sum
         }, 0) ?? 0
 
