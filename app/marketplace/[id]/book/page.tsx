@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { ArrowLeft, Shield, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../../page'
-import DateRangePicker from '@/components/DateRangePicker'
+import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicker'
 
 function BookPageInner() {
   const params = useParams()
@@ -22,6 +22,7 @@ function BookPageInner() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [bookedRanges, setBookedRanges] = useState<DisabledRange[]>([])
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [authEmail, setAuthEmail] = useState('')
@@ -45,32 +46,54 @@ function BookPageInner() {
     })
 
     // Load listing — try Supabase first, fall back to mock data
-    supabase
-      .from('listings')
-      .select('title, price_per_day, city, state, min_days, max_days')
-      .eq('id', listingId)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          // Fall back to mock listings for test environment
-          const mock = MOCK_LISTINGS.find(l => l.id === listingId)
-          if (mock) {
-            setListing({
-              title: mock.title,
-              price_per_day: mock.price_per_day,
-              city: mock.city,
-              state: mock.state,
-              min_days: 1,
-              max_days: 365,
-            })
-          } else {
-            setError('Listing not found')
-          }
+    Promise.all([
+      supabase
+        .from('listings')
+        .select('title, price_per_day, city, state, min_days, max_days, availability')
+        .eq('id', listingId)
+        .single(),
+      // Fetch confirmed/pending bookings to block those dates
+      supabase
+        .from('bookings')
+        .select('start_date, end_date')
+        .eq('listing_id', listingId)
+        .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review']),
+    ]).then(([listingRes, bookingsRes]) => {
+      const { data, error } = listingRes
+      if (error || !data) {
+        // Fall back to mock listings for test environment
+        const mock = MOCK_LISTINGS.find(l => l.id === listingId)
+        if (mock) {
+          setListing({
+            title: mock.title,
+            price_per_day: mock.price_per_day,
+            city: mock.city,
+            state: mock.state,
+            min_days: 1,
+            max_days: 365,
+          })
         } else {
-          setListing(data)
+          setError('Listing not found')
         }
-        setLoading(false)
-      })
+      } else {
+        setListing(data)
+      }
+
+      // Map booked ranges + host-blocked ranges
+      const ranges: DisabledRange[] = []
+      if (bookingsRes.data && bookingsRes.data.length > 0) {
+        bookingsRes.data.forEach(b => ranges.push({ start: b.start_date, end: b.end_date }))
+      }
+      // Add host-blocked availability ranges
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const avail = (data as any)?.availability as { blocked?: Array<{ start: string; end: string }> } | null
+      if (avail?.blocked && avail.blocked.length > 0) {
+        avail.blocked.forEach(b => ranges.push({ start: b.start, end: b.end }))
+      }
+      if (ranges.length > 0) setBookedRanges(ranges)
+
+      setLoading(false)
+    })
   }, [listingId, router])
 
   const { days, subtotal, buyerFee, total } = useMemo(() => {
@@ -219,6 +242,7 @@ function BookPageInner() {
             endDate={endDate}
             onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
             placeholder="Pick start & end date"
+            disabledRanges={bookedRanges}
           />
           {daysError && days > 0 && (
             <p className="text-xs font-medium" style={{ color: '#E63946' }}>{daysError}</p>

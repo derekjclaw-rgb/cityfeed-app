@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../page'
-import DateRangePicker from '@/components/DateRangePicker'
+import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicker'
 
 const CATEGORY_MAP: Record<string, string> = {
   digital_billboards: 'Digital Billboard',
@@ -111,6 +111,34 @@ function BookingWidget({ listing }: { listing: ListingData }) {
   const router = useRouter()
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [bookedRanges, setBookedRanges] = useState<DisabledRange[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.all([
+      supabase
+        .from('bookings')
+        .select('start_date, end_date')
+        .eq('listing_id', listing.id)
+        .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review']),
+      supabase
+        .from('listings')
+        .select('availability')
+        .eq('id', listing.id)
+        .single(),
+    ]).then(([bookingsRes, listingRes]) => {
+      const ranges: DisabledRange[] = []
+      if (bookingsRes.data) {
+        bookingsRes.data.forEach(b => ranges.push({ start: b.start_date, end: b.end_date }))
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const avail = (listingRes.data as any)?.availability as { blocked?: Array<{ start: string; end: string }> } | null
+      if (avail?.blocked) {
+        avail.blocked.forEach(b => ranges.push({ start: b.start, end: b.end }))
+      }
+      if (ranges.length > 0) setBookedRanges(ranges)
+    })
+  }, [listing.id])
 
   const { days, subtotal, fee, total } = useMemo(() => {
     if (!startDate || !endDate) return { days: 0, subtotal: 0, fee: 0, total: 0 }
@@ -140,6 +168,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
           endDate={endDate}
           onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
           placeholder="Pick start & end date"
+          disabledRanges={bookedRanges}
         />
       </div>
       {days > 0 && (

@@ -52,6 +52,11 @@ const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 // ─── Calendar Grid ─────────────────────────────────────────────────────────────
 
+export interface DisabledRange {
+  start: string // YYYY-MM-DD
+  end: string   // YYYY-MM-DD
+}
+
 interface GridProps {
   year: number
   month: number // 0-indexed
@@ -59,11 +64,16 @@ interface GridProps {
   endDate: string
   hoverDate: string
   minDate: string
+  disabledRanges?: DisabledRange[]
   onSelect: (d: string) => void
   onHover: (d: string) => void
 }
 
-function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, onSelect, onHover }: GridProps) {
+function isInDisabledRange(ds: string, ranges: DisabledRange[]): boolean {
+  return ranges.some(r => ds >= r.start && ds <= r.end)
+}
+
+function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, disabledRanges = [], onSelect, onHover }: GridProps) {
   const firstDow = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const today = new Date().toISOString().split('T')[0]
@@ -92,7 +102,8 @@ function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, onS
         {cells.map((day, i) => {
           if (!day) return <div key={`e-${i}`} className="h-9" />
           const ds = toDateStr(year, month, day)
-          const disabled = ds < minDate
+          const isBooked = isInDisabledRange(ds, disabledRanges)
+          const disabled = ds < minDate || isBooked
           const isStart = ds === startDate
           const isEnd = ds === endDate
           const inRange = !!(startDate && rangeEnd && ds > startDate && ds < rangeEnd)
@@ -102,25 +113,32 @@ function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, onS
             <div
               key={ds}
               style={{ backgroundColor: inRange ? 'rgba(126,207,192,0.13)' : 'transparent' }}
+              title={isBooked ? 'Booked' : undefined}
             >
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelect(ds)}
-                onMouseEnter={() => onHover(ds)}
-                className="w-full h-9 flex items-center justify-center text-xs rounded-full transition-colors"
+                onMouseEnter={() => !disabled && onHover(ds)}
+                className="w-full h-9 flex items-center justify-center text-xs rounded-full transition-colors relative"
                 style={{
-                  backgroundColor: (isStart || isEnd) ? '#7ecfc0' : undefined,
-                  color: disabled
-                    ? '#d0d0c8'
-                    : (isStart || isEnd)
-                      ? '#fff'
-                      : isToday
-                        ? '#7ecfc0'
-                        : '#2b2b2b',
+                  backgroundColor: isBooked
+                    ? 'rgba(230,57,70,0.08)'
+                    : (isStart || isEnd) ? '#7ecfc0' : undefined,
+                  color: isBooked
+                    ? '#dc2626'
+                    : disabled
+                      ? '#d0d0c8'
+                      : (isStart || isEnd)
+                        ? '#fff'
+                        : isToday
+                          ? '#7ecfc0'
+                          : '#2b2b2b',
                   fontWeight: (isStart || isEnd || isToday) ? '600' : '400',
                   border: isToday && !isStart && !isEnd ? '1px solid #7ecfc0' : 'none',
                   cursor: disabled ? 'not-allowed' : 'pointer',
+                  textDecoration: isBooked ? 'line-through' : 'none',
+                  opacity: isBooked ? 0.6 : 1,
                 }}
               >
                 {day}
@@ -129,6 +147,14 @@ function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, onS
           )
         })}
       </div>
+
+      {/* Legend */}
+      {disabledRanges.length > 0 && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'rgba(230,57,70,0.15)', border: '1px solid rgba(230,57,70,0.3)' }} />
+          <span className="text-xs" style={{ color: '#888' }}>Booked / Unavailable</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -142,6 +168,7 @@ export interface DateRangePickerProps {
   minDate?: string
   inline?: boolean
   placeholder?: string
+  disabledRanges?: DisabledRange[]
 }
 
 export default function DateRangePicker({
@@ -151,6 +178,7 @@ export default function DateRangePicker({
   minDate,
   inline = false,
   placeholder = 'Select dates',
+  disabledRanges = [],
 }: DateRangePickerProps) {
   const todayStr = new Date().toISOString().split('T')[0]
   const effectiveMin = minDate ?? todayStr
@@ -176,14 +204,24 @@ export default function DateRangePicker({
   }, [inline])
 
   function handleSelect(ds: string) {
+    // Don't allow selecting a booked date
+    if (isInDisabledRange(ds, disabledRanges)) return
+
     if (!startDate || (startDate && endDate)) {
       // Start fresh selection
       onChange(ds, '')
     } else {
       // We have start but no end
       if (ds > startDate) {
-        onChange(startDate, ds)
-        if (!inline) setOpen(false)
+        // Check if the range crosses any booked dates — if so, block it
+        const crossesBooked = disabledRanges.some(r => r.start <= ds && r.end >= startDate)
+        if (crossesBooked) {
+          // Restart selection from this date
+          onChange(ds, '')
+        } else {
+          onChange(startDate, ds)
+          if (!inline) setOpen(false)
+        }
       } else if (ds < startDate) {
         // Clicked before start → new start
         onChange(ds, '')
@@ -248,6 +286,7 @@ export default function DateRangePicker({
         endDate={endDate}
         hoverDate={hoverDate}
         minDate={effectiveMin}
+        disabledRanges={disabledRanges}
         onSelect={handleSelect}
         onHover={setHoverDate}
       />

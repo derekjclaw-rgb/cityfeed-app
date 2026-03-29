@@ -20,20 +20,29 @@ export async function GET(req: NextRequest) {
   try {
     // Verify the account exists and check its status
     const account = await stripe.accounts.retrieve(accountId)
-    const isConnected = account.details_submitted
 
-    // Update the user's profile with the stripe account id and connection status
+    // Fully connected = charges AND payouts enabled
+    const fullyConnected = account.charges_enabled === true && account.payouts_enabled === true
+    // Partially connected = details submitted but not fully enabled yet
+    const partiallyConnected = account.details_submitted === true
+
+    // Update the user's profile
     await supabase
       .from('profiles')
       .update({
         stripe_account_id: accountId,
-        stripe_connected: isConnected,
+        stripe_connected: fullyConnected,
       })
       .eq('id', userId)
 
-    if (isConnected) {
-      return NextResponse.redirect(`${baseUrl}/dashboard/stripe-onboarding?success=true`)
+    if (fullyConnected) {
+      // Fully set up — redirect to dashboard with success toast
+      return NextResponse.redirect(`${baseUrl}/dashboard?stripe_success=true`)
+    } else if (partiallyConnected) {
+      // Details submitted but not fully enabled — show incomplete state
+      return NextResponse.redirect(`${baseUrl}/dashboard/stripe-onboarding?incomplete=true`)
     } else {
+      // Not even submitted yet
       return NextResponse.redirect(`${baseUrl}/dashboard/stripe-onboarding?incomplete=true`)
     }
   } catch (err) {

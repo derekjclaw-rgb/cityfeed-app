@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutGrid, PlusCircle, MessageSquare, ClipboardList,
-  TrendingUp, DollarSign, AlertCircle, Loader2, User, Heart, CreditCard, MapPin, Image as ImageIcon
+  TrendingUp, DollarSign, AlertCircle, Loader2, User, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X
 } from 'lucide-react'
 
 interface Profile {
@@ -120,8 +120,9 @@ interface ActionBanner {
   cta: string
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [activity, setActivity] = useState<Activity[]>([])
@@ -129,6 +130,17 @@ export default function DashboardPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [hostListings, setHostListings] = useState<HostListing[]>([])
   const [loading, setLoading] = useState(true)
+  const [stripeSuccess, setStripeSuccess] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('stripe_success') === 'true') {
+      setStripeSuccess(true)
+      // Remove from URL without reload
+      const url = new URL(window.location.href)
+      url.searchParams.delete('stripe_success')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const supabase = createClient()
@@ -381,6 +393,24 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-4xl mx-auto">
+
+        {/* Stripe success toast */}
+        {stripeSuccess && (
+          <div className="rounded-xl px-5 py-4 mb-6 flex items-center justify-between gap-4"
+            style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#16a34a' }} />
+              <div>
+                <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Bank account connected!</p>
+                <p className="text-xs mt-0.5" style={{ color: '#15803d' }}>You&apos;re all set to receive payouts when campaigns complete.</p>
+              </div>
+            </div>
+            <button onClick={() => setStripeSuccess(false)} className="hover:opacity-70">
+              <X className="w-4 h-4" style={{ color: '#16a34a' }} />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           {profile?.avatar_url ? (
@@ -671,5 +701,17 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#7ecfc0' }} />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   )
 }

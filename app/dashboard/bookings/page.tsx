@@ -497,11 +497,11 @@ function BookingCard({
         {showPOPReview && (
           <Link
             href={`/dashboard/bookings/${booking.id}/pop-review`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: '#7ecfc0' }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}
           >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Review POP
+            <CheckCircle className="w-4 h-4" />
+            Review POP ✅
           </Link>
         )}
 

@@ -7,8 +7,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, MapPin, Edit2, Trash2, Loader2, Eye, AlertCircle, MoreVertical } from 'lucide-react'
+import { Plus, MapPin, Edit2, Trash2, Loader2, Eye, AlertCircle, MoreVertical, CalendarOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import AvailabilityManager from '@/components/AvailabilityManager'
 
 interface Listing {
   id: string
@@ -66,6 +67,7 @@ export default function MyListingsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [availabilityListing, setAvailabilityListing] = useState<{ id: string; title: string } | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -118,6 +120,13 @@ export default function MyListingsPage() {
 
   return (
     <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
+      {availabilityListing && (
+        <AvailabilityManager
+          listingId={availabilityListing.id}
+          listingTitle={availabilityListing.title}
+          onClose={() => setAvailabilityListing(null)}
+        />
+      )}
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -246,6 +255,17 @@ export default function MyListingsPage() {
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         Edit
+                      </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
+                        style={{ color: '#555' }}
+                        onClick={() => {
+                          setOpenMenuId(null)
+                          setAvailabilityListing({ id: listing.id, title: listing.title })
+                        }}
+                      >
+                        <CalendarOff className="w-3.5 h-3.5" />
+                        Availability
                       </button>
                       <button
                         className="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-red-50"

@@ -21,7 +21,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Upload, FileText, Image, Film, Archive,
-  CheckCircle, Clock, Download, X, AlertCircle, Package, Camera
+  CheckCircle, Clock, Download, X, AlertCircle, Package, Camera, ExternalLink
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -544,9 +544,12 @@ interface POPSectionProps {
   bookingId: string
   bookingStatus: string
   isHost: boolean
+  advertiserId?: string
+  hostId?: string
+  listingTitle?: string
 }
 
-function POPSection({ bookingId, bookingStatus, isHost }: POPSectionProps) {
+function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle }: POPSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [uploading, setUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -602,6 +605,50 @@ function POPSection({ bookingId, bookingStatus, isHost }: POPSectionProps) {
     setUploading(false)
     setSubmitted(true)
     await loadPOPFiles()
+
+    // Auto-send POP message in chat with photo(s)
+    if (advertiserId && hostId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          // Get signed URLs for photos just uploaded to send in chat
+          const { data: popItems } = await supabase.storage
+            .from('booking-collateral')
+            .list(folderPath)
+
+          const photoUrls: string[] = []
+          if (popItems && popItems.length > 0) {
+            for (const item of popItems) {
+              const { data: urlData } = await supabase.storage
+                .from('booking-collateral')
+                .createSignedUrl(`${folderPath}/${item.name}`, 86400)
+              if (urlData?.signedUrl) photoUrls.push(urlData.signedUrl)
+            }
+          }
+
+          const photoText = photoUrls.length > 0
+            ? `\n\n${photoUrls.join('\n')}`
+            : ''
+
+          await supabase.from('messages').insert({
+            booking_id: bookingId,
+            sender_id: user.id,
+            recipient_id: advertiserId,
+            content: `📸 Proof of posting submitted for "${listingTitle ?? 'your listing'}"! Please review and approve.${photoText}`,
+            image_url: photoUrls[0] ?? null,
+          })
+
+          // Notify advertiser
+          await supabase.from('notifications').insert({
+            user_id: advertiserId,
+            type: 'pop_submitted',
+            title: 'Proof of Posting Ready',
+            body: `Your host has submitted proof of posting for "${listingTitle ?? 'your booking'}". Please review.`,
+            href: `/dashboard/bookings/${bookingId}/pop-review`,
+          })
+        }
+      } catch { /* non-fatal */ }
+    }
   }
 
   if (!isHost) return null
@@ -917,6 +964,9 @@ export default function BookingDetailPage() {
               bookingId={bookingId}
               bookingStatus={booking.status}
               isHost={isHost}
+              advertiserId={booking.advertiser_id}
+              hostId={booking.host_id}
+              listingTitle={listing?.title}
             />
           )}
 
@@ -936,6 +986,16 @@ export default function BookingDetailPage() {
             >
               Messages
             </Link>
+            {['pop_pending', 'pop_review'].includes(booking.status) && !isHost && (
+              <Link
+                href={`/dashboard/bookings/${bookingId}/pop-review`}
+                className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors"
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}
+              >
+                <CheckCircle className="w-4 h-4" />
+                Review POP ✅
+              </Link>
+            )}
             {booking.status === 'completed' && !isHost && (
               <Link
                 href={`/dashboard/bookings/${bookingId}/review`}
