@@ -118,7 +118,7 @@ function BookingWidget({ listing }: { listing: ListingData }) {
     const end = new Date(endDate)
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
-    const fee = Math.round(subtotal * 0.07)
+    const fee = Math.round(subtotal * 0.07 * 100) / 100
     return { days, subtotal, fee, total: subtotal + fee }
   }, [startDate, endDate, listing.price_per_day])
 

@@ -166,12 +166,13 @@ function Toggle({
         type="button"
         onClick={() => onChange(!value)}
         className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
-        style={{ backgroundColor: value ? '#7ecfc0' : '#e0e0d8' }}
+        style={{ backgroundColor: value ? '#7ecfc0' : '#ccc', border: value ? 'none' : '1px solid #bbb' }}
       >
         <span
-          className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
-            value ? 'translate-x-5' : 'translate-x-0.5'
+          className={`absolute top-1 w-4 h-4 rounded-full shadow-sm transition-transform ${
+            value ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-white'
           }`}
+          style={{ top: value ? '4px' : '3px' }}
         />
       </button>
       <div>
