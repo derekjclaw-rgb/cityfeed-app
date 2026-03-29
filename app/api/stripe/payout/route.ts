@@ -1,3 +1,18 @@
+/**
+ * /api/stripe/payout — Manual payout fallback
+ *
+ * NOTE: This route is mostly unnecessary now that checkout uses Stripe Connect
+ * destination charges (see /api/checkout/route.ts). With destination charges,
+ * Stripe automatically splits the payment at checkout time — no manual transfer needed.
+ *
+ * This route is kept as a fallback for:
+ *   - Bookings made before destination charges were implemented
+ *   - Hosts who were not connected to Stripe at checkout time (no stripe_account_id)
+ *   - Admin-initiated manual payouts or corrections
+ *
+ * For new bookings with connected hosts, funds arrive in the host's Stripe account
+ * automatically within 2 business days of the payment being captured.
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'

@@ -207,6 +207,7 @@ export default function CreateListingPage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [hasStripeConnected, setHasStripeConnected] = useState<boolean | null>(null)
   const [photos, setPhotos] = useState<UploadedPhoto[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -215,11 +216,18 @@ export default function CreateListingPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
         router.push('/login?redirect=/dashboard/create-listing')
       } else {
         setUserId(data.user.id)
+        // Check if the host has connected their Stripe account
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('stripe_account_id')
+          .eq('id', data.user.id)
+          .single()
+        setHasStripeConnected(!!profile?.stripe_account_id)
         setAuthLoading(false)
       }
     })
@@ -1034,6 +1042,33 @@ export default function CreateListingPage() {
                   style={inputStyle}
                 />
               </FormField>
+            </div>
+          )}
+
+          {/* Stripe Connect warning — show if host hasn't connected their bank account */}
+          {hasStripeConnected === false && (
+            <div
+              className="rounded-xl px-4 py-4 text-sm flex items-start gap-3"
+              style={{
+                backgroundColor: '#fffbeb',
+                border: '1px solid #fde68a',
+                color: '#92400e',
+              }}
+            >
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#d97706' }} />
+              <div>
+                <p className="font-semibold mb-1">Connect your bank account to receive payouts</p>
+                <p className="mb-2" style={{ color: '#b45309' }}>
+                  You can create this listing, but advertisers&apos; payments won&apos;t be automatically sent to you until you connect Stripe. Set it up before your listing goes live.
+                </p>
+                <Link
+                  href="/dashboard/stripe-onboarding"
+                  className="font-semibold underline"
+                  style={{ color: '#d97706' }}
+                >
+                  Connect bank account →
+                </Link>
+              </div>
             </div>
           )}
 
