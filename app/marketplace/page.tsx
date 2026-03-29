@@ -224,7 +224,11 @@ function MapView({ listings }: { listings: Listing[] }) {
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
       {selectedListing && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-          <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
+          {selectedListing.images?.[0] ? (
+            <img src={selectedListing.images[0]} alt={selectedListing.title} className="h-28 w-full object-cover" />
+          ) : (
+            <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
+          )}
           <div className="p-4">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>{selectedListing.title}</h3>
@@ -255,7 +259,7 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rating'>('rating')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
-  const [allListings, setAllListings] = useState<Listing[]>(MOCK_LISTINGS)
+  const [allListings, setAllListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingRealData, setUsingRealData] = useState(false)
 
@@ -284,10 +288,16 @@ export default function MarketplacePage() {
       const { data, error } = await query
 
       if (!error && data && data.length > 0) {
-        setAllListings(data.map((row, i) => normalizeDbListing(row, i)))
+        const realListings = data.map((row, i) => normalizeDbListing(row, i))
+        // Merge: real listings + mock data (if enabled and IDs don't collide)
+        if (SHOW_MOCK_DATA) {
+          setAllListings([...realListings, ...MOCK_LISTINGS])
+        } else {
+          setAllListings(realListings)
+        }
         setUsingRealData(true)
       } else {
-        // Fall back to mock data if enabled
+        // No real data — fall back to mock if enabled
         if (SHOW_MOCK_DATA) {
           setAllListings(MOCK_LISTINGS)
         } else {
@@ -314,8 +324,7 @@ export default function MarketplacePage() {
   }, [fetchListings])
 
   const filtered = useMemo(() => {
-    if (usingRealData) return allListings
-    // Client-side filter for mock data
+    // Always apply client-side filter (handles both real+mock data in merged array)
     return allListings
       .filter(l => {
         const matchesSearch = !search || l.title.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase())
@@ -327,7 +336,7 @@ export default function MarketplacePage() {
         if (sortBy === 'price_desc') return b.price_per_day - a.price_per_day
         return b.rating - a.rating
       })
-  }, [allListings, usingRealData, search, selectedCategory, sortBy])
+  }, [allListings, search, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f0f0ec' }}>

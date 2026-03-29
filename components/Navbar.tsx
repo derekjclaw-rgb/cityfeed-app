@@ -4,14 +4,17 @@
  * Navbar — shared navigation across all pages
  * When logged in: user dropdown with Dashboard, My Profile, Settings, Log Out
  * Phase 5: Notification bell with unread count
+ * Phase 6: Host/Advertiser mode indicator + quick switch
  */
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell, ArrowLeftRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+
+type DashMode = 'advertiser' | 'host'
 
 interface UserInfo {
   email?: string
@@ -39,6 +42,7 @@ export default function Navbar() {
   const [user, setUser] = useState<UserInfo | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [dashMode, setDashMode] = useState<DashMode>('advertiser')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -88,11 +92,23 @@ export default function Navbar() {
       channelRef.current = channel
     })
 
+    // Sync mode from localStorage
+    const saved = localStorage.getItem('cf_dash_mode') as DashMode | null
+    if (saved) setDashMode(saved)
+
+    // Listen for mode changes from dashboard
+    const handleModeChange = (e: Event) => {
+      const newMode = (e as CustomEvent<DashMode>).detail
+      setDashMode(newMode)
+    }
+    window.addEventListener('cf_mode_change', handleModeChange)
+
     return () => {
       if (channelRef.current) {
         const supabase = createClient()
         supabase.removeChannel(channelRef.current)
       }
+      window.removeEventListener('cf_mode_change', handleModeChange)
     }
   }, [pathname])
 
@@ -145,6 +161,14 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  function handleSwitchMode() {
+    const newMode: DashMode = dashMode === 'host' ? 'advertiser' : 'host'
+    setDashMode(newMode)
+    localStorage.setItem('cf_dash_mode', newMode)
+    window.dispatchEvent(new CustomEvent('cf_mode_change', { detail: newMode }))
+    setDropdownOpen(false)
+  }
 
   async function handleLogout() {
     const supabase = createClient()
@@ -281,6 +305,12 @@ export default function Navbar() {
                 )}
               </div>
 
+              {/* Mode indicator pill */}
+              <Link href="/dashboard" className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: 'rgba(222,187,115,0.15)', color: '#debb73', border: '1px solid rgba(222,187,115,0.3)' }}>
+                {dashMode === 'host' ? '🏠 Host' : '📢 Advertiser'}
+              </Link>
+
               {/* User dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -323,6 +353,12 @@ export default function Navbar() {
                         <Settings className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                         Settings
                       </Link>
+                    </div>
+                    <div className="py-1" style={{ borderTop: '1px solid #f0f0ea' }}>
+                      <button onClick={handleSwitchMode} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#888' }}>
+                        <ArrowLeftRight className="w-4 h-4" style={{ color: '#debb73' }} />
+                        {dashMode === 'host' ? 'Switch to Advertiser' : 'Switch to Host'}
+                      </button>
                     </div>
                     <div className="py-1" style={{ borderTop: '1px solid #f0f0ea' }}>
                       <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#dc2626' }}>
@@ -405,6 +441,9 @@ export default function Navbar() {
                 <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
                   <Settings className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Settings
                 </Link>
+                <button onClick={() => { handleSwitchMode(); setMobileOpen(false) }} className="flex items-center gap-3 py-2.5 text-sm w-full" style={{ color: '#debb73' }}>
+                  <ArrowLeftRight className="w-4 h-4" /> {dashMode === 'host' ? 'Switch to Advertiser' : 'Switch to Host'}
+                </button>
                 <button onClick={handleLogout} className="flex items-center gap-3 py-2.5 text-sm w-full" style={{ color: '#dc2626' }}>
                   <LogOut className="w-4 h-4" /> Log Out
                 </button>
