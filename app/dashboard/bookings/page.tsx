@@ -228,13 +228,16 @@ export default function BookingsPage() {
             .single()
 
           if (advertiserProfile?.email) {
-            const { sendEmail } = await import('@/lib/email')
-            await sendEmail({
-              type: 'booking_approved_advertiser',
-              advertiserEmail: advertiserProfile.email,
-              listingTitle,
-              dates: `${b.start_date} → ${b.end_date}`,
-              bookingId,
+            await fetch('/api/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'booking_approved_advertiser',
+                advertiserEmail: advertiserProfile.email,
+                listingTitle,
+                dates: `${b.start_date} → ${b.end_date}`,
+                bookingId,
+              }),
             })
           }
         } catch {

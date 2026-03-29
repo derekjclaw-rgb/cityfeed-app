@@ -215,13 +215,16 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             .eq('id', advertiserId)
             .single()
           if (hostProfile?.email) {
-            const { sendEmail } = await import('@/lib/email')
-            await sendEmail({
-              type: 'collateral_uploaded',
-              hostEmail: hostProfile.email,
-              listingTitle: listingTitle ?? 'your listing',
-              advertiserName: advProfile?.full_name ?? 'The advertiser',
-              bookingId,
+            await fetch('/api/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'collateral_uploaded',
+                hostEmail: hostProfile.email,
+                listingTitle: listingTitle ?? 'your listing',
+                advertiserName: advProfile?.full_name ?? 'The advertiser',
+                bookingId,
+              }),
             })
           }
         }
