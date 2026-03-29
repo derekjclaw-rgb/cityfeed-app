@@ -47,10 +47,9 @@ export default function ReceiptPage() {
       const { data, error: fetchError } = await supabase
         .from('bookings')
         .select(`
-          id, status, start_date, end_date, total_days, price_per_day,
-          subtotal, buyer_fee, total_price, payout_amount, payout_at,
-          created_at, stripe_session_id,
-          listings(title),
+          id, status, start_date, end_date, total_price, platform_fee,
+          payout_amount, payout_at, created_at, stripe_payment_intent_id,
+          listings(title, price_per_day),
           host:profiles!bookings_host_id_fkey(full_name),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
         `)
@@ -65,15 +64,21 @@ export default function ReceiptPage() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const d = data as any
+      const pricePerDay = d.listings?.price_per_day ?? 0
+      const start = new Date(d.start_date)
+      const end = new Date(d.end_date)
+      const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+      const subtotal = pricePerDay * totalDays
+      const buyerFee = d.platform_fee ?? Math.round(subtotal * 0.07 * 100) / 100
       setReceipt({
         id: d.id,
         listing_title: d.listings?.title ?? 'Listing',
         start_date: d.start_date,
         end_date: d.end_date,
-        total_days: d.total_days ?? 1,
-        price_per_day: d.price_per_day ?? 0,
-        subtotal: d.subtotal ?? d.total_price,
-        buyer_fee: d.buyer_fee ?? 0,
+        total_days: totalDays,
+        price_per_day: pricePerDay,
+        subtotal: subtotal,
+        buyer_fee: buyerFee,
         total_price: d.total_price,
         payout_amount: d.payout_amount,
         payout_at: d.payout_at,
@@ -81,7 +86,7 @@ export default function ReceiptPage() {
         status: d.status,
         host_name: d.host?.full_name ?? 'Host',
         advertiser_name: d.advertiser?.full_name ?? 'Advertiser',
-        stripe_session_id: d.stripe_session_id,
+        stripe_session_id: d.stripe_payment_intent_id,
       })
       setLoading(false)
     })
@@ -251,7 +256,7 @@ export default function ReceiptPage() {
 
               <p className="text-xs text-center" style={{ color: '#aaa' }}>
                 Processed by City Feed. For questions, contact{' '}
-                <a href="mailto:support@cityfeed.co" style={{ color: '#7ecfc0' }}>support@cityfeed.co</a>
+                <a href="mailto:mk@cityfeed.io" style={{ color: '#7ecfc0' }}>mk@cityfeed.io</a>
               </p>
             </div>
           </div>
