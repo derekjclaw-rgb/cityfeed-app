@@ -1,58 +1,224 @@
 /**
- * Email notification utility
- * MVP: logs events to console.
- * Wire to Resend when email provider is configured:
- *   import { Resend } from 'resend'
- *   const resend = new Resend(process.env.RESEND_API_KEY)
- *   await resend.emails.send({ from: 'noreply@cityfeed.io', to: ..., subject: ..., html: ... })
+ * Email notification utility — nodemailer SMTP via Gmail
+ * SMTP: smtp.gmail.com:465 (SSL)
+ * User: derekjclaw@gmail.com
+ * App Password: tgpi oqil qoeu sank
  */
 
-type EmailEvent =
+import nodemailer from 'nodemailer'
+
+// Create transporter lazily so it only initializes in server context
+let transporter: ReturnType<typeof nodemailer.createTransport> | null = null
+
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // SSL
+      auth: {
+        user: process.env.SMTP_USER || 'derekjclaw@gmail.com',
+        pass: process.env.SMTP_PASS || 'tgpi oqil qoeu sank',
+      },
+    })
+  }
+  return transporter
+}
+
+const FROM = 'City Feed <derekjclaw@gmail.com>'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cityfeed.io'
+
+export type EmailEvent =
   | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number }
   | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number }
+  | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser' }
+  | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
+  | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string }
   | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string }
   | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number }
-  // Phase 5b: 48-hour collateral reminder
-  // Wire to Resend when email provider is configured
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
 
-export function sendEmail(event: EmailEvent): void {
-  switch (event.type) {
-    case 'new_booking_request':
-      console.log(`[EMAIL] → ${event.hostEmail}
-Subject: New booking request for "${event.listingTitle}"
-Body: ${event.advertiserName} has requested to book your listing for ${event.dates}. Total: $${event.total}.
-Action: Log in to City Feed to approve or decline.`)
-      break
+export async function sendEmail(event: EmailEvent): Promise<void> {
+  const mailer = getTransporter()
 
-    case 'booking_confirmed':
-      console.log(`[EMAIL] → ${event.advertiserEmail}
-Subject: Your booking is confirmed — "${event.listingTitle}"
-Body: Great news! Your booking for ${event.dates} has been confirmed. Total charged: $${event.total}.
-Action: Log in to City Feed to view booking details.`)
-      break
+  try {
+    switch (event.type) {
+      case 'new_booking_request':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `New booking request for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">New Booking Request</h2>
+            <p style="color:#555;margin:0 0 12px"><strong>${event.advertiserName}</strong> has requested to book your listing.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0 0 4px;color:#888">Dates: ${event.dates}</p>
+              <p style="margin:0;color:#888">Total: <strong style="color:#2b2b2b">$${event.total.toLocaleString()}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 20px">Log in to review and accept or decline this booking.</p>
+            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review Booking →</a>
+          `),
+        })
+        break
 
-    case 'pop_submitted':
-      console.log(`[EMAIL] → ${event.advertiserEmail}
-Subject: Proof of Performance submitted for "${event.listingTitle}"
-Body: The host has submitted proof of performance for booking #${event.bookingId}.
-Action: Log in to City Feed to review and approve.`)
-      break
+      case 'booking_confirmed':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.advertiserEmail,
+          subject: `Your booking is confirmed — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Booking Confirmed! 🎉</h2>
+            <p style="color:#555;margin:0 0 12px">Great news — your booking has been confirmed.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0 0 4px;color:#888">Dates: ${event.dates}</p>
+              <p style="margin:0;color:#888">Total charged: <strong style="color:#2b2b2b">$${event.total.toLocaleString()}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 8px"><strong>Next steps:</strong></p>
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Upload your creative files in the booking dashboard</li>
+              <li style="margin-bottom:6px">The host will review and begin setup</li>
+              <li>You'll receive proof of posting when your ad goes live</li>
+            </ol>
+            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+          `),
+        })
+        break
 
-    case 'pop_approved':
-      console.log(`[EMAIL] → ${event.hostEmail}
-Subject: POP approved — payout incoming for "${event.listingTitle}"
-Body: The advertiser has approved your proof of performance. Your payout of $${event.amount} is being processed.`)
-      break
+      case 'booking_approved_advertiser':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.advertiserEmail,
+          subject: `✅ Your booking has been approved — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Booking Approved ✅</h2>
+            <p style="color:#555;margin:0 0 12px">The host has approved your booking request.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0;color:#888">Dates: ${event.dates}</p>
+            </div>
+            <p style="color:#555;margin:0 0 8px"><strong>Next steps:</strong></p>
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Upload your creative/collateral files</li>
+              <li style="margin-bottom:6px">Review the creative specs on the booking page</li>
+              <li>The host will begin setup once materials are received</li>
+            </ol>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Upload Creative →</a>
+          `),
+        })
+        break
 
-    // Phase 5b — 48-hour collateral reminder
-    // Wire to Resend when email provider is configured
-    case 'collateral_reminder':
-      console.log(`[EMAIL] → ${event.advertiserEmail}
-Subject: Reminder: Upload your collateral for "${event.listingTitle}"
-Body: Your campaign starts ${event.campaignStartDate}. Please upload your creative files for booking #${event.bookingId} so the host can begin setup.
-Action: Log in to City Feed → Dashboard → Bookings to upload your files.
-[TODO: Wire to Resend when email provider is configured]`)
-      break
+      case 'booking_cancelled':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.recipientEmail,
+          subject: `Booking cancelled — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Booking Cancelled</h2>
+            <p style="color:#555;margin:0 0 12px">A booking has been cancelled.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0;color:#888">Dates: ${event.dates}</p>
+            </div>
+            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Dashboard →</a>
+          `),
+        })
+        break
+
+      case 'collateral_uploaded':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `Creative files uploaded for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Creative Files Ready 📎</h2>
+            <p style="color:#555;margin:0 0 12px"><strong>${event.advertiserName}</strong> has uploaded their creative files.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 20px">Review the files and begin setup when ready.</p>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Files →</a>
+          `),
+        })
+        break
+
+      case 'pop_submitted':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.advertiserEmail,
+          subject: `Proof of posting submitted for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Proof of Posting Submitted 📸</h2>
+            <p style="color:#555;margin:0 0 12px">The host has submitted proof that your ad is live.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 20px">Please review and approve within 72 hours. If no action is taken, it will be auto-approved.</p>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review POP →</a>
+          `),
+        })
+        break
+
+      case 'pop_approved':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `POP approved — payout incoming for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">POP Approved 🎉</h2>
+            <p style="color:#555;margin:0 0 12px">The advertiser has approved your proof of posting.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0;color:#888">Payout amount: <strong style="color:#16a34a">$${event.amount.toLocaleString()}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 20px">Your payout is being processed via Stripe.</p>
+            <a href="${BASE_URL}/dashboard" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Dashboard →</a>
+          `),
+        })
+        break
+
+      case 'collateral_reminder':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.advertiserEmail,
+          subject: `Reminder: Upload your creative for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">⏰ Creative Files Needed</h2>
+            <p style="color:#555;margin:0 0 12px">Your campaign starts <strong>${event.campaignStartDate}</strong> and we haven't received your creative files yet.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 20px">Please upload your files so the host can begin setup on time.</p>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Upload Now →</a>
+          `),
+        })
+        break
+    }
+  } catch (err) {
+    console.error('[EMAIL] Failed to send email:', err)
   }
+}
+
+function emailTemplate(body: string): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f0f0ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <div style="max-width:560px;margin:40px auto;padding:0 20px">
+    <div style="text-align:center;margin-bottom:24px">
+      <span style="font-size:20px;font-weight:800;color:#2b2b2b;letter-spacing:-0.5px">City Feed</span>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:32px;border:1px solid #e0e0d8">
+      ${body}
+    </div>
+    <p style="text-align:center;color:#aaa;font-size:12px;margin-top:20px">
+      City Feed · The marketplace for ad placements<br>
+      <a href="${BASE_URL}" style="color:#aaa">cityfeed.io</a>
+    </p>
+  </div>
+</body>
+</html>
+  `.trim()
 }

@@ -185,7 +185,64 @@ export default function BookingsPage() {
   async function handleHostAction(bookingId: string, newStatus: 'confirmed' | 'cancelled') {
     setActionLoading(bookingId + newStatus)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
     await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId)
+
+    if (newStatus === 'confirmed' && user) {
+      // Fetch booking details for auto-message
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('advertiser_id, listing_id, start_date, end_date, listings(title)')
+        .eq('id', bookingId)
+        .single()
+
+      if (booking) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const b = booking as any
+        const listingTitle = b.listings?.title ?? 'your listing'
+
+        // Auto-message to advertiser with next steps
+        await supabase.from('messages').insert({
+          booking_id: bookingId,
+          sender_id: user.id,
+          recipient_id: b.advertiser_id,
+          content: `✅ Great news — your booking has been approved!\n\nNext steps:\n1. Upload your creative/collateral files\n2. Review the creative specs on the listing page\n3. I'll begin setup once I receive your materials\n\nFeel free to message me with any questions!`,
+        })
+
+        // Insert notification for advertiser
+        await supabase.from('notifications').insert({
+          user_id: b.advertiser_id,
+          type: 'booking_approved',
+          title: `Your booking was approved!`,
+          body: `"${listingTitle}" — ${b.start_date} → ${b.end_date}`,
+          href: `/dashboard/bookings/${bookingId}`,
+        })
+
+        // Send email to advertiser
+        try {
+          const { data: advertiserProfile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', b.advertiser_id)
+            .single()
+
+          if (advertiserProfile?.email) {
+            const { sendEmail } = await import('@/lib/email')
+            await sendEmail({
+              type: 'booking_approved_advertiser',
+              advertiserEmail: advertiserProfile.email,
+              listingTitle,
+              dates: `${b.start_date} → ${b.end_date}`,
+              bookingId,
+            })
+          }
+        } catch {
+          // Email failure non-fatal
+        }
+      }
+    }
+
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b))
     setActionLoading(null)
   }
