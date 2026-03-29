@@ -99,9 +99,12 @@ interface CollateralSectionProps {
   bookingId: string
   isHost: boolean
   bookingStatus: string
+  hostId?: string
+  advertiserId?: string
+  listingTitle?: string
 }
 
-function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSectionProps) {
+function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertiserId, listingTitle }: CollateralSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -175,7 +178,51 @@ function CollateralSection({ bookingId, isHost, bookingStatus }: CollateralSecti
 
     setUploading(false)
     await loadFiles()
-  }, [folderPath]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // After successful upload (advertiser only), send auto-message to host + notification
+    if (!isHost && hostId && advertiserId) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('messages').insert({
+            booking_id: bookingId,
+            sender_id: user.id,
+            recipient_id: hostId,
+            content: `📎 Creative files have been uploaded for "${listingTitle ?? 'your listing'}"\n\nPlease review and begin setup when ready.`,
+          })
+          // Notify host
+          await supabase.from('notifications').insert({
+            user_id: hostId,
+            type: 'collateral_uploaded',
+            title: `Creative files uploaded`,
+            body: `For "${listingTitle ?? 'booking'}"`,
+            href: `/dashboard/bookings/${bookingId}`,
+          })
+          // Email host
+          const { data: hostProfile } = await supabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', hostId)
+            .single()
+          const { data: advProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', advertiserId)
+            .single()
+          if (hostProfile?.email) {
+            const { sendEmail } = await import('@/lib/email')
+            await sendEmail({
+              type: 'collateral_uploaded',
+              hostEmail: hostProfile.email,
+              listingTitle: listingTitle ?? 'your listing',
+              advertiserName: advProfile?.full_name ?? 'The advertiser',
+              bookingId,
+            })
+          }
+        }
+      } catch { /* non-fatal */ }
+    }
+  }, [folderPath, isHost, hostId, advertiserId, bookingId, listingTitle]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function deleteFile(path: string) {
     const { error } = await supabase.storage.from('booking-collateral').remove([path])
@@ -479,6 +526,9 @@ export default function BookingDetailPage() {
               bookingId={bookingId}
               isHost={isHost}
               bookingStatus={booking.status}
+              hostId={booking.host_id}
+              advertiserId={booking.advertiser_id}
+              listingTitle={listing?.title}
             />
           )}
 
