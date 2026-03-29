@@ -213,8 +213,12 @@ export default function DateRangePicker({
     } else {
       // We have start but no end
       if (ds > startDate) {
-        // Check if the range crosses any booked dates — if so, block it
-        const crossesBooked = disabledRanges.some(r => r.start <= ds && r.end >= startDate)
+        // Check if the range [startDate → ds] crosses any booked dates (check days strictly between them)
+        const crossesBooked = disabledRanges.some(r => {
+          // Range overlaps if booked start <= selection end AND booked end >= selection start
+          // But we exclude the exact startDate and ds endpoints to allow adjacent booking
+          return r.start < ds && r.end > startDate
+        })
         if (crossesBooked) {
           // Restart selection from this date
           onChange(ds, '')

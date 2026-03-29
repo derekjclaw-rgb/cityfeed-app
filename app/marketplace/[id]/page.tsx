@@ -13,6 +13,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../page'
 import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicker'
+import FavoriteButton from '@/components/FavoriteButton'
 
 const CATEGORY_MAP: Record<string, string> = {
   digital_billboards: 'Digital Billboard',
@@ -192,15 +193,15 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
         <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
           <div className="flex justify-between text-sm" style={{ color: '#555' }}>
             <span>${listing.price_per_day} × {days} day{days !== 1 ? 's' : ''}</span>
-            <span>${subtotal.toLocaleString()}</span>
+            <span>${subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm" style={{ color: '#888' }}>
             <span>City Feed fee (7%)</span>
-            <span>${fee.toLocaleString()}</span>
+            <span>${fee.toFixed(2)}</span>
           </div>
           <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
             <span>Total</span>
-            <span>${total.toLocaleString()}</span>
+            <span>${total.toFixed(2)}</span>
           </div>
         </div>
       )}
@@ -367,8 +368,15 @@ export default function ListingDetailPage() {
             {/* Photo gallery */}
             {listing.images.length > 0 ? (
               <div className="space-y-3">
-                <div className="h-72 md:h-96 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
+                <div className="h-72 md:h-96 rounded-2xl overflow-hidden relative" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
                   <img src={listing.images[activePhoto]} alt={listing.title} className="w-full h-full object-cover" />
+                  {!/^\d+$/.test(listing.id) && (
+                    <div className="absolute top-4 right-4">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                        <FavoriteButton listingId={listing.id} size={20} />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {listing.images.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto">
@@ -392,6 +400,13 @@ export default function ListingDetailPage() {
                     {listing.category}
                   </span>
                 </div>
+                {!/^\d+$/.test(listing.id) && (
+                  <div className="absolute top-4 right-4">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                      <FavoriteButton listingId={listing.id} size={20} />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

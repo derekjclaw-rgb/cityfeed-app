@@ -88,8 +88,8 @@ export default function FavoriteButton({ listingId, className = '', size = 20 }:
         style={{
           width: size,
           height: size,
-          color: isSaved ? '#7ecfc0' : '#888',
-          fill: isSaved ? '#7ecfc0' : 'none',
+          color: isSaved ? '#E63946' : '#888',
+          fill: isSaved ? '#E63946' : 'none',
           transition: 'all 0.2s',
           opacity: loading ? 0.5 : 1,
         }}

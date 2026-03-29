@@ -255,15 +255,15 @@ function BookPageInner() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between" style={{ color: '#555' }}>
                 <span>${listing.price_per_day}/day × {days} day{days !== 1 ? 's' : ''}</span>
-                <span>${subtotal.toLocaleString()}</span>
+                <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between" style={{ color: '#888' }}>
                 <span>Buyer fee (7%)</span>
-                <span>${buyerFee.toLocaleString()}</span>
+                <span>${buyerFee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-base pt-3" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
                 <span>Total due today</span>
-                <span>${total.toLocaleString()}</span>
+                <span>${total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -276,7 +276,7 @@ function BookPageInner() {
           style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
         >
           {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
-          {submitting ? 'Redirecting to payment...' : days > 0 ? `Confirm & Pay $${total.toLocaleString()}` : 'Select dates to continue'}
+          {submitting ? 'Redirecting to payment...' : days > 0 ? `Confirm & Pay $${total.toFixed(2)}` : 'Select dates to continue'}
         </button>
 
         <div className="flex items-center justify-center gap-2 text-xs" style={{ color: '#888' }}>

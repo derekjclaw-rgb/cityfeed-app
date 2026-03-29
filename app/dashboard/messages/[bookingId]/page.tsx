@@ -52,14 +52,14 @@ function BookingProgressBar({ status, endDate }: { status: string; endDate?: str
   const { step: currentStep, isAdLive } = getProgressInfo(status, endDate)
 
   return (
-    <div className="px-6 py-3" style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec' }}>
+    <div className="px-6 pt-3 pb-7" style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec' }}>
       <style>{`
         @keyframes pulse-green {
           0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6), 0 0 0 3px rgba(34, 197, 94, 0.2); }
           50% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0), 0 0 0 3px rgba(34, 197, 94, 0.35); }
         }
       `}</style>
-      <div className="flex items-center gap-0">
+      <div className="flex items-start gap-0">
         {PROGRESS_STEPS.map((step, i) => {
           const isCompleted = i < currentStep
           const isCurrent = i === currentStep
@@ -72,11 +72,11 @@ function BookingProgressBar({ status, endDate }: { status: string; endDate?: str
           const lineColor = i < currentStep ? '#7ecfc0' : '#e0e0d8'
 
           return (
-            <div key={step.label} className="flex items-center flex-1 last:flex-none">
+            <div key={step.label} className="flex items-start flex-1 last:flex-none">
               {/* Step dot + label */}
-              <div className="flex flex-col items-center gap-1 relative">
+              <div className="flex flex-col items-center gap-1.5">
                 <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all"
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all mt-0.5"
                   style={{
                     backgroundColor: dotColor,
                     animation: isLive ? 'pulse-green 1.8s ease-in-out infinite' : 'none',
@@ -84,11 +84,12 @@ function BookingProgressBar({ status, endDate }: { status: string; endDate?: str
                   }}
                 />
                 <span
-                  className="text-xs whitespace-nowrap absolute top-4"
+                  className="text-xs whitespace-nowrap text-center"
                   style={{
                     color: labelColor,
                     fontWeight: (isCurrent || isLive) ? '600' : '400',
                     fontSize: '10px',
+                    lineHeight: '1.2',
                   }}
                 >
                   {step.label}{isLive ? ' 🟢' : ''}
@@ -97,7 +98,7 @@ function BookingProgressBar({ status, endDate }: { status: string; endDate?: str
               {/* Connector line */}
               {!isLast && (
                 <div
-                  className="h-px flex-1 mx-1 transition-all"
+                  className="h-px flex-1 mx-1 mt-1.5 transition-all"
                   style={{ backgroundColor: lineColor }}
                 />
               )}
@@ -322,6 +323,21 @@ interface Message {
   content: string
   image_url?: string
   created_at: string
+  is_system?: boolean
+}
+
+const SYSTEM_PREFIXES = [
+  '🎉 Your booking is confirmed',
+  '📎 Creative files have been uploaded',
+  '📸 Proof of posting submitted',
+  'POP approved! Campaign complete',
+  '🔄 The advertiser has requested changes',
+  '🟢 Campaign is now LIVE',
+]
+
+function isSystemMessage(msg: Message): boolean {
+  if (msg.is_system) return true
+  return SYSTEM_PREFIXES.some(prefix => msg.content.startsWith(prefix))
 }
 
 // ─── Main Chat Page ───────────────────────────────────────────────────────────
@@ -534,10 +550,7 @@ export default function ChatPage() {
         <BookingProgressBar status={bookingStatus} endDate={bookingEndDate} />
       )}
 
-      {/* Spacer for progress step labels */}
-      {bookingStatus && bookingStatus !== 'cancelled' && bookingStatus !== 'disputed' && (
-        <div style={{ height: '20px', backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec' }} />
-      )}
+
 
       {/* POP Approval Buttons — for advertiser when POP pending */}
       <POPActions
@@ -559,7 +572,36 @@ export default function ChatPage() {
         ) : (
           messages.map(msg => {
             const isMe = msg.sender_id === userId
+            const isSystem = isSystemMessage(msg)
             const { text, extraImageUrls } = parseMessageContent(msg.content)
+
+            // System message — centered, minimal styling
+            if (isSystem) {
+              return (
+                <div key={msg.id} className="flex justify-center">
+                  <div
+                    className="max-w-sm rounded-2xl px-4 py-3 text-xs text-center"
+                    style={{ backgroundColor: 'rgba(126,207,192,0.08)', border: '1px solid rgba(126,207,192,0.25)', color: '#555' }}
+                  >
+                    {msg.image_url && (
+                      <a href={msg.image_url} target="_blank" rel="noopener noreferrer">
+                        <img src={msg.image_url} alt="attachment" className="rounded-xl mb-2 max-w-full mx-auto" style={{ maxHeight: '160px', objectFit: 'cover' }} />
+                      </a>
+                    )}
+                    {extraImageUrls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt={`proof ${i + 1}`} className="rounded-xl mb-2 max-w-full mx-auto" style={{ maxHeight: '160px', objectFit: 'cover' }} />
+                      </a>
+                    ))}
+                    {text && <p className="leading-relaxed whitespace-pre-wrap">{text}</p>}
+                    <p className="text-xs mt-1.5" style={{ color: '#aaa' }}>
+                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              )
+            }
+
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 {!isMe && (

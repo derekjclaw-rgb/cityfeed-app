@@ -46,6 +46,7 @@ const STATIC_CATEGORIES = [
 ]
 
 const PRODUCTION_TIMES = [
+  'Less than a day',
   '1 day',
   '2 days',
   '3 days',
@@ -165,14 +166,24 @@ function Toggle({
       <button
         type="button"
         onClick={() => onChange(!value)}
-        className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
-        style={{ backgroundColor: value ? '#7ecfc0' : '#ccc', border: value ? 'none' : '1px solid #bbb' }}
+        className="relative flex-shrink-0 rounded-full transition-colors"
+        style={{
+          width: '48px',
+          height: '28px',
+          backgroundColor: value ? '#7ecfc0' : '#d1d5db',
+          border: 'none',
+          outline: 'none',
+        }}
       >
         <span
-          className={`absolute top-1 w-4 h-4 rounded-full shadow-sm transition-transform ${
-            value ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-white'
-          }`}
-          style={{ top: value ? '4px' : '3px' }}
+          className="absolute rounded-full bg-white shadow-sm transition-transform"
+          style={{
+            width: '20px',
+            height: '20px',
+            top: '4px',
+            left: '4px',
+            transform: value ? 'translateX(20px)' : 'translateX(0)',
+          }}
         />
       </button>
       <div>

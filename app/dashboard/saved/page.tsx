@@ -45,7 +45,7 @@ export default function SavedPage() {
         .select(`
           id,
           listing_id,
-          listings(id, title, price_per_day, location, images, listing_type)
+          listings(id, title, price_per_day, city, state, images, category)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -53,14 +53,17 @@ export default function SavedPage() {
       const mapped: SavedListing[] = (data ?? []).map((f: Record<string, unknown>) => {
         const listing = f.listings as Record<string, unknown> | null
         const images = listing?.images as string[] | null
+        const city = (listing?.city as string) ?? ''
+        const state = (listing?.state as string) ?? ''
+        const location = city && state ? `${city}, ${state}` : city || state || ''
         return {
           id: f.id as string,
           listing_id: f.listing_id as string,
           listing_title: (listing?.title as string) ?? 'Listing',
           listing_price: (listing?.price_per_day as number) ?? 0,
-          listing_location: (listing?.location as string) ?? '',
+          listing_location: location,
           listing_image: images?.[0],
-          listing_type: (listing?.listing_type as string) ?? 'Placement',
+          listing_type: (listing?.category as string) ?? 'Placement',
         }
       })
 

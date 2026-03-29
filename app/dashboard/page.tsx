@@ -40,6 +40,8 @@ interface Activity {
   subtitle: string
   time: string
   href: string
+  start_date?: string
+  end_date?: string
 }
 
 interface Campaign {
@@ -120,6 +122,15 @@ function ModeToggle({ mode, onChange }: { mode: DashMode; onChange: (m: DashMode
 
 // ─── Status maps ──────────────────────────────────────────────────────────────
 
+/** Returns true if campaign is currently live (between start/end dates with approved POP) */
+function isCampaignLive(status: string, startDate: string, endDate: string): boolean {
+  if (!['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) return false
+  const now = new Date()
+  const start = startDate ? new Date(startDate) : null
+  const end = endDate ? new Date(endDate) : null
+  return !!(start && end && now >= start && now <= end)
+}
+
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending Review',
   confirmed: 'Confirmed',
@@ -138,6 +149,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   pop_review: { bg: '#f0f8f5', text: '#7ecfc0' },
   completed: { bg: '#f0fdf4', text: '#16a34a' },
   cancelled: { bg: '#fef2f2', text: '#dc2626' },
+  live: { bg: '#dcfce7', text: '#15803d' },
 }
 
 const LISTING_STATUS_STYLES: Record<string, React.CSSProperties> = {
@@ -360,15 +372,23 @@ function DashboardContent() {
         } catch { /* non-critical */ }
       }
 
-      // Recent activity (shared)
+      // Recent activity (shared) — sorted by status priority for host
       const { data: recentBookings } = await supabase
         .from('bookings')
-        .select('id, status, created_at, listings(title)')
+        .select('id, status, created_at, start_date, end_date, listings(title)')
         .eq(isHost ? 'host_id' : 'advertiser_id', uid)
         .order('created_at', { ascending: false })
-        .limit(3)
+        .limit(10)
 
-      setActivity((recentBookings ?? []).map(b => ({
+      const sortedBookings = (recentBookings ?? []).sort((a, b) => {
+        if (isHost) {
+          const order: Record<string, number> = { pending: 0, confirmed: 1, active: 2, pop_pending: 2, pop_review: 2, completed: 3, cancelled: 4 }
+          return (order[a.status] ?? 5) - (order[b.status] ?? 5)
+        }
+        return 0
+      }).slice(0, 3)
+
+      setActivity(sortedBookings.map(b => ({
         id: b.id,
         type: 'booking' as const,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -376,6 +396,8 @@ function DashboardContent() {
         subtitle: `Status: ${b.status}`,
         time: new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         href: `/dashboard/bookings`,
+        start_date: b.start_date,
+        end_date: b.end_date,
       })))
 
     } catch {
@@ -517,23 +539,43 @@ function DashboardContent() {
                   <Link href="/dashboard/bookings" className="text-xs font-medium hover:underline" style={{ color: '#7ecfc0' }}>View all</Link>
                 </div>
                 <div className="space-y-3">
-                  {campaigns.slice(0, 5).map(campaign => {
-                    const sc = STATUS_COLORS[campaign.status] ?? { bg: '#f8f8f5', text: '#888' }
+                  {[...campaigns]
+                    .sort((a, b) => {
+                      // Live first, then pending, then completed/others
+                      const aLive = isCampaignLive(a.status, a.start_date, a.end_date) ? 0 : 1
+                      const bLive = isCampaignLive(b.status, b.start_date, b.end_date) ? 0 : 1
+                      if (aLive !== bLive) return aLive - bLive
+                      const order: Record<string, number> = { pending: 0, confirmed: 1, active: 2, pop_pending: 2, pop_review: 2, completed: 3, cancelled: 4 }
+                      return (order[a.status] ?? 5) - (order[b.status] ?? 5)
+                    })
+                    .slice(0, 5)
+                    .map(campaign => {
+                    const isLive = isCampaignLive(campaign.status, campaign.start_date, campaign.end_date)
+                    const isComplete = campaign.status === 'completed' && !isLive
+                    const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[campaign.status] ?? { bg: '#f8f8f5', text: '#888' })
                     const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
                     return (
                       <Link key={campaign.id} href={`/dashboard/bookings/${campaign.id}`}>
                         <div className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
-                          style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                          style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-sm truncate" style={{ color: '#2b2b2b' }}>{campaign.listing_title}</h3>
-                              <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
-                                {STATUS_LABELS[campaign.status] ?? campaign.status}
-                              </span>
+                              {isLive ? (
+                                <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1"
+                                  style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                                  LIVE
+                                </span>
+                              ) : (
+                                <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
+                                  {isComplete ? 'Completed ✓' : (STATUS_LABELS[campaign.status] ?? campaign.status)}
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs" style={{ color: '#888' }}>
                               {fmt(campaign.start_date)} — {fmt(campaign.end_date)}
-                              {campaign.total_price ? ` · $${campaign.total_price.toLocaleString()}` : ''}
+                              {campaign.total_price ? ` · $${campaign.total_price.toFixed(2)}` : ''}
                             </p>
                           </div>
                           {campaign.listing_image ? (
@@ -656,7 +698,9 @@ function DashboardContent() {
                     {stats.pendingReviews > 0 && (
                       <StatCard label="POP to Review" value={stats.pendingReviews} icon={AlertCircle} color="#dc2626" />
                     )}
-                    <StatCard label="Messages" value={stats.unreadMessages} icon={MessageSquare} />
+                    <Link href="/dashboard/messages">
+                      <StatCard label="Messages" value={stats.unreadMessages} icon={MessageSquare} />
+                    </Link>
                   </>
                 )}
               </div>
@@ -671,18 +715,36 @@ function DashboardContent() {
                 </div>
                 {activity.length > 0 ? (
                   <div className="space-y-3">
-                    {activity.map(item => (
-                      <Link key={item.id} href="/dashboard/bookings">
-                        <div className="flex items-center justify-between p-4 rounded-2xl hover:shadow-md transition-all"
-                          style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                          <div>
-                            <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>{item.title}</p>
-                            <p className="text-xs mt-0.5" style={{ color: '#888' }}>{item.subtitle}</p>
+                    {activity.map(item => {
+                      const rawStatus = item.subtitle.replace('Status: ', '')
+                      const isLive = isCampaignLive(rawStatus, item.start_date ?? '', item.end_date ?? '')
+                      const isComplete = rawStatus === 'completed' && !isLive
+                      const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[rawStatus] ?? { bg: '#f8f8f5', text: '#888' })
+                      return (
+                        <Link key={item.id} href="/dashboard/bookings">
+                          <div className="flex items-center justify-between p-4 rounded-2xl hover:shadow-md transition-all"
+                            style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p className="text-sm font-medium truncate" style={{ color: '#2b2b2b' }}>{item.title}</p>
+                                {isLive ? (
+                                  <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1"
+                                    style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                                    LIVE
+                                  </span>
+                                ) : (
+                                  <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
+                                    {isComplete ? 'Complete' : (STATUS_LABELS[rawStatus] ?? rawStatus)}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs mt-0.5" style={{ color: '#888' }}>{item.time}</p>
+                            </div>
                           </div>
-                          <span className="text-xs" style={{ color: '#aaa' }}>{item.time}</span>
-                        </div>
-                      </Link>
-                    ))}
+                        </Link>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
