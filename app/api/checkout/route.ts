@@ -21,12 +21,15 @@ export async function POST(req: NextRequest) {
 
     if (!isMockListing) {
       // Create a real booking record for real listings
-      // Look up the listing to get the host_id
+      // Look up the listing to get the host_id and buy_now_enabled
       const { data: listing } = await supabase
         .from('listings')
-        .select('host_id')
+        .select('host_id, buy_now_enabled')
         .eq('id', listingId)
         .single()
+
+      // If buy_now_enabled, skip host approval — set to confirmed immediately
+      const initialStatus = listing?.buy_now_enabled ? 'confirmed' : 'pending'
 
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
           end_date: endDate,
           total_price: total,
           platform_fee: Math.round(days * pricePerDay * 0.07 * 100) / 100,
-          status: 'pending',
+          status: initialStatus,
         })
         .select('id')
         .single()

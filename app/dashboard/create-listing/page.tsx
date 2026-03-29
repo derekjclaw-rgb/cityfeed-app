@@ -433,11 +433,10 @@ export default function CreateListingPage() {
             <CheckCircle className="w-8 h-8" style={{ color: '#7ecfc0' }} />
           </div>
           <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>
-            Listing submitted!
+            Listing is now live!
           </h2>
           <p className="text-sm mb-8" style={{ color: '#888' }}>
-            Your listing is under review. We&apos;ll notify you once it&apos;s approved and live on
-            the marketplace.
+            Your listing is now live on the marketplace. Advertisers can find and book it right away.
           </p>
           <div className="flex gap-3 justify-center">
             <Link

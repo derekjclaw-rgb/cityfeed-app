@@ -23,38 +23,48 @@ export default function MessagesPage() {
   const router = useRouter()
   const [threads, setThreads] = useState<Thread[]>([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
 
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.push('/login?redirect=/dashboard/messages'); return }
-      setUserId(data.user.id)
+      const userId = data.user.id
 
-      // Fetch bookings with messages
+      // Fix: use host_id (on bookings table directly, not listings.host_id)
       const { data: bookings } = await supabase
         .from('bookings')
         .select(`
-          id, status,
+          id, status, host_id, advertiser_id,
           listings(title),
-          messages(content, created_at, sender_id)
+          host:profiles!bookings_host_id_fkey(full_name),
+          advertiser:profiles!bookings_advertiser_id_fkey(full_name),
+          messages(content, created_at, sender_id, read)
         `)
-        .or(`advertiser_id.eq.${data.user.id},listings.host_id.eq.${data.user.id}`)
+        .or(`advertiser_id.eq.${userId},host_id.eq.${userId}`)
         .order('created_at', { ascending: false })
 
       if (bookings) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped: Thread[] = bookings.map((b: any) => {
-          const msgs = b.messages ?? []
+          const msgs = [...(b.messages ?? [])].sort(
+            (a: { created_at: string }, c: { created_at: string }) =>
+              new Date(a.created_at).getTime() - new Date(c.created_at).getTime()
+          )
           const lastMsg = msgs[msgs.length - 1]
+          const unread = msgs.filter((m: { sender_id: string; read: boolean }) => m.sender_id !== userId && !m.read).length
+
+          const otherParty = userId === b.host_id
+            ? (b.advertiser?.full_name ?? 'Advertiser')
+            : (b.host?.full_name ?? 'Host')
+
           return {
             booking_id: b.id,
             listing_title: b.listings?.title ?? 'Listing',
-            other_party: 'Host / Advertiser',
+            other_party: otherParty,
             last_message: lastMsg?.content ?? 'No messages yet',
             last_message_at: lastMsg?.created_at ?? b.created_at,
-            unread: 0,
+            unread,
             status: b.status,
           }
         })
@@ -97,7 +107,7 @@ export default function MessagesPage() {
               <Link key={thread.booking_id} href={`/dashboard/messages/${thread.booking_id}`}>
                 <div
                   className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
-                  style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+                  style={{ backgroundColor: '#fff', border: thread.unread > 0 ? '1px solid #debb73' : '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
                 >
                   <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm" style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}>
                     <MessageCircle className="w-5 h-5" />
@@ -109,7 +119,11 @@ export default function MessagesPage() {
                         {new Date(thread.last_message_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-xs truncate" style={{ color: '#888' }}>{thread.last_message}</p>
+                    <p className="text-xs truncate" style={{ color: '#888' }}>
+                      <span style={{ color: '#555' }}>{thread.other_party}</span>
+                      {' · '}
+                      {thread.last_message}
+                    </p>
                   </div>
                   {thread.unread > 0 && (
                     <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: '#debb73' }}>

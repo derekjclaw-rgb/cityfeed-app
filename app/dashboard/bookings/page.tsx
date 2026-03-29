@@ -18,7 +18,7 @@ interface Booking {
   status: string
   start_date: string
   end_date: string
-  total_amount: number
+  total_price: number
   payout_amount?: number
   created_at: string
   listing_id: string
@@ -152,7 +152,7 @@ export default function BookingsPage() {
       const { data } = await supabase
         .from('bookings')
         .select(`
-          id, status, start_date, end_date, total_amount, payout_amount, created_at, listing_id,
+          id, status, start_date, end_date, total_price, payout_amount, created_at, listing_id,
           listings(title),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name),
           host:profiles!bookings_host_id_fkey(full_name)
@@ -165,7 +165,7 @@ export default function BookingsPage() {
         status: b.status as string,
         start_date: b.start_date as string,
         end_date: b.end_date as string,
-        total_amount: b.total_amount as number,
+        total_price: b.total_price as number,
         payout_amount: b.payout_amount as number | undefined,
         created_at: b.created_at as string,
         listing_id: b.listing_id as string,
@@ -204,7 +204,7 @@ export default function BookingsPage() {
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
   const totalEarnings = isHost
-    ? completed.reduce((sum, b) => sum + (b.payout_amount ?? b.total_amount * 0.93), 0)
+    ? completed.reduce((sum, b) => sum + (b.payout_amount ?? b.total_price * 0.93), 0)
     : 0
 
   return (
@@ -348,7 +348,7 @@ function BookingCard({
   const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
 
   const earnings = isHost && booking.status === 'completed'
-    ? (booking.payout_amount ?? booking.total_amount * 0.93)
+    ? (booking.payout_amount ?? booking.total_price * 0.93)
     : null
 
   return (
@@ -381,7 +381,7 @@ function BookingCard({
           {new Date(booking.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
         <span className="font-semibold" style={{ color: '#2b2b2b' }}>
-          ${booking.total_amount?.toLocaleString()}
+          ${booking.total_price?.toLocaleString()}
         </span>
         {earnings !== null && (
           <span className="font-semibold flex items-center gap-1" style={{ color: '#16a34a' }}>

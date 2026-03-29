@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature')
 
   if (!sig || !process.env.STRIPE_WEBHOOK_SECRET) {
-    // Dev fallback: process without signature verification
     console.warn('[Stripe Webhook] No signature or secret — processing without verification (dev only)')
     try {
       const event = JSON.parse(body) as Stripe.Event
@@ -51,11 +50,10 @@ async function handleEvent(event: Stripe.Event) {
       .from('bookings')
       .update({
         status: 'confirmed',
-        stripe_session_id: session.id,
-        stripe_payment_intent: session.payment_intent as string,
+        stripe_payment_intent_id: session.payment_intent as string,
       })
       .eq('id', bookingId)
-      .select('*, listings(title, host_id), profiles!advertiser_id(full_name)')
+      .select('*, listings(title, host_id)')
       .single()
 
     if (error) {
@@ -65,15 +63,74 @@ async function handleEvent(event: Stripe.Event) {
 
     console.log(`[Stripe Webhook] Booking ${bookingId} confirmed`)
 
-    // Trigger email notifications
     if (booking) {
-      sendEmail({
-        type: 'booking_confirmed',
-        advertiserEmail: 'advertiser@example.com', // Phase 4: pull from profile
-        listingTitle: booking.listings?.title ?? 'your listing',
-        dates: `${booking.start_date} → ${booking.end_date}`,
-        total: booking.total_amount,
+      // Fetch advertiser profile
+      const { data: advertiserProfile } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', booking.advertiser_id)
+        .single()
+
+      // Fetch host profile
+      const { data: hostProfile } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', booking.host_id)
+        .single()
+
+      const listingTitle = booking.listings?.title ?? 'your listing'
+      const dates = `${booking.start_date} → ${booking.end_date}`
+
+      // Send confirmation email to advertiser
+      if (advertiserProfile?.email) {
+        sendEmail({
+          type: 'booking_confirmed',
+          advertiserEmail: advertiserProfile.email,
+          listingTitle,
+          dates,
+          total: booking.total_price,
+        })
+      }
+
+      // Send new booking notification to host
+      if (hostProfile?.email) {
+        sendEmail({
+          type: 'new_booking_request',
+          hostEmail: hostProfile.email,
+          listingTitle,
+          advertiserName: advertiserProfile?.full_name ?? 'An advertiser',
+          dates,
+          total: booking.total_price,
+        })
+      }
+
+      // Auto-message to advertiser with next steps
+      const systemMessage = `🎉 Your booking is confirmed!\n\nHere's what to do next:\n\n1. Upload your creative/collateral files in the booking detail page\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
+
+      await supabase.from('messages').insert({
+        booking_id: bookingId,
+        sender_id: booking.host_id,
+        recipient_id: booking.advertiser_id,
+        content: systemMessage,
       })
+
+      // Insert notifications
+      await supabase.from('notifications').insert([
+        {
+          user_id: booking.advertiser_id,
+          type: 'booking_confirmed',
+          title: 'Your booking is confirmed!',
+          body: `"${listingTitle}" — ${dates}`,
+          href: `/dashboard/bookings/${bookingId}`,
+        },
+        {
+          user_id: booking.host_id,
+          type: 'new_booking',
+          title: `New booking request for "${listingTitle}"`,
+          body: `From ${advertiserProfile?.full_name ?? 'An advertiser'} — ${dates}`,
+          href: `/dashboard/bookings`,
+        },
+      ])
     }
   }
 }

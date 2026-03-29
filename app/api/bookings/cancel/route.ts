@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     // Fetch booking
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('id, status, start_date, total_amount, stripe_payment_intent, host_id, advertiser_id, listings(title)')
+      .select('id, status, start_date, total_price, stripe_payment_intent, host_id, advertiser_id, listings(title)')
       .eq('id', booking_id)
       .single()
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const now = new Date()
     const campaignStart = new Date(booking.start_date)
     const daysUntilStart = (campaignStart.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    const totalAmountCents = Math.round((booking.total_amount ?? 0) * 100)
+    const totalAmountCents = Math.round((booking.total_price ?? 0) * 100)
 
     let refundAmountCents = 0
     let refundPolicy = ''

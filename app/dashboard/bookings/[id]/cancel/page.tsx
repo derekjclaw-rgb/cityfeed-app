@@ -14,7 +14,7 @@ interface BookingInfo {
   status: string
   start_date: string
   end_date: string
-  total_amount: number
+  total_price: number
   listing_title: string
   host_id: string
   advertiser_id: string
@@ -24,7 +24,7 @@ function calcRefund(booking: BookingInfo, userId: string): { amount: number; pol
   const now = new Date()
   const start = new Date(booking.start_date)
   const daysUntil = (start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  const total = booking.total_amount
+  const total = booking.total_price
 
   if (now >= start) {
     return { amount: 0, policy: 'no_refund', label: 'No refund — campaign already started', color: '#dc2626' }
@@ -57,7 +57,7 @@ export default function CancelBookingPage() {
 
       const { data, error: fetchError } = await supabase
         .from('bookings')
-        .select('id, status, start_date, end_date, total_amount, host_id, advertiser_id, listings(title)')
+        .select('id, status, start_date, end_date, total_price, host_id, advertiser_id, listings(title)')
         .eq('id', bookingId)
         .single()
 
@@ -74,7 +74,7 @@ export default function CancelBookingPage() {
         status: b.status,
         start_date: b.start_date,
         end_date: b.end_date,
-        total_amount: b.total_amount,
+        total_price: b.total_price,
         listing_title: b.listings?.title ?? 'Listing',
         host_id: b.host_id,
         advertiser_id: b.advertiser_id,
@@ -200,7 +200,7 @@ export default function CancelBookingPage() {
               </div>
               <div className="flex justify-between font-semibold">
                 <span style={{ color: '#888' }}>Total paid</span>
-                <span style={{ color: '#2b2b2b' }}>${booking?.total_amount?.toFixed(2)}</span>
+                <span style={{ color: '#2b2b2b' }}>${booking?.total_price?.toFixed(2)}</span>
               </div>
             </div>
           </div>

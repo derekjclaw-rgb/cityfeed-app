@@ -10,7 +10,7 @@ interface BookingDetails {
   id: string
   start_date: string
   end_date: string
-  total_amount: number
+  total_price: number
   status: string
   listings?: { title: string; city: string; state: string }
 }
@@ -26,7 +26,7 @@ function SuccessPageInner() {
     const supabase = createClient()
     supabase
       .from('bookings')
-      .select('id, start_date, end_date, total_amount, status, listings(title, city, state)')
+      .select('id, start_date, end_date, total_price, status, listings(title, city, state)')
       .eq('id', bookingId)
       .single()
       .then(({ data }) => {
@@ -65,7 +65,7 @@ function SuccessPageInner() {
                   </div>
                   <div className="flex justify-between">
                     <span>Total paid</span>
-                    <span className="font-semibold" style={{ color: '#debb73' }}>${booking.total_amount.toLocaleString()}</span>
+                    <span className="font-semibold" style={{ color: '#debb73' }}>${booking.total_price.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Status</span>

@@ -87,14 +87,14 @@ export default function DashboardPage() {
         if (isHost) {
           const [listingsRes, bookingsRes, messagesRes, popRes] = await Promise.all([
             supabase.from('listings').select('id', { count: 'exact' }).eq('host_id', user.id).eq('status', 'active'),
-            supabase.from('bookings').select('id, total_amount, status').eq('host_id', user.id).in('status', ['active', 'confirmed', 'pending']),
+            supabase.from('bookings').select('id, total_price, status').eq('host_id', user.id).in('status', ['active', 'confirmed', 'pending']),
             supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', user.id),
             supabase.from('bookings').select('id', { count: 'exact' }).eq('host_id', user.id).eq('status', 'pop_pending'),
           ])
 
           const earnings = bookingsRes.data?.reduce((sum, b) => {
             if (b.status === 'confirmed' || b.status === 'active') {
-              return sum + (b.total_amount || 0) * 0.93 // After 7% platform fee
+              return sum + (b.total_price || 0) * 0.93 // After 7% platform fee
             }
             return sum
           }, 0) ?? 0
@@ -111,14 +111,14 @@ export default function DashboardPage() {
         } else {
           // Advertiser
           const [bookingsRes, messagesRes, reviewsRes] = await Promise.all([
-            supabase.from('bookings').select('id, total_amount, status').eq('advertiser_id', user.id),
+            supabase.from('bookings').select('id, total_price, status').eq('advertiser_id', user.id),
             supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', user.id),
             supabase.from('bookings').select('id', { count: 'exact' }).eq('advertiser_id', user.id).eq('status', 'pop_review'),
           ])
 
           const totalSpent = bookingsRes.data?.reduce((sum, b) => {
             if (b.status === 'confirmed' || b.status === 'active' || b.status === 'completed') {
-              return sum + (b.total_amount || 0)
+              return sum + (b.total_price || 0)
             }
             return sum
           }, 0) ?? 0

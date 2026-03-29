@@ -31,7 +31,7 @@ interface Booking {
   status: string
   start_date: string
   end_date: string
-  total_amount: number
+  total_price: number
   payout_amount?: number
   created_at: string
   listing_id: string
@@ -444,7 +444,7 @@ export default function BookingDetailPage() {
                 { label: 'Start date', value: fmt(booking.start_date) },
                 { label: 'End date', value: fmt(booking.end_date) },
                 { label: 'Duration', value: days > 0 ? `${days} day${days !== 1 ? 's' : ''}` : '—' },
-                { label: 'Total paid', value: booking.total_amount ? `$${booking.total_amount.toLocaleString()}` : '—' },
+                { label: 'Total paid', value: booking.total_price ? `$${booking.total_price.toLocaleString()}` : '—' },
               ].map(item => (
                 <div key={item.label} className="flex flex-col gap-0.5">
                   <span style={{ color: '#aaa' }}>{item.label}</span>

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
-        id, total_amount, status, stripe_payment_intent,
+        id, total_price, status, stripe_payment_intent,
         host_id, advertiser_id,
         host:profiles!bookings_host_id_fkey(stripe_account_id, full_name),
         listings(title)
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate payout: total - 7% seller fee
-    const totalAmount = booking.total_amount ?? 0
+    const totalAmount = booking.total_price ?? 0
     const sellerFee = Math.round(totalAmount * 0.07 * 100) // cents
     const payoutAmount = Math.round(totalAmount * 100) - sellerFee // cents
 

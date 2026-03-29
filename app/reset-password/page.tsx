@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, CheckCircle, Lock } from 'lucide-react'
+import { Loader2, CheckCircle, Lock, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -12,6 +13,30 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [sessionReady, setSessionReady] = useState(false)
+  const [sessionChecked, setSessionChecked] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Listen for PASSWORD_RECOVERY event from Supabase auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setSessionReady(true)
+        setSessionChecked(true)
+      }
+    })
+
+    // Also check if session already exists (page refreshed with valid session)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSessionReady(true)
+      }
+      setSessionChecked(true)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,6 +72,39 @@ export default function ResetPasswordPage() {
             <CheckCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#22c55e' }} />
             <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Password updated</h1>
             <p className="text-sm" style={{ color: '#888' }}>Redirecting you to login...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Waiting for session detection
+  if (!sessionChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#7ecfc0' }} />
+      </div>
+    )
+  }
+
+  // No valid session found — invalid/expired link
+  if (sessionChecked && !sessionReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <div className="w-full max-w-md text-center">
+          <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
+            <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#E63946' }} />
+            <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Invalid or expired link</h1>
+            <p className="text-sm mb-6" style={{ color: '#888' }}>
+              This password reset link has expired or is invalid. Please request a new one.
+            </p>
+            <Link
+              href="/forgot-password"
+              className="inline-block font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+            >
+              Request new link
+            </Link>
           </div>
         </div>
       </div>

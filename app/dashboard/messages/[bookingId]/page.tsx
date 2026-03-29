@@ -28,9 +28,11 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [recipientId, setRecipientId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [bookingTitle, setBookingTitle] = useState('Conversation')
+  const [otherPartyName, setOtherPartyName] = useState('Other party')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -50,16 +52,35 @@ export default function ChatPage() {
 
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.push('/login'); return }
-      setUserId(data.user.id)
+      const uid = data.user.id
+      setUserId(uid)
 
-      // Fetch booking title
+      // Fetch booking with host/advertiser info for names and recipient
       const { data: booking } = await supabase
         .from('bookings')
-        .select('listings(title)')
+        .select(`
+          host_id, advertiser_id,
+          listings(title),
+          host:profiles!bookings_host_id_fkey(full_name),
+          advertiser:profiles!bookings_advertiser_id_fkey(full_name)
+        `)
         .eq('id', bookingId)
         .single()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (booking) setBookingTitle((booking as any).listings?.title ?? 'Conversation')
+
+      if (booking) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const b = booking as any
+        setBookingTitle(b.listings?.title ?? 'Conversation')
+
+        const isHost = uid === b.host_id
+        const recipient = isHost ? b.advertiser_id : b.host_id
+        setRecipientId(recipient)
+
+        const otherName = isHost
+          ? (b.advertiser?.full_name ?? 'Advertiser')
+          : (b.host?.full_name ?? 'Host')
+        setOtherPartyName(otherName)
+      }
 
       // Fetch messages
       const { data: msgs } = await supabase
@@ -69,6 +90,15 @@ export default function ChatPage() {
         .order('created_at', { ascending: true })
 
       if (msgs) setMessages(msgs)
+
+      // Mark messages from other party as read
+      await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('booking_id', bookingId)
+        .neq('sender_id', uid)
+        .eq('read', false)
+
       setLoading(false)
 
       // Subscribe to realtime
@@ -109,7 +139,7 @@ export default function ChatPage() {
 
   async function sendMessage(e: React.FormEvent) {
     e.preventDefault()
-    if ((!newMessage.trim() && !imageFile) || !userId || sending) return
+    if ((!newMessage.trim() && !imageFile) || !userId || !recipientId || sending) return
     setSending(true)
 
     const supabase = createClient()
@@ -131,6 +161,7 @@ export default function ChatPage() {
     await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: userId,
+      recipient_id: recipientId,
       content: newMessage.trim(),
       image_url: imageUrl,
     })
@@ -156,7 +187,7 @@ export default function ChatPage() {
         </Link>
         <div>
           <h1 className="font-semibold text-sm" style={{ color: '#2b2b2b' }}>{bookingTitle}</h1>
-          <p className="text-xs" style={{ color: '#888' }}>Booking #{bookingId.slice(0, 8)}</p>
+          <p className="text-xs" style={{ color: '#888' }}>with {otherPartyName}</p>
         </div>
       </div>
 
@@ -171,6 +202,11 @@ export default function ChatPage() {
             const isMe = msg.sender_id === userId
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                {!isMe && (
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mr-2 mt-1" style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}>
+                    {otherPartyName.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <div
                   className="max-w-xs rounded-2xl px-4 py-3 text-sm"
                   style={isMe
@@ -181,7 +217,7 @@ export default function ChatPage() {
                   {msg.image_url && (
                     <img src={msg.image_url} alt="attachment" className="rounded-xl mb-2 max-w-full" style={{ maxHeight: '200px', objectFit: 'cover' }} />
                   )}
-                  {msg.content && <p className="leading-relaxed">{msg.content}</p>}
+                  {msg.content && <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>}
                   <p className={`text-xs mt-1.5 ${isMe ? 'text-white/70' : ''}`} style={isMe ? {} : { color: '#aaa' }}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>

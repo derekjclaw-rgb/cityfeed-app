@@ -18,7 +18,7 @@ interface ReceiptData {
   price_per_day: number
   subtotal: number
   buyer_fee: number
-  total_amount: number
+  total_price: number
   payout_amount?: number
   payout_at?: string
   created_at: string
@@ -48,7 +48,7 @@ export default function ReceiptPage() {
         .from('bookings')
         .select(`
           id, status, start_date, end_date, total_days, price_per_day,
-          subtotal, buyer_fee, total_amount, payout_amount, payout_at,
+          subtotal, buyer_fee, total_price, payout_amount, payout_at,
           created_at, stripe_session_id,
           listings(title),
           host:profiles!bookings_host_id_fkey(full_name),
@@ -72,9 +72,9 @@ export default function ReceiptPage() {
         end_date: d.end_date,
         total_days: d.total_days ?? 1,
         price_per_day: d.price_per_day ?? 0,
-        subtotal: d.subtotal ?? d.total_amount,
+        subtotal: d.subtotal ?? d.total_price,
         buyer_fee: d.buyer_fee ?? 0,
-        total_amount: d.total_amount,
+        total_price: d.total_price,
         payout_amount: d.payout_amount,
         payout_at: d.payout_at,
         created_at: d.created_at,
@@ -224,7 +224,7 @@ export default function ReceiptPage() {
 
                 <div className="flex justify-between mt-4 pt-4" style={{ borderTop: '2px solid #f0f0ea' }}>
                   <span className="font-bold" style={{ color: '#2b2b2b' }}>Total Charged</span>
-                  <span className="font-bold text-lg" style={{ color: '#7ecfc0' }}>{fmtMoney(receipt.total_amount)}</span>
+                  <span className="font-bold text-lg" style={{ color: '#7ecfc0' }}>{fmtMoney(receipt.total_price)}</span>
                 </div>
               </div>
 
