@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     // Fetch booking
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('id, status, start_date, total_price, stripe_payment_intent, host_id, advertiser_id, listings(title)')
+      .select('id, status, start_date, total_price, stripe_payment_intent_id, host_id, advertiser_id, listings(title)')
       .eq('id', booking_id)
       .single()
 
@@ -73,10 +73,10 @@ export async function POST(req: NextRequest) {
     let refundId: string | null = null
 
     // Process Stripe refund if applicable
-    if (refundAmountCents > 0 && booking.stripe_payment_intent) {
+    if (refundAmountCents > 0 && booking.stripe_payment_intent_id) {
       try {
         const refund = await stripe.refunds.create({
-          payment_intent: booking.stripe_payment_intent,
+          payment_intent: booking.stripe_payment_intent_id,
           amount: refundAmountCents,
           reason: 'requested_by_customer',
           metadata: {
@@ -111,6 +111,30 @@ export async function POST(req: NextRequest) {
       console.error('[Cancel] Update error:', updateError)
       return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
     }
+
+    // Insert notifications for both parties
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const listingTitle = (booking as any).listings?.title ?? 'a listing'
+    const otherPartyId = isAdvertiser ? booking.host_id : booking.advertiser_id
+    const notifInserts = [
+      {
+        user_id: user_id,
+        type: 'booking_cancelled',
+        title: 'Booking cancelled',
+        body: `"${listingTitle}"`,
+        href: `/dashboard/bookings/${booking_id}`,
+      },
+    ]
+    if (otherPartyId) {
+      notifInserts.push({
+        user_id: otherPartyId,
+        type: 'booking_cancelled',
+        title: 'Booking cancelled',
+        body: `"${listingTitle}" — ${isAdvertiser ? 'Advertiser' : 'Host'} cancelled`,
+        href: `/dashboard/bookings/${booking_id}`,
+      })
+    }
+    await supabase.from('notifications').insert(notifInserts)
 
     // If host cancelled, flag their profile (hosts who cancel frequently affect their reputation)
     if (isHost) {

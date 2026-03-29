@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
-        id, total_price, status, stripe_payment_intent,
+        id, total_price, status, stripe_payment_intent_id,
         host_id, advertiser_id,
         host:profiles!bookings_host_id_fkey(stripe_account_id, full_name),
         listings(title)
