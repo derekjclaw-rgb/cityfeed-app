@@ -163,12 +163,12 @@ function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUse
       console.error('[POPActions] Payout request failed:', payoutErr)
     }
 
-    // Auto-message
+    // Auto-message: POP approved — campaign is LIVE (not "complete" yet)
     await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,
       recipient_id: hostId,
-      content: 'POP approved! Campaign complete 🎉',
+      content: 'POP approved! Your ad is now LIVE 🟢',
     })
 
     // Notification
@@ -330,7 +330,7 @@ const SYSTEM_PREFIXES = [
   '🎉 Your booking is confirmed',
   '📎 Creative files have been uploaded',
   '📸 Proof of posting submitted',
-  'POP approved! Campaign complete',
+  'POP approved! Your ad is now LIVE',
   '🔄 The advertiser has requested changes',
   '🟢 Campaign is now LIVE',
 ]

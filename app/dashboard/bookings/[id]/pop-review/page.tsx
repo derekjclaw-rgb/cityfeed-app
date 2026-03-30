@@ -129,12 +129,12 @@ export default function POPReviewPage() {
       console.error('[POPReview] Payout request failed:', payoutErr)
     }
 
-    // Auto-message
+    // Auto-message: POP approved — campaign is LIVE (not "complete" yet)
     await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,
       recipient_id: hostId,
-      content: '🎉 Campaign complete! POP approved. Thank you for using City Feed!',
+      content: 'POP approved! Your ad is now LIVE 🟢',
     })
 
     // Notification to host

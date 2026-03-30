@@ -19,23 +19,64 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const supabase = createClient()
 
-    // Listen for PASSWORD_RECOVERY event from Supabase auth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        setSessionReady(true)
+    async function initialize() {
+      // Check for PKCE code in URL params (Supabase SSR / PKCE flow)
+      const urlParams = new URLSearchParams(window.location.search)
+      const code = urlParams.get('code')
+
+      if (code) {
+        try {
+          const { data, error: exchError } = await supabase.auth.exchangeCodeForSession(code)
+          if (!exchError && data.session) {
+            setSessionReady(true)
+            // Clean up the URL so code isn't reused
+            window.history.replaceState({}, '', '/reset-password')
+          }
+        } catch {
+          // Exchange failed — fall through to show "invalid link"
+        }
+        setSessionChecked(true)
+        return
+      }
+
+      // Hash / implicit flow — listen for PASSWORD_RECOVERY event
+      // Supabase fires this when it detects #access_token=...&type=recovery in the URL
+      let authEventFired = false
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+          authEventFired = true
+          setSessionReady(true)
+          setSessionChecked(true)
+        }
+      })
+
+      // Give onAuthStateChange up to 1.5s to fire (hash processing is async)
+      // then fall back to getSession() for the "already logged in" case
+      const hasHashToken = window.location.hash.includes('access_token')
+
+      if (hasHashToken) {
+        // Wait for Supabase to process the hash and fire the auth event
+        setTimeout(async () => {
+          if (!authEventFired) {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) setSessionReady(true)
+            setSessionChecked(true)
+          }
+        }, 1500)
+      } else {
+        // No hash, no code — check if there's already an active session
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          setSessionReady(true)
+        }
         setSessionChecked(true)
       }
-    })
 
-    // Also check if session already exists (page refreshed with valid session)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSessionReady(true)
-      }
-      setSessionChecked(true)
-    })
+      return () => subscription.unsubscribe()
+    }
 
-    return () => subscription.unsubscribe()
+    initialize()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {

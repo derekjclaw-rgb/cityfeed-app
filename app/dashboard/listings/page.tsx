@@ -248,14 +248,15 @@ export default function MyListingsPage() {
                         <Eye className="w-3.5 h-3.5" />
                         View listing
                       </Link>
-                      <button
+                      <Link
+                        href={`/dashboard/listings/${listing.id}/edit`}
                         className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
                         style={{ color: '#555' }}
                         onClick={() => setOpenMenuId(null)}
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                         Edit
-                      </button>
+                      </Link>
                       <button
                         className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
                         style={{ color: '#555' }}
