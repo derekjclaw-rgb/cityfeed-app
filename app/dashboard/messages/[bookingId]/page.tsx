@@ -53,55 +53,53 @@ function BookingProgressBar({ status, endDate, buyNowEnabled }: { status: string
   const { step: currentStep, isAdLive } = getProgressInfo(status, endDate, buyNowEnabled)
 
   return (
-    <div className="px-6 pt-3 pb-7" style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec' }}>
-      <style>{`
-        @keyframes pulse-green {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6), 0 0 0 3px rgba(34, 197, 94, 0.2); }
-          50% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0), 0 0 0 3px rgba(34, 197, 94, 0.35); }
-        }
-      `}</style>
-      <div className="flex items-start gap-0">
+    <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec', padding: '12px 24px 16px' }}>
+      {/* Simple flexbox row: dot line dot line dot line dot line dot */}
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
         {PROGRESS_STEPS.map((step, i) => {
           const isCompleted = i < currentStep
           const isCurrent = i === currentStep
-          const isLive = isCurrent && i === 3 && isAdLive // "Ad Live" step, actively running
+          const isLive = isCurrent && i === 3 && isAdLive
           const isLast = i === PROGRESS_STEPS.length - 1
 
-          // Color logic
-          const dotColor = isLive ? '#22c55e' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#e0e0d8'
+          const dotBg = isLive ? '#22c55e' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#e0e0d8'
           const labelColor = isLive ? '#16a34a' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#bbb'
-          const lineColor = i < currentStep ? '#7ecfc0' : '#e0e0d8'
+          const lineBg = isCompleted ? '#7ecfc0' : '#e0e0d8'
 
           return (
-            <div key={step.label} className={`flex items-start ${isLast ? 'flex-none' : 'flex-1'}`}>
-              {/* Step dot + label */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all mt-0.5"
-                  style={{
-                    backgroundColor: dotColor,
-                    animation: isLive ? 'pulse-green 1.8s ease-in-out infinite' : 'none',
-                    boxShadow: isCurrent && !isLive ? '0 0 0 3px rgba(222,187,115,0.25)' : 'none',
-                  }}
-                />
-                <span
-                  className="text-xs whitespace-nowrap text-center"
-                  style={{
-                    color: labelColor,
-                    fontWeight: (isCurrent || isLive) ? '600' : '400',
-                    fontSize: '10px',
-                    lineHeight: '1.2',
-                  }}
-                >
+            <div key={step.label} style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', flex: isLast ? 'none' : 1 }}>
+              {/* Dot + label column */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: dotBg,
+                  flexShrink: 0,
+                  marginTop: '2px',
+                  boxShadow: isCurrent && !isLive ? '0 0 0 3px rgba(222,187,115,0.25)' : 'none',
+                }} />
+                <span style={{
+                  color: labelColor,
+                  fontWeight: (isCurrent || isLive) ? 600 : 400,
+                  fontSize: '10px',
+                  lineHeight: '1.2',
+                  whiteSpace: 'nowrap',
+                  textAlign: 'center',
+                }}>
                   {step.label}{isLive ? ' 🟢' : ''}
                 </span>
               </div>
-              {/* Connector line */}
+              {/* Connector line — only between dots, not after last */}
               {!isLast && (
-                <div
-                  className="h-px flex-1 mx-1 mt-1.5 transition-all"
-                  style={{ backgroundColor: lineColor }}
-                />
+                <div style={{
+                  height: '2px',
+                  flex: 1,
+                  marginTop: '6px',
+                  marginLeft: '4px',
+                  marginRight: '4px',
+                  backgroundColor: lineBg,
+                }} />
               )}
             </div>
           )

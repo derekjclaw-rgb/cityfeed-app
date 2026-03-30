@@ -70,6 +70,7 @@ export default function PublicProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [existingBookingId, setExistingBookingId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -78,6 +79,19 @@ export default function PublicProfilePage() {
       // Get current user (for contact button)
       const { data: { user } } = await supabase.auth.getUser()
       setCurrentUserId(user?.id ?? null)
+
+      // Check if current user has a booking with this host
+      if (user?.id) {
+        const { data: booking } = await supabase
+          .from('bookings')
+          .select('id')
+          .eq('advertiser_id', user.id)
+          .eq('host_id', profileId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (booking) setExistingBookingId(booking.id)
+      }
 
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
@@ -141,8 +155,13 @@ export default function PublicProfilePage() {
       router.push(`/login?redirect=/profile/${profileId}`)
       return
     }
-    // Redirect to messages — they'll need an existing booking or we go to listings
-    router.push('/dashboard/messages')
+    if (existingBookingId) {
+      // Link directly to existing message thread
+      router.push(`/dashboard/messages/${existingBookingId}`)
+    } else {
+      // No booking — can't message yet, handled below via disabled state
+      router.push('/marketplace')
+    }
   }
 
   if (loading) {
@@ -242,14 +261,26 @@ export default function PublicProfilePage() {
 
             {/* Contact button */}
             {currentUserId !== profileId && (
-              <button
-                onClick={handleContactHost}
-                className="flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
-              >
-                <MessageSquare className="w-4 h-4" />
-                {isHost ? 'Contact Host' : 'Send Message'}
-              </button>
+              <div className="flex-shrink-0 flex flex-col items-end gap-1">
+                <button
+                  onClick={handleContactHost}
+                  disabled={!!currentUserId && !existingBookingId && isHost}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-opacity"
+                  style={
+                    currentUserId && !existingBookingId && isHost
+                      ? { backgroundColor: '#f0f0ec', color: '#aaa', border: '1px solid #e0e0d8', cursor: 'not-allowed' }
+                      : { backgroundColor: '#debb73', color: '#2b2b2b', cursor: 'pointer' }
+                  }
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {existingBookingId ? 'Message Thread' : (isHost ? 'Contact Host' : 'Send Message')}
+                </button>
+                {currentUserId && !existingBookingId && isHost && (
+                  <p className="text-xs" style={{ color: '#aaa' }}>
+                    <Link href="/marketplace" style={{ color: '#7ecfc0', textDecoration: 'underline' }}>Book a listing</Link> to message this host
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

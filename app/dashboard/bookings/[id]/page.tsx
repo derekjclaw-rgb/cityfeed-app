@@ -1007,6 +1007,15 @@ export default function BookingDetailPage() {
                 Leave Review
               </Link>
             )}
+            {booking.status === 'completed' && !isHost && booking.listing_id && (
+              <Link
+                href={`/marketplace/${booking.listing_id}/book`}
+                className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors"
+                style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
+              >
+                🔁 Book Again
+              </Link>
+            )}
           </div>
         </div>
       </div>

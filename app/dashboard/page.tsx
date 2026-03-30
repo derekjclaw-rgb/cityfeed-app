@@ -340,9 +340,21 @@ function DashboardContent() {
           return sum
         }, 0) ?? 0
 
+        // Active campaigns = confirmed + pending + LIVE (completed but within date range)
+        const now = new Date()
+        const activeCampaignsCount = bookingsRes.data?.filter(b => {
+          if (b.status === 'confirmed' || b.status === 'pending') return true
+          if (b.status === 'completed') {
+            const start = b.start_date ? new Date(b.start_date) : null
+            const end = b.end_date ? new Date(b.end_date) : null
+            return !!(start && end && now >= start && now <= end)
+          }
+          return false
+        }).length ?? 0
+
         setStats({
           listings: 0,
-          activeBookings: bookingsRes.data?.filter(b => b.status === 'active' || b.status === 'confirmed').length ?? 0,
+          activeBookings: activeCampaignsCount,
           earnings: 0,
           pendingPOP: 0,
           unreadMessages: messagesRes.count ?? 0,
@@ -416,7 +428,7 @@ function DashboardContent() {
         type: 'booking' as const,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         title: (b as any).listings?.title ?? 'Booking',
-        subtitle: `Status: ${b.status}`,
+        subtitle: `Status: ${STATUS_LABELS[b.status] ?? b.status}`,
         time: new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         href: `/dashboard/bookings`,
         start_date: b.start_date,
@@ -578,38 +590,53 @@ function DashboardContent() {
                     const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[campaign.status] ?? { bg: '#f8f8f5', text: '#888' })
                     const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
                     return (
-                      <Link key={campaign.id} href={`/dashboard/bookings/${campaign.id}`}>
-                        <div className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
-                          style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-sm truncate" style={{ color: '#2b2b2b' }}>{campaign.listing_title}</h3>
-                              {isLive ? (
-                                <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1"
-                                  style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                                  LIVE
-                                </span>
-                              ) : (
-                                <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
-                                  {isComplete ? 'Completed ✓' : (STATUS_LABELS[campaign.status] ?? campaign.status)}
-                                </span>
-                              )}
+                      <div key={campaign.id} className="rounded-2xl overflow-hidden transition-all hover:shadow-md"
+                        style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
+                        <Link href={`/dashboard/bookings/${campaign.id}`}>
+                          <div className="p-4 flex items-center gap-4 cursor-pointer">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold text-sm truncate" style={{ color: '#2b2b2b' }}>{campaign.listing_title}</h3>
+                                {isLive ? (
+                                  <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1"
+                                    style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                                    LIVE
+                                  </span>
+                                ) : (
+                                  <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
+                                    {isComplete ? 'Completed ✓' : (STATUS_LABELS[campaign.status] ?? campaign.status)}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs" style={{ color: '#888' }}>
+                                {fmt(campaign.start_date)} — {fmt(campaign.end_date)}
+                                {campaign.total_price ? ` · $${campaign.total_price.toFixed(2)}` : ''}
+                              </p>
                             </div>
-                            <p className="text-xs" style={{ color: '#888' }}>
-                              {fmt(campaign.start_date)} — {fmt(campaign.end_date)}
-                              {campaign.total_price ? ` · $${campaign.total_price.toFixed(2)}` : ''}
-                            </p>
+                            {campaign.listing_image ? (
+                              <img src={campaign.listing_image} alt={campaign.listing_title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" style={{ border: '1px solid #e0e0d8' }} />
+                            ) : (
+                              <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+                                <ImageIcon className="w-5 h-5" style={{ color: '#ccc' }} />
+                              </div>
+                            )}
                           </div>
-                          {campaign.listing_image ? (
-                            <img src={campaign.listing_image} alt={campaign.listing_title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" style={{ border: '1px solid #e0e0d8' }} />
-                          ) : (
-                            <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
-                              <ImageIcon className="w-5 h-5" style={{ color: '#ccc' }} />
-                            </div>
-                          )}
-                        </div>
-                      </Link>
+                        </Link>
+                        {/* Book Again CTA for completed campaigns */}
+                        {isComplete && campaign.listing_id && (
+                          <div className="px-4 pb-3 pt-0">
+                            <Link
+                              href={`/marketplace/${campaign.listing_id}/book`}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-80 transition-opacity"
+                              style={{ backgroundColor: 'rgba(222,187,115,0.15)', color: '#b8941a', border: '1px solid rgba(222,187,115,0.4)' }}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              🔁 Book Again
+                            </Link>
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>

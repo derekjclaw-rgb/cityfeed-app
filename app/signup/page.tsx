@@ -48,6 +48,13 @@ function SignupForm() {
       setError(error.message)
       setLoading(false)
     } else {
+      // Send welcome email (fire-and-forget — don't block on it)
+      fetch('/api/auth/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: fullName, role }),
+      }).catch(() => { /* non-fatal */ })
+
       // Check if email confirmation is needed
       const supabase2 = createClient()
       const { data: { session } } = await supabase2.auth.getSession()

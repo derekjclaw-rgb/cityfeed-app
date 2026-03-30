@@ -73,7 +73,16 @@ function SuccessPageInner() {
                   </div>
                   <div className="flex justify-between">
                     <span>Status</span>
-                    <span className="capitalize font-medium" style={{ color: '#2b2b2b' }}>{booking.status}</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{{
+                      pending: 'Pending Review',
+                      confirmed: 'Confirmed',
+                      active: 'Active',
+                      completed: 'Completed',
+                      cancelled: 'Cancelled',
+                      pop_pending: 'Awaiting Proof of Posting',
+                      pop_review: 'Proof of Posting Under Review',
+                      disputed: 'Disputed',
+                    }[booking.status] ?? booking.status}</span>
                   </div>
                 </div>
               </div>
