@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutGrid, ClipboardList,
-  DollarSign, Loader2, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X
+  DollarSign, Loader2, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X, MessageCircle
 } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -773,7 +773,11 @@ function DashboardContent() {
                 </div>
                 {hostBookings.length > 0 ? (
                   <div className="space-y-3">
-                    {hostBookings.map(booking => {
+                    {[...hostBookings].sort((a, b) => {
+                      const aLive = isCampaignLive(a.status, a.start_date, a.end_date) ? 0 : (a.status === 'completed' ? 2 : 1)
+                      const bLive = isCampaignLive(b.status, b.start_date, b.end_date) ? 0 : (b.status === 'completed' ? 2 : 1)
+                      return aLive - bLive
+                    }).map(booking => {
                       const isLive = isCampaignLive(booking.status, booking.start_date, booking.end_date)
                       const isComplete = booking.status === 'completed' && !isLive
                       const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[booking.status] ?? { bg: '#f8f8f5', text: '#888' })
@@ -827,18 +831,26 @@ function DashboardContent() {
 
             {/* ── Stats Row ─────────────────────────────────────────────── */}
             {stats && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 {isHost ? (
                   <>
                     <StatCard label="Earnings (completed)" value={stats.earnings.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
                     <StatCard label="Active Bookings" value={stats.activeBookings} icon={ClipboardList} />
                     <StatCard label="Listings" value={stats.listings} icon={LayoutGrid} />
+                    <Link href="/dashboard/messages" className="relative">
+                      <StatCard label="Messages" value={stats.unreadMessages || 0} icon={MessageCircle} color={stats.unreadMessages > 0 ? '#E63946' : undefined} />
+                      {stats.unreadMessages > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: '#E63946' }} />}
+                    </Link>
                   </>
                 ) : (
                   <>
                     <StatCard label="Active Campaigns" value={stats.activeBookings} icon={ClipboardList} />
                     <StatCard label="Total Spent" value={stats.totalSpent.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
                     <StatCard label="Saved Listings" value={stats.savedListings} icon={Heart} />
+                    <Link href="/dashboard/messages" className="relative">
+                      <StatCard label="Messages" value={stats.unreadMessages || 0} icon={MessageCircle} color={stats.unreadMessages > 0 ? '#E63946' : undefined} />
+                      {stats.unreadMessages > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: '#E63946' }} />}
+                    </Link>
                   </>
                 )}
               </div>
