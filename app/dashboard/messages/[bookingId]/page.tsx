@@ -73,7 +73,7 @@ function BookingProgressBar({ status, endDate, buyNowEnabled }: { status: string
           const lineColor = i < currentStep ? '#7ecfc0' : '#e0e0d8'
 
           return (
-            <div key={step.label} className="flex items-start flex-1 last:flex-none">
+            <div key={step.label} className={`flex items-start ${isLast ? 'flex-none' : 'flex-1'}`}>
               {/* Step dot + label */}
               <div className="flex flex-col items-center gap-1.5">
                 <div

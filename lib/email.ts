@@ -208,7 +208,7 @@ function emailTemplate(body: string): string {
 <body style="margin:0;padding:0;background:#f0f0ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
   <div style="max-width:560px;margin:40px auto;padding:0 20px">
     <div style="text-align:center;margin-bottom:24px">
-      <span style="font-size:20px;font-weight:800;color:#2b2b2b;letter-spacing:-0.5px">City Feed</span>
+      <img src="https://www.cityfeed.io/logo-nav.png" alt="City Feed" style="height: 40px; margin-bottom: 16px;" />
     </div>
     <div style="background:#fff;border-radius:16px;padding:32px;border:1px solid #e0e0d8">
       ${body}

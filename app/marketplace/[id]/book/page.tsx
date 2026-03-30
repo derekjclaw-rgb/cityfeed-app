@@ -17,7 +17,7 @@ function BookPageInner() {
   const searchParams = useSearchParams()
   const listingId = params.id as string
 
-  const [listing, setListing] = useState<{ title: string; price_per_day: number; city: string; state: string; min_days: number; max_days: number } | null>(null)
+  const [listing, setListing] = useState<{ title: string; price_per_day: number; city: string; state: string; min_days: number; max_days: number; buy_now_enabled?: boolean } | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -49,7 +49,7 @@ function BookPageInner() {
     Promise.all([
       supabase
         .from('listings')
-        .select('title, price_per_day, city, state, min_days, max_days, availability')
+        .select('title, price_per_day, city, state, min_days, max_days, availability, buy_now_enabled')
         .eq('id', listingId)
         .single(),
       // Fetch confirmed/pending bookings to block those dates
@@ -276,7 +276,7 @@ function BookPageInner() {
           style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
         >
           {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
-          {submitting ? 'Redirecting to payment...' : days > 0 ? `Confirm & Pay $${total.toFixed(2)}` : 'Select dates to continue'}
+          {submitting ? 'Redirecting to payment...' : days > 0 ? (listing.buy_now_enabled ? `Book Now · $${total.toFixed(2)}` : `Request to Book · $${total.toFixed(2)}`) : 'Select dates to continue'}
         </button>
 
         <div className="flex items-center justify-center gap-2 text-xs" style={{ color: '#888' }}>

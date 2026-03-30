@@ -74,6 +74,7 @@ interface ListingData {
   review_count: number
   host_id?: string
   creative_specs?: CreativeSpecs
+  buy_now_enabled?: boolean
 }
 
 interface HostData {
@@ -211,12 +212,12 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
         className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
       >
-        Request to Book
+        {listing.buy_now_enabled ? 'Book Now' : 'Request to Book'}
         <ChevronRight className="w-4 h-4" />
       </button>
       <div className="flex items-center justify-center gap-1.5 mt-4 text-xs" style={{ color: '#888' }}>
         <Shield className="w-3.5 h-3.5" />
-        You won&apos;t be charged until confirmed
+        {listing.buy_now_enabled ? 'You\'ll be charged immediately' : 'You won\'t be charged until confirmed'}
       </div>
     </div>
   )
@@ -269,6 +270,7 @@ export default function ListingDetailPage() {
           rating: 0,
           review_count: 0,
           host_id: row.host_id,
+          buy_now_enabled: row.buy_now_enabled ?? false,
           creative_specs: (row.creative_formats || row.creative_dimensions || row.creative_max_file_size) ? {
             formats: row.creative_formats,
             dimensions: row.creative_dimensions,
@@ -592,7 +594,7 @@ export default function ListingDetailPage() {
             className="font-semibold px-6 py-3 rounded-xl text-sm"
             style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
           >
-            Book Now
+            {listing.buy_now_enabled ? 'Book Now' : 'Request to Book'}
           </Link>
         </div>
       </div>

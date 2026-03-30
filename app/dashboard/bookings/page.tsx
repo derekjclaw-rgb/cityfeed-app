@@ -525,8 +525,8 @@ function BookingCard({
           Message
         </Link>
 
-        {/* Review */}
-        {canReview && (
+        {/* Review — only visible to advertiser, not host */}
+        {canReview && !isHost && (
           <Link
             href={`/dashboard/bookings/${booking.id}/review`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
