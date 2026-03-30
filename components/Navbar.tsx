@@ -10,7 +10,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell, ArrowLeftRight } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell, ArrowLeftRight, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -42,6 +42,7 @@ export default function Navbar() {
   const [user, setUser] = useState<UserInfo | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
   const [dashMode, setDashMode] = useState<DashMode>('advertiser')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
@@ -70,6 +71,14 @@ export default function Navbar() {
 
       // Fetch notifications
       await loadNotifications(data.user.id)
+
+      // Fetch unread message count
+      const { count: msgCount } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('recipient_id', data.user.id)
+        .eq('read', false)
+      setUnreadMessages(msgCount ?? 0)
 
       // Subscribe to new notifications via Realtime
       const channel = supabase
@@ -344,6 +353,22 @@ export default function Navbar() {
                       <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
                         <LayoutDashboard className="w-4 h-4" style={{ color: '#7ecfc0' }} />
                         Dashboard
+                      </Link>
+                      <Link href="/dashboard/messages" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
+                        <div className="relative">
+                          <MessageSquare className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+                          {unreadMessages > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: '#E63946', color: '#fff', fontSize: '9px' }}>
+                              {unreadMessages > 9 ? '9+' : unreadMessages}
+                            </span>
+                          )}
+                        </div>
+                        Messages
+                        {unreadMessages > 0 && (
+                          <span className="ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#E63946', color: '#fff' }}>
+                            {unreadMessages}
+                          </span>
+                        )}
                       </Link>
                       <Link href="/dashboard/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
                         <User className="w-4 h-4" style={{ color: '#7ecfc0' }} />

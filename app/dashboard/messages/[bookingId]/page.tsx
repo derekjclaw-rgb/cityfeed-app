@@ -6,7 +6,7 @@
  * v3: Progress bar, POP approval buttons, inline POP image display
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Send, Loader2, ImageIcon, X, CheckCircle, RotateCcw, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -121,12 +121,11 @@ interface POPActionsProps {
   currentUserId: string | null
   listingTitle: string
   onStatusChange: (newStatus: string) => void
+  onPrefillMessage?: (text: string) => void
 }
 
-function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUserId, listingTitle, onStatusChange }: POPActionsProps) {
-  const [actionLoading, setActionLoading] = useState<'approve' | 'changes' | null>(null)
-  const [showChangesInput, setShowChangesInput] = useState(false)
-  const [changesNote, setChangesNote] = useState('')
+function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUserId, listingTitle, onStatusChange, onPrefillMessage }: POPActionsProps) {
+  const [actionLoading, setActionLoading] = useState<'approve' | null>(null)
   const [error, setError] = useState('')
 
   const showActions = isAdvertiser && ['pop_pending', 'pop_review'].includes(bookingStatus)
@@ -164,55 +163,43 @@ function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUse
       console.error('[POPActions] Payout request failed:', payoutErr)
     }
 
-    // Auto-message: POP approved — campaign is LIVE (not "complete" yet)
+    // Auto-message: role-specific "ad is now live" messages
+    // For host
     await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,
       recipient_id: hostId,
-      content: 'POP approved! Your ad is now LIVE 🟢',
+      content: '🟢 Proof of posting approved! The campaign is now live. You\'ll receive your payout once the campaign period ends.',
+    })
+    // For advertiser (self-message from system perspective — sender is current user = advertiser, but we want them to see it in chat too)
+    // Insert a system message visible in this thread from host perspective
+    await supabase.from('messages').insert({
+      booking_id: bookingId,
+      sender_id: hostId,
+      recipient_id: currentUserId,
+      content: '🟢 Your ad is now live! The host has confirmed your placement is active.',
     })
 
-    // Notification
-    await supabase.from('notifications').insert({
-      user_id: hostId,
-      type: 'pop_approved',
-      title: 'POP Approved!',
-      body: `Your proof for "${listingTitle}" was approved. Payout is processing.`,
-      href: `/dashboard/bookings/${bookingId}`,
-    })
+    // Notifications for both parties
+    await supabase.from('notifications').insert([
+      {
+        user_id: hostId,
+        type: 'pop_approved',
+        title: 'POP Approved!',
+        body: `Your proof for "${listingTitle}" was approved. Payout is processing.`,
+        href: `/dashboard/bookings/${bookingId}`,
+      },
+      {
+        user_id: currentUserId,
+        type: 'ad_live',
+        title: 'Your ad is now live! 🟢',
+        body: `"${listingTitle}" campaign is active.`,
+        href: `/dashboard/bookings/${bookingId}`,
+      },
+    ])
 
     setActionLoading(null)
     onStatusChange('completed')
-  }
-
-  async function handleRequestChanges() {
-    if (!currentUserId || !hostId) return
-    if (!changesNote.trim()) {
-      setError('Please describe what changes you need.')
-      return
-    }
-    setActionLoading('changes')
-    setError('')
-
-    const supabase = createClient()
-    await supabase.from('messages').insert({
-      booking_id: bookingId,
-      sender_id: currentUserId,
-      recipient_id: hostId,
-      content: `🔄 The advertiser has requested changes to the proof of posting. Please review and resubmit.\n\nNote: ${changesNote.trim()}`,
-    })
-
-    await supabase.from('notifications').insert({
-      user_id: hostId,
-      type: 'pop_changes_requested',
-      title: 'POP Changes Requested',
-      body: `Changes requested for "${listingTitle}": ${changesNote.trim()}`,
-      href: `/dashboard/bookings/${bookingId}`,
-    })
-
-    setActionLoading(null)
-    setShowChangesInput(false)
-    setChangesNote('')
   }
 
   return (
@@ -226,57 +213,26 @@ function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUse
         </div>
       )}
 
-      {!showChangesInput ? (
-        <div className="flex gap-2">
-          <button
-            onClick={handleApprove}
-            disabled={actionLoading !== null}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.35)' }}
-          >
-            {actionLoading === 'approve' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-            Approve Proof of Posting ✅
-          </button>
-          <button
-            onClick={() => setShowChangesInput(true)}
-            disabled={actionLoading !== null}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-80 transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Request Changes 🔄
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <textarea
-            value={changesNote}
-            onChange={e => setChangesNote(e.target.value)}
-            rows={2}
-            placeholder="Describe what changes you need..."
-            className="w-full rounded-xl px-3 py-2 text-xs focus:outline-none resize-none"
-            style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleRequestChanges}
-              disabled={actionLoading !== null}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity disabled:opacity-50"
-              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
-            >
-              {actionLoading === 'changes' ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
-              Send Request
-            </button>
-            <button
-              onClick={() => { setShowChangesInput(false); setChangesNote(''); setError('') }}
-              className="text-xs px-2 py-1.5 hover:opacity-70"
-              style={{ color: '#aaa' }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={handleApprove}
+          disabled={actionLoading !== null}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.35)' }}
+        >
+          {actionLoading === 'approve' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+          Approve Proof of Posting ✅
+        </button>
+        <button
+          onClick={() => onPrefillMessage?.('Hey, could you update the proof of posting? I noticed ')}
+          disabled={actionLoading !== null}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-80 transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          Not quite right? Let your host know below
+        </button>
+      </div>
     </div>
   )
 }
@@ -334,6 +290,8 @@ const SYSTEM_PREFIXES = [
   'POP approved! Your ad is now LIVE',
   '🔄 The advertiser has requested changes',
   '🟢 Campaign is now LIVE',
+  '🟢 Your ad is now live!',
+  '🟢 Proof of posting approved!',
 ]
 
 function isSystemMessage(msg: Message): boolean {
@@ -346,6 +304,7 @@ function isSystemMessage(msg: Message): boolean {
 export default function ChatPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const bookingId = params.bookingId as string
 
   const [messages, setMessages] = useState<Message[]>([])
@@ -366,6 +325,7 @@ export default function ChatPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const messageInputRef = useRef<HTMLInputElement>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   const scrollToBottom = useCallback(() => {
@@ -375,6 +335,18 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
+
+  // Handle prefill from pop-review "request changes" redirect
+  useEffect(() => {
+    if (!loading && searchParams.get('prefill') === 'changes') {
+      setNewMessage('Hey, could you update the proof of posting? I noticed ')
+      setTimeout(() => messageInputRef.current?.focus(), 100)
+      // Clear the param from URL without navigation
+      const url = new URL(window.location.href)
+      url.searchParams.delete('prefill')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [loading, searchParams])
 
   useEffect(() => {
     const supabase = createClient()
@@ -564,6 +536,10 @@ export default function ChatPage() {
         currentUserId={userId}
         listingTitle={listingTitle}
         onStatusChange={(newStatus) => setBookingStatus(newStatus)}
+        onPrefillMessage={(text) => {
+          setNewMessage(text)
+          setTimeout(() => messageInputRef.current?.focus(), 50)
+        }}
       />
 
       {/* Messages */}
@@ -668,6 +644,7 @@ export default function ChatPage() {
           </button>
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
           <input
+            ref={messageInputRef}
             type="text"
             value={newMessage}
             onChange={e => setNewMessage(e.target.value)}

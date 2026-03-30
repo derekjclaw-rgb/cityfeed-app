@@ -22,7 +22,7 @@ export default function POPReviewPage() {
   const bookingId = params.id as string
 
   const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState<'approve' | 'changes' | null>(null)
+  const [actionLoading, setActionLoading] = useState<'approve' | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [files, setFiles] = useState<POPFile[]>([])
@@ -31,8 +31,7 @@ export default function POPReviewPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [advertiserIdFromBooking, setAdvertiserIdFromBooking] = useState<string | null>(null)
   const [hostId, setHostId] = useState<string | null>(null)
-  const [changesNote, setChangesNote] = useState('')
-  const [showChangesInput, setShowChangesInput] = useState(false)
+
 
   useEffect(() => {
     async function load() {
@@ -129,22 +128,37 @@ export default function POPReviewPage() {
       console.error('[POPReview] Payout request failed:', payoutErr)
     }
 
-    // Auto-message: POP approved — campaign is LIVE (not "complete" yet)
+    // Role-specific auto-messages: one for host, one for advertiser
     await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,
       recipient_id: hostId,
-      content: 'POP approved! Your ad is now LIVE 🟢',
+      content: '🟢 Proof of posting approved! The campaign is now live. You\'ll receive your payout once the campaign period ends.',
+    })
+    await supabase.from('messages').insert({
+      booking_id: bookingId,
+      sender_id: hostId,
+      recipient_id: currentUserId,
+      content: '🟢 Your ad is now live! The host has confirmed your placement is active.',
     })
 
-    // Notification to host
-    await supabase.from('notifications').insert({
-      user_id: hostId,
-      type: 'pop_approved',
-      title: 'POP Approved!',
-      body: `Your proof of posting for "${listingTitle}" was approved. Payout is being processed.`,
-      href: `/dashboard/bookings/${bookingId}`,
-    })
+    // Notifications for both parties
+    await supabase.from('notifications').insert([
+      {
+        user_id: hostId,
+        type: 'pop_approved',
+        title: 'POP Approved!',
+        body: `Your proof of posting for "${listingTitle}" was approved. Payout is being processed.`,
+        href: `/dashboard/bookings/${bookingId}`,
+      },
+      {
+        user_id: currentUserId,
+        type: 'ad_live',
+        title: 'Your ad is now live! 🟢',
+        body: `"${listingTitle}" campaign is active.`,
+        href: `/dashboard/bookings/${bookingId}`,
+      },
+    ])
 
     // Email notification
     try {
@@ -170,39 +184,9 @@ export default function POPReviewPage() {
     setTimeout(() => router.push(`/dashboard/bookings/${bookingId}`), 2000)
   }
 
-  async function handleRequestChanges() {
-    if (!currentUserId || !hostId) return
-    if (!changesNote.trim()) {
-      setError('Please describe what changes you need.')
-      return
-    }
-    setActionLoading('changes')
-    setError('')
-
-    const supabase = createClient()
-
-    // Send message to host
-    await supabase.from('messages').insert({
-      booking_id: bookingId,
-      sender_id: currentUserId,
-      recipient_id: hostId,
-      content: `🔄 The advertiser has requested changes to the proof of posting. Please review and resubmit.\n\nNote: ${changesNote.trim()}`,
-    })
-
-    // Notification
-    await supabase.from('notifications').insert({
-      user_id: hostId,
-      type: 'pop_changes_requested',
-      title: 'POP Changes Requested',
-      body: `Changes requested for "${listingTitle}": ${changesNote.trim()}`,
-      href: `/dashboard/bookings/${bookingId}`,
-    })
-
-    setActionLoading(null)
-    setShowChangesInput(false)
-    setChangesNote('')
-    setSuccess('Change request sent to host.')
-    setTimeout(() => router.push(`/dashboard/bookings/${bookingId}`), 2000)
+  function handleRequestChanges() {
+    // Conversational approach: go to messages with a pre-filled template
+    router.push(`/dashboard/messages/${bookingId}?prefill=changes`)
   }
 
   if (loading) {
@@ -317,63 +301,32 @@ export default function POPReviewPage() {
                   </div>
                 )}
 
-                {!showChangesInput ? (
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      onClick={handleApprove}
-                      disabled={actionLoading !== null}
-                      className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-                      style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
-                    >
-                      {actionLoading === 'approve'
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <CheckCircle className="w-4 h-4" />
-                      }
-                      Approve POP ✅
-                    </button>
-                    <button
-                      onClick={() => setShowChangesInput(true)}
-                      disabled={actionLoading !== null}
-                      className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-                      style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Request Changes 🔄
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <textarea
-                      value={changesNote}
-                      onChange={e => setChangesNote(e.target.value)}
-                      rows={3}
-                      placeholder="Describe what changes you need the host to make..."
-                      className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none resize-none"
-                      style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
-                    />
-                    <div className="flex gap-3">
-                      <button
-                        onClick={handleRequestChanges}
-                        disabled={actionLoading !== null}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-                        style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
-                      >
-                        {actionLoading === 'changes'
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <RotateCcw className="w-4 h-4" />
-                        }
-                        Send Request 🔄
-                      </button>
-                      <button
-                        onClick={() => { setShowChangesInput(false); setChangesNote(''); setError('') }}
-                        className="px-4 py-3 rounded-xl text-sm hover:opacity-70"
-                        style={{ color: '#888' }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleApprove}
+                    disabled={actionLoading !== null}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                    style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
+                  >
+                    {actionLoading === 'approve'
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <CheckCircle className="w-4 h-4" />
+                    }
+                    Approve POP ✅
+                  </button>
+                  <button
+                    onClick={handleRequestChanges}
+                    disabled={actionLoading !== null}
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                    style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Not quite right? Tell your host
+                  </button>
+                </div>
+                <p className="text-xs mt-3" style={{ color: '#aaa' }}>
+                  Need changes? Click the button above to let your host know in the chat.
+                </p>
               </div>
             )}
           </div>

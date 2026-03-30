@@ -113,13 +113,14 @@ async function handleEvent(event: Stripe.Event) {
       const priceSummary = booking.total_price ? `$${Number(booking.total_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : ''
       const systemMessage = `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nHere's what to do next:\n\n1. Upload your creative/collateral files in the booking detail page\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
 
-      await supabase.from('messages').insert({
+      const msgInsert = await supabase.from('messages').insert({
         booking_id: bookingId,
         sender_id: booking.host_id,
         recipient_id: booking.advertiser_id,
         content: systemMessage,
         ...(listingPhoto ? { image_url: listingPhoto } : {}),
       })
+      console.log(`[Stripe Webhook] Auto-message insert result:`, msgInsert.error ?? 'OK', { bookingId, host_id: booking.host_id, advertiser_id: booking.advertiser_id })
 
       // Insert notifications
       await supabase.from('notifications').insert([

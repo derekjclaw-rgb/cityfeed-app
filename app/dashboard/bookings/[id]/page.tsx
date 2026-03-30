@@ -587,9 +587,11 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   }, [bookingId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handlePOPUpload(incoming: FileList | null) {
-    if (!incoming || incoming.length === 0) return
+    if (!incoming || incoming.length === 0 || uploading) return
     setUploading(true)
     setError('')
+    // Reset input so same file can be re-selected if needed
+    if (fileInputRef.current) fileInputRef.current.value = ''
 
     for (const file of Array.from(incoming)) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`

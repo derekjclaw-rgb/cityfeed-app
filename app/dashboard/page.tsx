@@ -33,6 +33,11 @@ interface Stats {
   pendingReviews: number
 }
 
+interface PendingPayout {
+  totalAmount: number
+  estimatedDate: string
+}
+
 interface Activity {
   id: string
   type: 'booking' | 'message'
@@ -185,6 +190,7 @@ function DashboardContent() {
   const [actionBanner, setActionBanner] = useState<ActionBanner | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [hostListings, setHostListings] = useState<HostListing[]>([])
+  const [pendingPayout, setPendingPayout] = useState<PendingPayout | null>(null)
   const [loading, setLoading] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
   const [stripeSuccess, setStripeSuccess] = useState(false)
@@ -241,6 +247,7 @@ function DashboardContent() {
     setHostListings([])
     setActivity([])
     setActionBanner(null)
+    setPendingPayout(null)
 
     const supabase = createClient()
     const isHost = currentMode === 'host'
@@ -270,6 +277,21 @@ function DashboardContent() {
           }
           return sum
         }, 0) ?? 0
+
+        // Pending payouts: completed bookings with payout_amount set but not yet paid out
+        const pendingPayoutBookings = bookingsRes.data?.filter(b =>
+          b.status === 'completed' && (b as unknown as { payout_amount?: number }).payout_amount
+        ) ?? []
+        if (pendingPayoutBookings.length > 0) {
+          const totalPending = pendingPayoutBookings.reduce((sum, b) => {
+            return sum + ((b as unknown as { payout_amount: number }).payout_amount ?? 0)
+          }, 0)
+          // Estimate 7 days from now as payout date
+          const estDate = new Date()
+          estDate.setDate(estDate.getDate() + 7)
+          const estDateStr = estDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+          setPendingPayout({ totalAmount: Math.round(totalPending * 100) / 100, estimatedDate: estDateStr })
+        }
 
         setStats({
           listings: listingsRes.count ?? 0,
@@ -676,6 +698,24 @@ function DashboardContent() {
                       </Link>
                     )
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* ── HOST: Pending Payouts Tile ────────────────────────────── */}
+            {isHost && pendingPayout && (
+              <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
+                style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div className="p-3 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(22,163,74,0.1)' }}>
+                  <DollarSign className="w-6 h-6" style={{ color: '#16a34a' }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ color: '#15803d' }}>
+                    💰 Pending Payouts: ${pendingPayout.totalAmount.toFixed(2)}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: '#16a34a' }}>
+                    Expected by {pendingPayout.estimatedDate}
+                  </p>
                 </div>
               </div>
             )}

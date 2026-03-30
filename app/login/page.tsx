@@ -16,13 +16,15 @@ function LoginForm() {
   const redirectTo = searchParams.get('redirect') || '/dashboard'
   const confirmed = searchParams.get('confirmed') === 'true'
 
-  // Redirect if already signed in
+  // Redirect if already signed in — run once on mount only
   useEffect(() => {
+    let active = true
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace(redirectTo)
+      if (active && session) router.replace(redirectTo)
     })
-  }, [router, redirectTo])
+    return () => { active = false }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -36,12 +38,26 @@ function LoginForm() {
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      setError(error.message)
+    // 10-second timeout guard
+    let didTimeout = false
+    const loginTimeout = setTimeout(() => {
+      didTimeout = true
+      setLoading(false)
+      setError('Something went wrong, please try again')
+    }, 10000)
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (didTimeout) return
+    clearTimeout(loginTimeout)
+
+    if (signInError) {
+      setError(signInError.message)
       setLoading(false)
     } else {
+      // Safety: clear loading if navigation stalls
+      setTimeout(() => setLoading(false), 4000)
       router.push(redirectTo)
       router.refresh()
     }
