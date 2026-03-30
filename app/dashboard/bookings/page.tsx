@@ -65,65 +65,28 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; d
   },
 }
 
-const TIMELINE_STEPS = [
-  { key: 'pending_payment', label: 'Payment' },
-  { key: 'confirmed', label: 'Confirmed' },
-  { key: 'active', label: 'Live' },
-  { key: 'pop_pending', label: 'Proof Review' },
-  { key: 'completed', label: 'Done' },
-]
-
-function getTimelineStep(status: string): number {
-  const map: Record<string, number> = {
-    pending_payment: 0,
-    pending: 0,
-    confirmed: 1,
-    active: 2,
-    pop_pending: 3,
-    pop_review: 3,
-    completed: 4,
-    cancelled: -1,
-    disputed: -1,
+function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string): { label: string; emoji: string; bg: string; text: string } {
+  // Check if currently live
+  if (['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) {
+    const now = new Date()
+    const start = startDate ? new Date(startDate) : null
+    const end = endDate ? new Date(endDate) : null
+    if (start && end && now >= start && now <= end) {
+      return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
+    }
   }
-  return map[status] ?? 0
-}
-
-function StatusTimeline({ status }: { status: string }) {
-  if (status === 'cancelled' || status === 'disputed') return null
-  const current = getTimelineStep(status)
-
-  return (
-    <div className="mt-3 mb-1">
-      <div className="flex items-center gap-0">
-        {TIMELINE_STEPS.map((step, i) => (
-          <div key={step.key} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{
-                  backgroundColor: i <= current ? '#7ecfc0' : '#e8e8e0',
-                  border: `2px solid ${i <= current ? '#7ecfc0' : '#e0e0d8'}`,
-                }}
-              >
-                {i < current && (
-                  <CheckCircle className="w-2.5 h-2.5" style={{ color: '#fff' }} />
-                )}
-              </div>
-              <span className="text-xs" style={{ color: i <= current ? '#7ecfc0' : '#aaa', whiteSpace: 'nowrap' }}>
-                {step.label}
-              </span>
-            </div>
-            {i < TIMELINE_STEPS.length - 1 && (
-              <div
-                className="flex-1 h-0.5 mb-4 mx-1"
-                style={{ backgroundColor: i < current ? '#7ecfc0' : '#e8e8e0' }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  const map: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
+    pending_payment: { label: 'Awaiting Payment', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
+    pending: { label: 'Pending Review', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
+    confirmed: { label: 'Awaiting Creative', emoji: '📂', bg: '#eff6ff', text: '#1d4ed8' },
+    active: { label: 'Active', emoji: '📍', bg: '#f0fdf4', text: '#16a34a' },
+    pop_pending: { label: 'Proof Submitted', emoji: '📸', bg: '#f0f8f5', text: '#7ecfc0' },
+    pop_review: { label: 'Proof Submitted', emoji: '📸', bg: '#f0f8f5', text: '#7ecfc0' },
+    completed: { label: 'Complete', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' },
+    cancelled: { label: 'Cancelled', emoji: '❌', bg: '#fef2f2', text: '#dc2626' },
+    disputed: { label: 'Disputed', emoji: '⚠️', bg: '#fef2f2', text: '#dc2626' },
+  }
+  return map[status] ?? { label: status, emoji: '•', bg: '#f8f8f5', text: '#888' }
 }
 
 export default function BookingsPage() {
@@ -410,6 +373,8 @@ function BookingCard({
   actionLoading: string | null
 }) {
   const statusConfig = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status, description: '' }
+  const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date)
+  const isLiveNow = simpleBadge.label === 'LIVE'
   const canReview = booking.status === 'completed'
   const showAcceptDecline = isHost && booking.status === 'pending'
   const showPOPPrompt = isHost && booking.status === 'active'
@@ -432,15 +397,16 @@ function BookingCard({
           </p>
         </div>
         <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
-          style={{ backgroundColor: statusConfig.bg, color: statusConfig.text }}
+          className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
+          style={{ backgroundColor: simpleBadge.bg, color: simpleBadge.text }}
         >
-          {statusConfig.label}
+          {isLiveNow && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />}
+          {simpleBadge.emoji} {simpleBadge.label}
         </span>
       </div>
 
       {/* Timeline */}
-      <StatusTimeline status={booking.status} />
+
 
       {/* Dates + Amount */}
       <div className="flex items-center gap-4 text-xs mt-3" style={{ color: '#888' }}>
@@ -503,15 +469,14 @@ function BookingCard({
           </Link>
         )}
 
-        {/* Advertiser: Review POP */}
+        {/* Advertiser: POP submitted — show 'report issue' link */}
         {showPOPReview && (
           <Link
-            href={`/dashboard/bookings/${booking.id}/pop-review`}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}
+            href={`/dashboard/messages/${booking.id}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
+            style={{ color: '#888', border: '1px solid #e0e0d8' }}
           >
-            <CheckCircle className="w-4 h-4" />
-            Review Proof of Posting ✅
+            Report an issue
           </Link>
         )}
 

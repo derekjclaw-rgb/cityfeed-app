@@ -601,14 +601,23 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       if (uploadErr) setError(uploadErr.message)
     }
 
-    // Update booking status → pop_pending
-    await supabase.from('bookings').update({ status: 'pop_pending' }).eq('id', bookingId)
+    // Update booking status → completed immediately (no advertiser approval gate)
+    await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId)
+
+    // Trigger payout immediately
+    try {
+      await fetch('/api/stripe/payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId }),
+      })
+    } catch { /* non-fatal — payout logged server-side */ }
 
     setUploading(false)
     setSubmitted(true)
     await loadPOPFiles()
 
-    // Auto-send POP message in chat with photo(s)
+    // Auto-send POP messages in chat — transparency for advertiser, confirmation for host
     if (advertiserId && hostId) {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -632,21 +641,30 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             ? `\n\n${photoUrls.join('\n')}`
             : ''
 
+          // Message to advertiser — transparency, they can see proof but no action needed
           await supabase.from('messages').insert({
             booking_id: bookingId,
             sender_id: user.id,
             recipient_id: advertiserId,
-            content: `📸 Proof of posting submitted for "${listingTitle ?? 'your listing'}"! Please review and approve.${photoText}`,
+            content: `📸 Your host has confirmed your ad placement is live! Here's the proof. If anything looks wrong, message your host directly.${photoText}`,
             image_url: photoUrls[0] ?? null,
+          })
+
+          // Message to host — confirmation payout initiated
+          await supabase.from('messages').insert({
+            booking_id: bookingId,
+            sender_id: user.id,
+            recipient_id: user.id,
+            content: `✅ Proof of posting received! Your payout has been initiated. Expected within 2 business days.`,
           })
 
           // Notify advertiser
           await supabase.from('notifications').insert({
             user_id: advertiserId,
             type: 'pop_submitted',
-            title: 'Proof of Posting Ready',
-            body: `Your host has submitted proof of posting for "${listingTitle ?? 'your booking'}". Please review.`,
-            href: `/dashboard/bookings/${bookingId}/pop-review`,
+            title: 'Your ad is live 🟢',
+            body: `"${listingTitle ?? 'your booking'}" — proof of posting confirmed.`,
+            href: `/dashboard/bookings/${bookingId}`,
           })
         }
       } catch { /* non-fatal */ }
@@ -667,8 +685,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
           </div>
           <div>
-            <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Proof of Posting Submitted</p>
-            <p className="text-xs mt-0.5" style={{ color: '#888' }}>The advertiser will review and confirm completion</p>
+            <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Proof of Posting Submitted ✅</p>
+            <p className="text-xs mt-0.5" style={{ color: '#888' }}>Payout initiated — expected within 2 business days</p>
           </div>
         </div>
         {files.length > 0 && (
@@ -746,7 +764,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       )}
 
       <p className="text-xs" style={{ color: '#aaa' }}>
-        Your payout will be processed once the advertiser confirms the proof.
+        Uploading proof completes the campaign and initiates your payout. Expected within 2 business days.
       </p>
     </div>
   )
@@ -999,14 +1017,13 @@ export default function BookingDetailPage() {
             >
               Messages
             </Link>
-            {['pop_pending', 'pop_review'].includes(booking.status) && !isHost && (
+            {['pop_pending', 'pop_review', 'completed'].includes(booking.status) && !isHost && (
               <Link
-                href={`/dashboard/bookings/${bookingId}/pop-review`}
-                className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors"
-                style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}
+                href={`/dashboard/messages/${bookingId}`}
+                className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#888' }}
               >
-                <CheckCircle className="w-4 h-4" />
-                Review Proof of Posting ✅
+                Report an issue
               </Link>
             )}
             {booking.status === 'completed' && !isHost && (

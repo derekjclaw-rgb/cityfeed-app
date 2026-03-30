@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
-  LayoutGrid, PlusCircle, MessageSquare, ClipboardList,
-  TrendingUp, DollarSign, AlertCircle, Loader2, User, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X
+  LayoutGrid, ClipboardList,
+  DollarSign, Loader2, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X
 } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -31,6 +31,7 @@ interface Stats {
   unreadMessages: number
   totalSpent: number
   pendingReviews: number
+  savedListings: number
 }
 
 interface PendingPayout {
@@ -80,6 +81,7 @@ interface HostBooking {
   start_date: string
   end_date: string
   total_price: number
+  advertiser_name?: string
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -273,7 +275,8 @@ function DashboardContent() {
           supabase.from('listings').select('id, title, city, state, status, images, price_per_day, category', { count: 'exact' }).eq('host_id', uid).eq('status', 'active'),
           supabase.from('bookings').select(`
             id, total_price, payout_amount, status, start_date, end_date, listing_id,
-            listings(title, images)
+            listings(title, images),
+            advertiser:profiles!bookings_advertiser_id_fkey(full_name)
           `).eq('host_id', uid).in('status', ['active', 'confirmed', 'pending', 'completed', 'pop_pending', 'pop_review']).order('created_at', { ascending: false }).limit(10),
           supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid).eq('read', false),
           supabase.from('bookings').select('id', { count: 'exact' }).eq('host_id', uid).eq('status', 'pop_pending'),
@@ -289,6 +292,14 @@ function DashboardContent() {
 
         // Set host bookings with listing images for the bookings section
         const nowTs = new Date()
+
+        function fmtAdvertiserName(fullName: string | undefined): string {
+          if (!fullName) return 'Advertiser'
+          const parts = fullName.trim().split(/\s+/)
+          if (parts.length === 1) return parts[0]
+          return `${parts[0]} ${parts[parts.length - 1].charAt(0).toUpperCase()}.`
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setHostBookings((bookingsRes.data ?? []).slice(0, 5).map((b: any) => ({
           id: b.id,
@@ -299,6 +310,7 @@ function DashboardContent() {
           start_date: b.start_date,
           end_date: b.end_date,
           total_price: b.total_price,
+          advertiser_name: fmtAdvertiserName(b.advertiser?.full_name),
         })))
 
         const earnings = bookingsRes.data?.reduce((sum, b) => {
@@ -325,7 +337,7 @@ function DashboardContent() {
             const fee = b.platform_fee ?? Math.round(price / 1.07 * 0.07 * 100) / 100
             return sum + Math.round((price - fee) * 0.93 * 100) / 100
           }, 0)
-          setPendingPayout({ totalAmount: Math.round(totalPending * 100) / 100, estimatedDate: 'After campaign ends' })
+          setPendingPayout({ totalAmount: Math.round(totalPending * 100) / 100, estimatedDate: 'Within 2 business days' })
         }
 
         const unread = messagesRes.count ?? 0
@@ -339,6 +351,7 @@ function DashboardContent() {
           unreadMessages: unread,
           totalSpent: 0,
           pendingReviews: 0,
+          savedListings: 0,
         })
 
         // Action banner (host)
@@ -364,13 +377,14 @@ function DashboardContent() {
 
       } else {
         // Advertiser
-        const [bookingsRes, messagesRes, reviewsRes] = await Promise.all([
+        const [bookingsRes, messagesRes, reviewsRes, savedRes] = await Promise.all([
           supabase.from('bookings').select(`
             id, total_price, status, start_date, end_date, listing_id,
             listings(title, images)
           `).eq('advertiser_id', uid).order('created_at', { ascending: false }),
           supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid).eq('read', false),
           supabase.from('bookings').select('id', { count: 'exact' }).eq('advertiser_id', uid).eq('status', 'pop_review'),
+          supabase.from('favorites').select('id', { count: 'exact' }).eq('user_id', uid),
         ])
 
         const totalSpent = bookingsRes.data?.reduce((sum, b) => {
@@ -400,6 +414,7 @@ function DashboardContent() {
           unreadMessages: unreadAdv,
           totalSpent: Math.round(totalSpent),
           pendingReviews: reviewsRes.count ?? 0,
+          savedListings: savedRes.count ?? 0,
         })
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -515,26 +530,6 @@ function DashboardContent() {
   const isHost = mode === 'host'
   const firstName = profile?.full_name?.split(' ')[0] || ''
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
-
-  const hostLinks = [
-    { href: '/dashboard/create-listing', label: 'Create Listing', desc: 'List a new ad placement', icon: PlusCircle },
-    { href: '/dashboard/listings', label: 'My Listings', desc: 'Manage your active listings', icon: LayoutGrid },
-    { href: '/dashboard/messages', label: 'Messages', desc: 'Chat with advertisers', icon: MessageSquare },
-    { href: '/dashboard/bookings', label: 'Bookings', desc: 'View booking requests', icon: ClipboardList },
-    { href: '/dashboard/stripe-onboarding', label: 'Payout Setup', desc: 'Connect your bank account', icon: CreditCard },
-    { href: '/dashboard/profile', label: 'My Profile', desc: 'Edit your public profile', icon: User },
-  ]
-
-  const advertiserLinks = [
-    { href: '/marketplace', label: 'Browse Placements', desc: 'Find ad spaces to book', icon: TrendingUp },
-    { href: '/dashboard/bookings', label: 'My Campaigns', desc: 'Track your active campaigns', icon: ClipboardList },
-    { href: '/dashboard/saved', label: 'Saved Listings', desc: 'Your favorited placements', icon: Heart },
-    { href: '/dashboard/messages', label: 'Messages', desc: 'Chat with hosts', icon: MessageSquare },
-    { href: '/dashboard/profile', label: 'My Profile', desc: 'Edit your public profile', icon: User },
-    { href: '/dashboard/create-listing', label: 'List Your Space', desc: 'Got ad space? Start earning', icon: PlusCircle },
-  ]
-
-  const links = isHost ? hostLinks : advertiserLinks
 
   return (
     <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
@@ -769,51 +764,6 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* ── HOST: Pending Payouts Tile ────────────────────────────── */}
-            {isHost && pendingPayout && (
-              <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
-                style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <div className="p-3 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(234,179,8,0.12)' }}>
-                  <DollarSign className="w-6 h-6" style={{ color: '#d97706' }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold" style={{ color: '#92400e' }}>
-                    💰 Pending Payouts: ${pendingPayout.totalAmount.toFixed(2)}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#b45309' }}>
-                    Estimated payout: {pendingPayout.estimatedDate}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* ── Stats Grid ────────────────────────────────────────────── */}
-            {stats && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                {isHost ? (
-                  <>
-                    <StatCard label="Active Listings" value={stats.listings} icon={LayoutGrid} />
-                    <StatCard label="Active Bookings" value={stats.activeBookings} icon={ClipboardList} />
-                    <StatCard label="Earnings" value={stats.earnings.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
-                    {stats.pendingPOP > 0 && (
-                      <StatCard label="Proof to Submit" value={stats.pendingPOP} icon={AlertCircle} color="#dc2626" />
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <StatCard label="Active Campaigns" value={stats.activeBookings} icon={ClipboardList} />
-                    <StatCard label="Total Spent" value={stats.totalSpent.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
-                    {stats.pendingReviews > 0 && (
-                      <StatCard label="Proof to Review" value={stats.pendingReviews} icon={AlertCircle} color="#dc2626" />
-                    )}
-                    <Link href="/dashboard/messages">
-                      <StatCard label="Messages" value={stats.unreadMessages} icon={MessageSquare} />
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
-
             {/* ── HOST: Bookings section ────────────────────────────────── */}
             {isHost && (
               <div className="mb-8">
@@ -849,6 +799,7 @@ function DashboardContent() {
                                   )}
                                 </div>
                                 <p className="text-xs" style={{ color: '#888' }}>
+                                  {booking.advertiser_name && <><span style={{ color: '#555' }}>{booking.advertiser_name}</span> · </>}
                                   {fmt(booking.start_date)} — {fmt(booking.end_date)}
                                   {booking.total_price ? ` · $${booking.total_price.toFixed(2)}` : ''}
                                 </p>
@@ -874,58 +825,39 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* ── Quick Actions Grid ────────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              {links.map((link) => {
-                const isMessages = link.href === '/dashboard/messages'
-                const showBadge = isMessages && unreadCount > 0
-                return (
-                  <Link key={link.href} href={link.href}
-                    className="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all hover:-translate-y-0.5"
-                    style={{ border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-xl relative" style={{ backgroundColor: '#f0f0ec' }}>
-                        <link.icon className="w-6 h-6" style={{ color: '#7ecfc0' }} />
-                        {showBadge && (
-                          <span style={{
-                            position: 'absolute', top: '-4px', right: '-4px',
-                            backgroundColor: '#ef4444', color: '#fff',
-                            borderRadius: '9999px', fontSize: '10px', fontWeight: 700,
-                            minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', padding: '0 4px', lineHeight: 1,
-                          }}>
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-1 group-hover:text-[#7ecfc0] transition-colors" style={{ color: '#2b2b2b' }}>
-                          {link.label}
-                        </h3>
-                        <p className="text-sm" style={{ color: '#888' }}>{link.desc}</p>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+            {/* ── Stats Row ─────────────────────────────────────────────── */}
+            {stats && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                {isHost ? (
+                  <>
+                    <StatCard label="Earnings (completed)" value={stats.earnings.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
+                    <StatCard label="Active Bookings" value={stats.activeBookings} icon={ClipboardList} />
+                    <StatCard label="Listings" value={stats.listings} icon={LayoutGrid} />
+                  </>
+                ) : (
+                  <>
+                    <StatCard label="Active Campaigns" value={stats.activeBookings} icon={ClipboardList} />
+                    <StatCard label="Total Spent" value={stats.totalSpent.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
+                    <StatCard label="Saved Listings" value={stats.savedListings} icon={Heart} />
+                  </>
+                )}
+              </div>
+            )}
 
-            {/* ── ADVERTISER: Recent Activity ───────────────────────────── */}
-            {!isHost && activity.length > 0 && (
-              <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Recent Activity</h2>
-                <div className="space-y-3">
-                  {activity.map(item => (
-                    <Link key={item.id} href={item.href}
-                      className="flex items-center justify-between p-3 rounded-xl hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: '#f8f8f5' }}>
-                      <div>
-                        <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>{item.title}</p>
-                        <p className="text-xs" style={{ color: '#888' }}>{item.subtitle}</p>
-                      </div>
-                      <span className="text-xs" style={{ color: '#aaa' }}>{item.time}</span>
-                    </Link>
-                  ))}
+            {/* ── HOST: Pending Payouts Tile ────────────────────────────── */}
+            {isHost && pendingPayout && (
+              <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
+                style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div className="p-3 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(234,179,8,0.12)' }}>
+                  <DollarSign className="w-6 h-6" style={{ color: '#d97706' }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ color: '#92400e' }}>
+                    💰 Pending Payout: ${pendingPayout.totalAmount.toFixed(2)}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: '#b45309' }}>
+                    Payout processing — {pendingPayout.estimatedDate}
+                  </p>
                 </div>
               </div>
             )}

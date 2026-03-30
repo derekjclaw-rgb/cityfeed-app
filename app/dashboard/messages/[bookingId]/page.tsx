@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Send, Loader2, ImageIcon, X, CheckCircle, RotateCcw, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Send, Loader2, ImageIcon, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -29,10 +29,9 @@ function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDa
 
   const steps = [
     { label: 'Booked', done: true },
-    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || buyNow },
+    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow },
     { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status) },
-    { label: 'Proof Review', done: ['pop_review','completed'].includes(status) },
-    { label: isLive ? '🟢 LIVE' : 'Live', done: status === 'completed' },
+    { label: isLive ? '🟢 LIVE' : 'Proof Submitted', done: ['pop_pending','pop_review','completed'].includes(status) },
     { label: 'Complete', done: status === 'completed' && end != null && now >= end },
   ]
 
@@ -72,115 +71,23 @@ interface POPActionsProps {
   onPrefillMessage?: (text: string) => void
 }
 
-function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUserId, listingTitle, onStatusChange, onPrefillMessage }: POPActionsProps) {
-  const [actionLoading, setActionLoading] = useState<'approve' | null>(null)
-  const [error, setError] = useState('')
 
-  const showActions = isAdvertiser && ['pop_pending', 'pop_review'].includes(bookingStatus)
-  if (!showActions) return null
-
-  async function handleApprove() {
-    if (!currentUserId || !hostId) return
-    setActionLoading('approve')
-    setError('')
-
-    const supabase = createClient()
-    const { error: updateErr } = await supabase
-      .from('bookings')
-      .update({ status: 'completed' })
-      .eq('id', bookingId)
-
-    if (updateErr) {
-      setError(updateErr.message)
-      setActionLoading(null)
-      return
-    }
-
-    // Trigger payout to host
-    try {
-      const payoutRes = await fetch('/api/stripe/payout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: bookingId }),
-      })
-      if (!payoutRes.ok) {
-        const payoutData = await payoutRes.json()
-        console.error('[POPActions] Payout failed:', payoutData.error)
-      }
-    } catch (payoutErr) {
-      console.error('[POPActions] Payout request failed:', payoutErr)
-    }
-
-    // Auto-message: role-specific "ad is now live" messages
-    // For host
-    await supabase.from('messages').insert({
-      booking_id: bookingId,
-      sender_id: currentUserId,
-      recipient_id: hostId,
-      content: '🟢 Proof of posting approved! The campaign is now live. You\'ll receive your payout once the campaign period ends.',
-    })
-    // For advertiser (self-message from system perspective — sender is current user = advertiser, but we want them to see it in chat too)
-    // Insert a system message visible in this thread from host perspective
-    await supabase.from('messages').insert({
-      booking_id: bookingId,
-      sender_id: hostId,
-      recipient_id: currentUserId,
-      content: '🟢 Your ad is now live! The host has confirmed your placement is active.',
-    })
-
-    // Notifications for both parties
-    await supabase.from('notifications').insert([
-      {
-        user_id: hostId,
-        type: 'pop_approved',
-        title: 'POP Approved!',
-        body: `Your proof for "${listingTitle}" was approved. Payout is processing.`,
-        href: `/dashboard/bookings/${bookingId}`,
-      },
-      {
-        user_id: currentUserId,
-        type: 'ad_live',
-        title: 'Your ad is now live! 🟢',
-        body: `"${listingTitle}" campaign is active.`,
-        href: `/dashboard/bookings/${bookingId}`,
-      },
-    ])
-
-    setActionLoading(null)
-    onStatusChange('completed')
-  }
+function POPActions({ bookingId, isAdvertiser, bookingStatus }: POPActionsProps) {
+  const showBanner = isAdvertiser && ['pop_pending', 'pop_review', 'completed'].includes(bookingStatus)
+  if (!showBanner) return null
 
   return (
-    <div className="px-6 py-3" style={{ backgroundColor: 'rgba(222,187,115,0.08)', borderBottom: '1px solid rgba(222,187,115,0.25)' }}>
-      <p className="text-xs font-semibold mb-2" style={{ color: '#b45309' }}>📸 Proof of posting ready for your review</p>
-
-      {error && (
-        <div className="rounded-lg px-3 py-2 text-xs flex items-center gap-2 mb-2" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
-          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-          {error}
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={handleApprove}
-          disabled={actionLoading !== null}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.35)' }}
+    <div className="px-6 py-3" style={{ backgroundColor: 'rgba(126,207,192,0.06)', borderBottom: '1px solid rgba(126,207,192,0.2)' }}>
+      <p className="text-xs font-semibold" style={{ color: '#2b6b5e' }}>
+        🟢 Your host has confirmed your ad placement is live! Check the proof photos above.
+        {' '}<a
+          href={`/dashboard/messages/${bookingId}`}
+          className="underline underline-offset-2 hover:opacity-70 transition-opacity"
+          style={{ color: '#7ecfc0' }}
         >
-          {actionLoading === 'approve' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-          Approve Proof of Posting ✅
-        </button>
-        <button
-          onClick={() => onPrefillMessage?.('Hey, could you update the proof of posting? I noticed ')}
-          disabled={actionLoading !== null}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold hover:opacity-80 transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Not quite right? Let your host know below
-        </button>
-      </div>
+          Report an issue
+        </a>
+      </p>
     </div>
   )
 }
@@ -456,16 +363,7 @@ function ChatPageInner() {
           <h1 className="font-semibold text-sm" style={{ color: '#2b2b2b' }}>{bookingTitle}</h1>
           <p className="text-xs" style={{ color: '#888' }}>with {otherPartyName}</p>
         </div>
-        {bookingStatus && ['pop_pending', 'pop_review'].includes(bookingStatus) && isAdvertiser && (
-          <Link
-            href={`/dashboard/bookings/${bookingId}/pop-review`}
-            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
-          >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Review Proof of Posting
-          </Link>
-        )}
+
       </div>
 
       {/* Progress bar — below header */}
