@@ -26,34 +26,38 @@ function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDa
   const now = new Date()
   const end = endDate ? new Date(endDate) : null
   const isLive = status === 'completed' && end && now < end
+  const isFullyComplete = status === 'completed' && end != null && now >= end
 
   const steps = [
-    { label: 'Booked', done: true },
-    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow },
-    { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status) },
-    { label: isLive ? '🟢 LIVE' : 'Proof Submitted', done: ['pop_pending','pop_review','completed'].includes(status) },
-    { label: 'Complete', done: status === 'completed' && end != null && now >= end },
+    { label: 'Booked', done: true, live: false },
+    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow, live: false },
+    { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status), live: false },
+    { label: 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
+    { label: 'Complete', done: isFullyComplete, live: false },
   ]
 
+  const dotColor = (s: typeof steps[0]) => s.live ? '#16a34a' : s.done ? '#7ecfc0' : '#ddd'
+  const lineColor = (next: typeof steps[0]) => next.done ? '#7ecfc0' : '#e0e0d8'
+
+  /* Ultra-simple: one row of inline-block spans. No flex, no table, no absolute. */
   return (
-    <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: '0px', borderBottom: '1px solid #e0e0d8' }}>
-      {steps.map((step, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '48px' }}>
-            <div style={{
-              width: '10px', height: '10px', borderRadius: '50%',
-              backgroundColor: step.done ? (step.label.includes('LIVE') ? '#16a34a' : '#7ecfc0') : '#ddd',
-              ...(step.label.includes('LIVE') ? { boxShadow: '0 0 6px #16a34a' } : {})
-            }} />
-            <span style={{ fontSize: '9px', marginTop: '4px', color: step.done ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
-              {step.label}
+    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #e0e0d8', textAlign: 'center', lineHeight: 1 }}>
+      {steps.map((step, i) => {
+        const isLast = i === steps.length - 1
+        return (
+          <span key={i} style={{ display: 'inline-block', verticalAlign: 'top', textAlign: 'center' }}>
+            {/* Line before dot (except first) */}
+            {i > 0 && <span style={{ display: 'inline-block', width: '24px', height: '2px', backgroundColor: lineColor(step), verticalAlign: 'middle', margin: '0 -1px' }} />}
+            {/* Dot + label stack */}
+            <span style={{ display: 'inline-block', verticalAlign: 'middle', textAlign: 'center', width: '50px' }}>
+              <span style={{ display: 'block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: dotColor(step), margin: '0 auto' }} />
+              <span style={{ display: 'block', fontSize: '8px', marginTop: '4px', color: step.done ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
+                {step.live ? '🟢 LIVE' : step.label}
+              </span>
             </span>
-          </div>
-          {i < steps.length - 1 && (
-            <div style={{ flex: 1, height: '2px', backgroundColor: steps[i + 1].done ? '#7ecfc0' : '#e0e0d8', minWidth: '8px' }} />
-          )}
-        </div>
-      ))}
+          </span>
+        )
+      })}
     </div>
   )
 }
