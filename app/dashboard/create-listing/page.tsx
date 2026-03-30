@@ -503,7 +503,7 @@ export default function CreateListingPage() {
           List your space
         </h1>
         <p className="text-sm mb-8" style={{ color: '#888' }}>
-          Fill out the details below. Your listing will be reviewed before going live.
+          Fill out the details below. Your listing will go live immediately.
         </p>
 
         {error && (
@@ -1083,7 +1083,7 @@ export default function CreateListingPage() {
             }}
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-            {loading ? 'Submitting...' : 'Submit listing for review'}
+            {loading ? 'Submitting...' : 'Publish listing'}
           </button>
         </form>
       </div>

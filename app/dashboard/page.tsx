@@ -135,8 +135,8 @@ const STATUS_LABELS: Record<string, string> = {
   pending: 'Pending Review',
   confirmed: 'Confirmed',
   active: 'Active — Live',
-  pop_pending: 'POP Submitted',
-  pop_review: 'POP Review',
+  pop_pending: 'Proof of Posting Submitted',
+  pop_review: 'Proof of Posting Review',
   completed: 'Completed ✓',
   cancelled: 'Cancelled',
 }
@@ -353,7 +353,8 @@ function DashboardContent() {
               if (storageFiles && storageFiles.length > 0) { hasCollateral = true; break }
             }
             if (hasCollateral) {
-              setActionBanner({ message: `Collateral is with the host — stand by for POP`, href: `/dashboard/messages`, cta: 'View Messages' })
+              const firstBookingId = confirmedBookings[0].id
+              setActionBanner({ message: `Creative files are with the host — stand by for Proof of Posting`, href: `/dashboard/messages/${firstBookingId}`, cta: 'Message Host' })
             } else {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const title = (confirmedBookings[0] as any).listings?.title ?? 'your listing'
@@ -688,7 +689,7 @@ function DashboardContent() {
                     <StatCard label="Active Bookings" value={stats.activeBookings} icon={ClipboardList} />
                     <StatCard label="Earnings" value={stats.earnings.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
                     {stats.pendingPOP > 0 && (
-                      <StatCard label="POP Needed" value={stats.pendingPOP} icon={AlertCircle} color="#dc2626" />
+                      <StatCard label="Proof to Submit" value={stats.pendingPOP} icon={AlertCircle} color="#dc2626" />
                     )}
                   </>
                 ) : (
@@ -696,7 +697,7 @@ function DashboardContent() {
                     <StatCard label="Active Campaigns" value={stats.activeBookings} icon={ClipboardList} />
                     <StatCard label="Total Spent" value={stats.totalSpent.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
                     {stats.pendingReviews > 0 && (
-                      <StatCard label="POP to Review" value={stats.pendingReviews} icon={AlertCircle} color="#dc2626" />
+                      <StatCard label="Proof to Review" value={stats.pendingReviews} icon={AlertCircle} color="#dc2626" />
                     )}
                     <Link href="/dashboard/messages">
                       <StatCard label="Messages" value={stats.unreadMessages} icon={MessageSquare} />

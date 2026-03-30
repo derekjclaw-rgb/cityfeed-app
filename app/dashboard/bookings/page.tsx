@@ -45,11 +45,11 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; d
   },
   pop_pending: {
     bg: '#f0f8f5', text: '#7ecfc0',
-    label: 'POP Submitted — Review Required', description: 'Proof of placement awaiting your approval',
+    label: 'Proof of Posting Submitted', description: 'Proof of posting awaiting your approval',
   },
   pop_review: {
     bg: '#f0f8f5', text: '#7ecfc0',
-    label: 'POP Submitted — Review Required', description: 'Review the proof of placement',
+    label: 'Proof of Posting Submitted', description: 'Review the proof of posting',
   },
   completed: {
     bg: '#f0fdf4', text: '#16a34a',
@@ -69,7 +69,7 @@ const TIMELINE_STEPS = [
   { key: 'pending_payment', label: 'Payment' },
   { key: 'confirmed', label: 'Confirmed' },
   { key: 'active', label: 'Live' },
-  { key: 'pop_pending', label: 'POP Review' },
+  { key: 'pop_pending', label: 'Proof Review' },
   { key: 'completed', label: 'Done' },
 ]
 
@@ -140,13 +140,23 @@ export default function BookingsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      const host = profile?.role === 'host' || profile?.role === 'admin'
+      // Use mode toggle (cf_dash_mode) — same as dashboard/page.tsx
+      // Falls back to profile.role for first-time users without a saved mode
+      const savedMode = typeof window !== 'undefined' ? localStorage.getItem('cf_dash_mode') : null
+      let host: boolean
+      if (savedMode === 'host') {
+        host = true
+      } else if (savedMode === 'advertiser') {
+        host = false
+      } else {
+        // No saved mode — fall back to profile.role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+        host = profile?.role === 'host' || profile?.role === 'admin' || profile?.role === 'both'
+      }
       setIsHost(host)
 
       const { data } = await supabase
@@ -207,7 +217,7 @@ export default function BookingsPage() {
           booking_id: bookingId,
           sender_id: user.id,
           recipient_id: b.advertiser_id,
-          content: `✅ Great news — your booking has been approved!\n\nNext steps:\n1. Upload your creative/collateral files\n2. Review the creative specs on the listing page\n3. I'll begin setup once I receive your materials\n\nFeel free to message me with any questions!`,
+          content: `✅ Great news — your booking has been approved!\n\nNext steps:\n1. Upload your creative files\n2. Review the creative specs on the listing page\n3. I'll begin setup once I receive your materials\n\nFeel free to message me with any questions!`,
         })
 
         // Insert notification for advertiser
@@ -489,7 +499,7 @@ function BookingCard({
             style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: '#7ecfc0' }}
           >
             <Upload className="w-3.5 h-3.5" />
-            Upload POP
+            Upload Proof of Posting
           </Link>
         )}
 
@@ -501,7 +511,7 @@ function BookingCard({
             style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}
           >
             <CheckCircle className="w-4 h-4" />
-            Review POP ✅
+            Review Proof of Posting ✅
           </Link>
         )}
 

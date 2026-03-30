@@ -289,17 +289,17 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold" style={{ color: '#2b2b2b' }}>
-          {isHost ? 'Advertiser Collateral' : 'Upload Your Collateral'}
+          {isHost ? 'Advertiser Creative Files' : 'Upload Your Creative Files'}
         </h2>
         {hasFiles ? (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
             <CheckCircle className="w-3 h-3" />
-            Collateral Uploaded ✅
+            Creative Files Uploaded ✅
           </span>
         ) : (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
             <Clock className="w-3 h-3" />
-            Awaiting Collateral
+            Awaiting Creative Files
           </span>
         )}
       </div>
@@ -307,7 +307,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       {/* Advertiser intro text — only before upload */}
       {!isHost && !showSuccessState && (
         <p className="text-sm mb-5 leading-relaxed" style={{ color: '#555' }}>
-          Please deliver your collateral within the production window listed on this placement.
+          Please deliver your creative files within the production window listed on this placement.
           The host will begin setup once received.
         </p>
       )}
@@ -315,7 +315,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       {/* Host note — no files yet */}
       {isHost && !hasFiles && (
         <p className="text-sm mb-5" style={{ color: '#888' }}>
-          The advertiser hasn&apos;t uploaded collateral yet. You&apos;ll be notified when files arrive.
+          The advertiser hasn&apos;t uploaded creative files yet. You&apos;ll be notified when files arrive.
         </p>
       )}
 
@@ -403,8 +403,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
             </div>
             <div>
-              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Collateral Updated ✅</p>
-              <p className="text-xs mt-0.5" style={{ color: '#555' }}>Host will get this live and send you proof of production</p>
+              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Creative Files Uploaded ✅</p>
+              <p className="text-xs mt-0.5" style={{ color: '#555' }}>Host will get this live and send you proof of posting</p>
             </div>
           </div>
         </div>
@@ -757,8 +757,8 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
   pending: { bg: '#fef9ec', text: '#b45309', label: 'Pending Review' },
   confirmed: { bg: '#eff6ff', text: '#1d4ed8', label: 'Confirmed' },
   active: { bg: '#f0fdf4', text: '#16a34a', label: 'Active — Live' },
-  pop_pending: { bg: '#f0f8f5', text: '#7ecfc0', label: 'POP Submitted' },
-  pop_review: { bg: '#f0f8f5', text: '#7ecfc0', label: 'POP Review' },
+  pop_pending: { bg: '#f0f8f5', text: '#7ecfc0', label: 'Proof of Posting Submitted' },
+  pop_review: { bg: '#f0f8f5', text: '#7ecfc0', label: 'Proof of Posting Review' },
   completed: { bg: '#f0fdf4', text: '#16a34a', label: 'Completed ✓' },
   cancelled: { bg: '#fef2f2', text: '#dc2626', label: 'Cancelled' },
   disputed: { bg: '#fef2f2', text: '#dc2626', label: 'Disputed' },
@@ -993,7 +993,7 @@ export default function BookingDetailPage() {
                 style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}
               >
                 <CheckCircle className="w-4 h-4" />
-                Review POP ✅
+                Review Proof of Posting ✅
               </Link>
             )}
             {booking.status === 'completed' && !isHost && (

@@ -24,32 +24,33 @@ function formatName(fullName: string): string {
 
 const PROGRESS_STEPS = [
   { label: 'Booked' },
+  { label: 'Host Approved' },
   { label: 'Creative Uploaded' },
   { label: 'Ad Live' },
   { label: 'Completed' },
 ]
 
 /**
- * Returns the current step index (0-3) and whether the "Ad Live" step is actively live.
- * Ad Live = status is completed AND today < end_date (campaign still running)
- * Completed = status is completed AND today >= end_date
+ * Returns the current step index (0-4) and whether the "Ad Live" step is actively live.
+ * Steps: Booked(0) → Host Approved(1) → Creative Uploaded(2) → Ad Live(3) → Completed(4)
  */
-function getProgressInfo(status: string, endDate?: string | null): { step: number; isAdLive: boolean } {
+function getProgressInfo(status: string, endDate?: string | null, buyNowEnabled?: boolean): { step: number; isAdLive: boolean } {
   const now = new Date()
   const end = endDate ? new Date(endDate) : null
 
   if (status === 'completed') {
-    if (end && now < end) return { step: 2, isAdLive: true } // Ad Live (campaign running)
-    return { step: 3, isAdLive: false } // Completed
+    if (end && now < end) return { step: 3, isAdLive: true } // Ad Live (campaign running)
+    return { step: 4, isAdLive: false } // Completed
   }
-  if (['pop_pending', 'pop_review'].includes(status)) return { step: 2, isAdLive: false }
-  if (status === 'active') return { step: 1, isAdLive: false }
-  return { step: 0, isAdLive: false }
+  if (['pop_pending', 'pop_review'].includes(status)) return { step: 3, isAdLive: false }
+  if (status === 'active') return { step: 2, isAdLive: false }
+  if (status === 'confirmed' || buyNowEnabled) return { step: 1, isAdLive: false } // Host Approved
+  return { step: 0, isAdLive: false } // Booked / pending
 }
 
-function BookingProgressBar({ status, endDate }: { status: string; endDate?: string | null }) {
+function BookingProgressBar({ status, endDate, buyNowEnabled }: { status: string; endDate?: string | null; buyNowEnabled?: boolean }) {
   if (status === 'cancelled' || status === 'disputed') return null
-  const { step: currentStep, isAdLive } = getProgressInfo(status, endDate)
+  const { step: currentStep, isAdLive } = getProgressInfo(status, endDate, buyNowEnabled)
 
   return (
     <div className="px-6 pt-3 pb-7" style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec' }}>
@@ -63,7 +64,7 @@ function BookingProgressBar({ status, endDate }: { status: string; endDate?: str
         {PROGRESS_STEPS.map((step, i) => {
           const isCompleted = i < currentStep
           const isCurrent = i === currentStep
-          const isLive = isCurrent && i === 2 && isAdLive // "Ad Live" step, actively running
+          const isLive = isCurrent && i === 3 && isAdLive // "Ad Live" step, actively running
           const isLast = i === PROGRESS_STEPS.length - 1
 
           // Color logic
@@ -234,7 +235,7 @@ function POPActions({ bookingId, isAdvertiser, bookingStatus, hostId, currentUse
             style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.35)' }}
           >
             {actionLoading === 'approve' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-            Approve POP ✅
+            Approve Proof of Posting ✅
           </button>
           <button
             onClick={() => setShowChangesInput(true)}
@@ -358,6 +359,7 @@ export default function ChatPage() {
   const [bookingTitle, setBookingTitle] = useState('Conversation')
   const [bookingStatus, setBookingStatus] = useState('')
   const [bookingEndDate, setBookingEndDate] = useState<string | null>(null)
+  const [buyNowEnabled, setBuyNowEnabled] = useState(false)
   const [listingTitle, setListingTitle] = useState('')
   const [otherPartyName, setOtherPartyName] = useState('Other party')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -387,7 +389,7 @@ export default function ChatPage() {
         .from('bookings')
         .select(`
           host_id, advertiser_id, status, end_date,
-          listings(title),
+          listings(title, buy_now_enabled),
           host:profiles!bookings_host_id_fkey(full_name),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
         `)
@@ -402,6 +404,7 @@ export default function ChatPage() {
         setListingTitle(title)
         setBookingStatus(b.status ?? '')
         setBookingEndDate(b.end_date ?? null)
+        setBuyNowEnabled(b.listings?.buy_now_enabled ?? false)
         setHostId(b.host_id)
 
         const isHost = uid === b.host_id
@@ -523,7 +526,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col pt-16" style={{ height: '100vh', backgroundColor: '#f0f0ec' }}>
+    <div className="flex flex-col pt-16" style={{ height: '100dvh', backgroundColor: '#f0f0ec' }}>
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-4" style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
         <Link href="/dashboard/messages" className="hover:opacity-70" style={{ color: '#888' }}>
@@ -540,14 +543,14 @@ export default function ChatPage() {
             style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
           >
             <CheckCircle className="w-3.5 h-3.5" />
-            Review POP
+            Review Proof of Posting
           </Link>
         )}
       </div>
 
       {/* Progress bar — below header */}
       {bookingStatus && (
-        <BookingProgressBar status={bookingStatus} endDate={bookingEndDate} />
+        <BookingProgressBar status={bookingStatus} endDate={bookingEndDate} buyNowEnabled={buyNowEnabled} />
       )}
 
 

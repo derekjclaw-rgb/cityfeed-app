@@ -281,7 +281,7 @@ function BookPageInner() {
 
         <div className="flex items-center justify-center gap-2 text-xs" style={{ color: '#888' }}>
           <Shield className="w-3.5 h-3.5" />
-          Secured by Stripe · 7-day cancellation policy
+          Secured by Stripe · <Link href="/terms" style={{ color: '#888', textDecoration: 'underline' }}>Cancellation policy applies</Link>
         </div>
       </div>
 

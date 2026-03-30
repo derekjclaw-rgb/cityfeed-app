@@ -61,7 +61,11 @@ function SuccessPageInner() {
                 <div className="space-y-1.5 text-sm" style={{ color: '#888' }}>
                   <div className="flex justify-between">
                     <span>Dates</span>
-                    <span style={{ color: '#2b2b2b' }}>{booking.start_date} → {booking.end_date}</span>
+                    <span style={{ color: '#2b2b2b' }}>
+                      {new Date(booking.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {' → '}
+                      {new Date(booking.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Total paid</span>

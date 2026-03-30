@@ -418,6 +418,10 @@ export default function Navbar() {
                   {user.firstName && (
                     <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
                   )}
+                  {/* Mode indicator badge */}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-lg" style={{ backgroundColor: 'rgba(222,187,115,0.15)', color: '#debb73', border: '1px solid rgba(222,187,115,0.3)' }}>
+                    {dashMode === 'host' ? '🏠 Host' : '📢 Advertiser'}
+                  </span>
                   {unreadCount > 0 && (
                     <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E63946', color: '#fff' }}>
                       {unreadCount} notif{unreadCount !== 1 ? 's' : ''}

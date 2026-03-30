@@ -31,8 +31,6 @@ export default function Footer() {
             <ul className="space-y-2.5">
               <li><Link href="/about" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>About</Link></li>
               <li><Link href="/how-it-works" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>How It Works</Link></li>
-              <li><Link href="#" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>Blog</Link></li>
-              <li><Link href="#" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>Careers</Link></li>
             </ul>
           </div>
 
@@ -40,13 +38,26 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>For You</h4>
             <ul className="space-y-2.5">
-              {['For Hosts', 'For Advertisers', 'Pricing', 'Help Center'].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                    {item}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link href="/signup?role=host" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  For Hosts
+                </Link>
+              </li>
+              <li>
+                <Link href="/signup?role=advertiser" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  For Advertisers
+                </Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <a href="mailto:mk@cityfeed.io" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
+                  Help Center
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -81,7 +92,7 @@ export default function Footer() {
           <div className="flex gap-5">
             <Link href="/privacy" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Privacy</Link>
             <Link href="/terms" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Terms</Link>
-            <Link href="#" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Contact</Link>
+            <a href="mailto:mk@cityfeed.io" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Contact</a>
           </div>
         </div>
       </div>
