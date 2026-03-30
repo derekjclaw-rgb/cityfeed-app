@@ -22,89 +22,39 @@ function formatName(fullName: string): string {
 
 // ─── Booking Progress Bar ─────────────────────────────────────────────────────
 
-const PROGRESS_STEPS = [
-  { label: 'Booked' },
-  { label: 'Host Approved' },
-  { label: 'Creative Uploaded' },
-  { label: 'Ad Live' },
-  { label: 'Completed' },
-]
-
-/**
- * Returns the current step index (0-4) and whether the "Ad Live" step is actively live.
- * Steps: Booked(0) → Host Approved(1) → Creative Uploaded(2) → Ad Live(3) → Completed(4)
- */
-function getProgressInfo(status: string, endDate?: string | null, buyNowEnabled?: boolean): { step: number; isAdLive: boolean } {
+function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDate?: string; buyNow?: boolean }) {
   const now = new Date()
   const end = endDate ? new Date(endDate) : null
+  const isLive = status === 'completed' && end && now < end
 
-  if (status === 'completed') {
-    if (end && now < end) return { step: 3, isAdLive: true } // Ad Live (campaign running)
-    return { step: 4, isAdLive: false } // Completed
-  }
-  if (['pop_pending', 'pop_review'].includes(status)) return { step: 3, isAdLive: false }
-  if (status === 'active') return { step: 2, isAdLive: false }
-  if (status === 'confirmed' || buyNowEnabled) return { step: 1, isAdLive: false } // Host Approved
-  return { step: 0, isAdLive: false } // Booked / pending
-}
-
-function BookingProgressBar({ status, endDate, buyNowEnabled }: { status: string; endDate?: string | null; buyNowEnabled?: boolean }) {
-  if (status === 'cancelled' || status === 'disputed') return null
-  const { step: currentStep, isAdLive } = getProgressInfo(status, endDate, buyNowEnabled)
+  const steps = [
+    { label: 'Booked', done: true },
+    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || buyNow },
+    { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status) },
+    { label: 'Proof Review', done: ['pop_review','completed'].includes(status) },
+    { label: isLive ? '🟢 LIVE' : 'Live', done: status === 'completed' },
+    { label: 'Complete', done: status === 'completed' && end != null && now >= end },
+  ]
 
   return (
-    <div style={{ backgroundColor: '#fff', borderBottom: '1px solid #f0f0ec', padding: '12px 24px 16px' }}>
-      {/* Simple flexbox row: dot line dot line dot line dot line dot */}
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
-        {PROGRESS_STEPS.map((step, i) => {
-          const isCompleted = i < currentStep
-          const isCurrent = i === currentStep
-          const isLive = isCurrent && i === 3 && isAdLive
-          const isLast = i === PROGRESS_STEPS.length - 1
-
-          const dotBg = isLive ? '#22c55e' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#e0e0d8'
-          const labelColor = isLive ? '#16a34a' : isCompleted ? '#7ecfc0' : isCurrent ? '#debb73' : '#bbb'
-          const lineBg = isCompleted ? '#7ecfc0' : '#e0e0d8'
-
-          return (
-            <div key={step.label} style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', flex: isLast ? 'none' : 1 }}>
-              {/* Dot + label column */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                <div style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  backgroundColor: dotBg,
-                  flexShrink: 0,
-                  marginTop: '2px',
-                  boxShadow: isCurrent && !isLive ? '0 0 0 3px rgba(222,187,115,0.25)' : 'none',
-                }} />
-                <span style={{
-                  color: labelColor,
-                  fontWeight: (isCurrent || isLive) ? 600 : 400,
-                  fontSize: '10px',
-                  lineHeight: '1.2',
-                  whiteSpace: 'nowrap',
-                  textAlign: 'center',
-                }}>
-                  {step.label}{isLive ? ' 🟢' : ''}
-                </span>
-              </div>
-              {/* Connector line — only between dots, not after last */}
-              {!isLast && (
-                <div style={{
-                  height: '2px',
-                  flex: 1,
-                  marginTop: '6px',
-                  marginLeft: '4px',
-                  marginRight: '4px',
-                  backgroundColor: lineBg,
-                }} />
-              )}
-            </div>
-          )
-        })}
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', gap: '0px', borderBottom: '1px solid #e0e0d8' }}>
+      {steps.map((step, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '48px' }}>
+            <div style={{
+              width: '10px', height: '10px', borderRadius: '50%',
+              backgroundColor: step.done ? (step.label.includes('LIVE') ? '#16a34a' : '#7ecfc0') : '#ddd',
+              ...(step.label.includes('LIVE') ? { boxShadow: '0 0 6px #16a34a' } : {})
+            }} />
+            <span style={{ fontSize: '9px', marginTop: '4px', color: step.done ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
+              {step.label}
+            </span>
+          </div>
+          {i < steps.length - 1 && (
+            <div style={{ flex: 1, height: '2px', backgroundColor: steps[i + 1].done ? '#7ecfc0' : '#e0e0d8', minWidth: '8px' }} />
+          )}
+        </div>
+      ))}
     </div>
   )
 }
@@ -520,7 +470,7 @@ function ChatPageInner() {
 
       {/* Progress bar — below header */}
       {bookingStatus && (
-        <BookingProgressBar status={bookingStatus} endDate={bookingEndDate} buyNowEnabled={buyNowEnabled} />
+        <BookingProgressBar status={bookingStatus} endDate={bookingEndDate ?? undefined} buyNow={buyNowEnabled} />
       )}
 
 

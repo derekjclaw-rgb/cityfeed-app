@@ -841,6 +841,10 @@ export default function BookingDetailPage() {
 
   const isHost = currentUserId === booking.host_id
   const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
+  const now = new Date()
+  const isLive = booking.status === 'completed' &&
+    booking.start_date && booking.end_date &&
+    now >= new Date(booking.start_date) && now <= new Date(booking.end_date)
   const days = booking.start_date && booking.end_date
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
@@ -865,9 +869,16 @@ export default function BookingDetailPage() {
               <p className="text-sm" style={{ color: '#888' }}>{listing.city}, {listing.state}</p>
             )}
           </div>
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1" style={{ backgroundColor: statusCfg.bg, color: statusCfg.text }}>
-            {statusCfg.label}
-          </span>
+          {isLive ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1 flex items-center gap-1.5" style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a', display: 'inline-block', boxShadow: '0 0 6px #16a34a', animation: 'pulse 2s infinite' }} />
+              LIVE
+            </span>
+          ) : (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1" style={{ backgroundColor: statusCfg.bg, color: statusCfg.text }}>
+              {statusCfg.label}
+            </span>
+          )}
         </div>
 
         <div className="space-y-4">

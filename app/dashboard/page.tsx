@@ -71,6 +71,17 @@ interface HostListing {
   category: string
 }
 
+interface HostBooking {
+  id: string
+  listing_title: string
+  listing_id: string
+  listing_image?: string
+  status: string
+  start_date: string
+  end_date: string
+  total_price: number
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({ label, value, icon: Icon, prefix = '', color = '#7ecfc0' }: {
@@ -190,7 +201,9 @@ function DashboardContent() {
   const [actionBanner, setActionBanner] = useState<ActionBanner | null>(null)
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [hostListings, setHostListings] = useState<HostListing[]>([])
+  const [hostBookings, setHostBookings] = useState<HostBooking[]>([])
   const [pendingPayout, setPendingPayout] = useState<PendingPayout | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [dataLoading, setDataLoading] = useState(false)
   const [stripeSuccess, setStripeSuccess] = useState(false)
@@ -245,9 +258,11 @@ function DashboardContent() {
     setStats(null)
     setCampaigns([])
     setHostListings([])
+    setHostBookings([])
     setActivity([])
     setActionBanner(null)
     setPendingPayout(null)
+    setUnreadCount(0)
 
     const supabase = createClient()
     const isHost = currentMode === 'host'
@@ -256,8 +271,11 @@ function DashboardContent() {
       if (isHost) {
         const [listingsRes, bookingsRes, messagesRes, popRes] = await Promise.all([
           supabase.from('listings').select('id, title, city, state, status, images, price_per_day, category', { count: 'exact' }).eq('host_id', uid).eq('status', 'active'),
-          supabase.from('bookings').select('id, total_price, payout_amount, status').eq('host_id', uid).in('status', ['active', 'confirmed', 'pending', 'completed']),
-          supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid),
+          supabase.from('bookings').select(`
+            id, total_price, payout_amount, status, start_date, end_date, listing_id,
+            listings(title, images)
+          `).eq('host_id', uid).in('status', ['active', 'confirmed', 'pending', 'completed', 'pop_pending', 'pop_review']).order('created_at', { ascending: false }).limit(10),
+          supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid).eq('read', false),
           supabase.from('bookings').select('id', { count: 'exact' }).eq('host_id', uid).eq('status', 'pop_pending'),
         ])
 
@@ -269,6 +287,20 @@ function DashboardContent() {
           .limit(5)
         setHostListings((allListings ?? []) as HostListing[])
 
+        // Set host bookings with listing images for the bookings section
+        const nowTs = new Date()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setHostBookings((bookingsRes.data ?? []).slice(0, 5).map((b: any) => ({
+          id: b.id,
+          listing_title: b.listings?.title ?? 'Listing',
+          listing_id: b.listing_id,
+          listing_image: b.listings?.images?.[0] ?? undefined,
+          status: b.status,
+          start_date: b.start_date,
+          end_date: b.end_date,
+          total_price: b.total_price,
+        })))
+
         const earnings = bookingsRes.data?.reduce((sum, b) => {
           // Only count completed bookings as real earnings
           if (b.status === 'completed') {
@@ -278,27 +310,33 @@ function DashboardContent() {
           return sum
         }, 0) ?? 0
 
-        // Pending payouts: completed bookings with payout_amount set but not yet paid out
-        const pendingPayoutBookings = bookingsRes.data?.filter(b =>
-          b.status === 'completed' && (b as unknown as { payout_amount?: number }).payout_amount
-        ) ?? []
+        // Pending payouts: completed bookings that are LIVE (within date range)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pendingPayoutBookings = (bookingsRes.data ?? []).filter((b: any) => {
+          if (b.status !== 'completed') return false
+          const start = b.start_date ? new Date(b.start_date) : null
+          const end = b.end_date ? new Date(b.end_date) : null
+          return start && end && nowTs >= start && nowTs <= end
+        })
         if (pendingPayoutBookings.length > 0) {
-          const totalPending = pendingPayoutBookings.reduce((sum, b) => {
-            return sum + ((b as unknown as { payout_amount: number }).payout_amount ?? 0)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const totalPending = pendingPayoutBookings.reduce((sum: number, b: any) => {
+            const price = b.total_price ?? 0
+            const fee = b.platform_fee ?? Math.round(price / 1.07 * 0.07 * 100) / 100
+            return sum + Math.round((price - fee) * 0.93 * 100) / 100
           }, 0)
-          // Estimate 7 days from now as payout date
-          const estDate = new Date()
-          estDate.setDate(estDate.getDate() + 7)
-          const estDateStr = estDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-          setPendingPayout({ totalAmount: Math.round(totalPending * 100) / 100, estimatedDate: estDateStr })
+          setPendingPayout({ totalAmount: Math.round(totalPending * 100) / 100, estimatedDate: 'After campaign ends' })
         }
+
+        const unread = messagesRes.count ?? 0
+        setUnreadCount(unread)
 
         setStats({
           listings: listingsRes.count ?? 0,
-          activeBookings: bookingsRes.data?.filter(b => b.status === 'active' || b.status === 'confirmed').length ?? 0,
+          activeBookings: bookingsRes.data?.filter(b => ['active', 'confirmed', 'pop_pending', 'pop_review'].includes(b.status)).length ?? 0,
           earnings: Math.round(earnings),
           pendingPOP: popRes.count ?? 0,
-          unreadMessages: messagesRes.count ?? 0,
+          unreadMessages: unread,
           totalSpent: 0,
           pendingReviews: 0,
         })
@@ -331,7 +369,7 @@ function DashboardContent() {
             id, total_price, status, start_date, end_date, listing_id,
             listings(title, images)
           `).eq('advertiser_id', uid).order('created_at', { ascending: false }),
-          supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid),
+          supabase.from('messages').select('id', { count: 'exact' }).neq('sender_id', uid).eq('read', false),
           supabase.from('bookings').select('id', { count: 'exact' }).eq('advertiser_id', uid).eq('status', 'pop_review'),
         ])
 
@@ -352,12 +390,14 @@ function DashboardContent() {
           return false
         }).length ?? 0
 
+        const unreadAdv = messagesRes.count ?? 0
+        setUnreadCount(unreadAdv)
         setStats({
           listings: 0,
           activeBookings: activeCampaignsCount,
           earnings: 0,
           pendingPOP: 0,
-          unreadMessages: messagesRes.count ?? 0,
+          unreadMessages: unreadAdv,
           totalSpent: Math.round(totalSpent),
           pendingReviews: reviewsRes.count ?? 0,
         })
@@ -732,16 +772,16 @@ function DashboardContent() {
             {/* ── HOST: Pending Payouts Tile ────────────────────────────── */}
             {isHost && pendingPayout && (
               <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
-                style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <div className="p-3 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(22,163,74,0.1)' }}>
-                  <DollarSign className="w-6 h-6" style={{ color: '#16a34a' }} />
+                style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div className="p-3 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(234,179,8,0.12)' }}>
+                  <DollarSign className="w-6 h-6" style={{ color: '#d97706' }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold" style={{ color: '#15803d' }}>
+                  <p className="text-sm font-bold" style={{ color: '#92400e' }}>
                     💰 Pending Payouts: ${pendingPayout.totalAmount.toFixed(2)}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#16a34a' }}>
-                    Expected by {pendingPayout.estimatedDate}
+                  <p className="text-xs mt-0.5" style={{ color: '#b45309' }}>
+                    Estimated payout: {pendingPayout.estimatedDate}
                   </p>
                 </div>
               </div>
@@ -781,36 +821,48 @@ function DashboardContent() {
                   <h2 className="text-lg font-bold" style={{ color: '#2b2b2b' }}>Bookings</h2>
                   <Link href="/dashboard/bookings" className="text-xs font-medium hover:underline" style={{ color: '#7ecfc0' }}>View all</Link>
                 </div>
-                {activity.length > 0 ? (
+                {hostBookings.length > 0 ? (
                   <div className="space-y-3">
-                    {activity.map(item => {
-                      const rawStatus = item.subtitle.replace('Status: ', '')
-                      const isLive = isCampaignLive(rawStatus, item.start_date ?? '', item.end_date ?? '')
-                      const isComplete = rawStatus === 'completed' && !isLive
-                      const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[rawStatus] ?? { bg: '#f8f8f5', text: '#888' })
+                    {hostBookings.map(booking => {
+                      const isLive = isCampaignLive(booking.status, booking.start_date, booking.end_date)
+                      const isComplete = booking.status === 'completed' && !isLive
+                      const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[booking.status] ?? { bg: '#f8f8f5', text: '#888' })
+                      const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
                       return (
-                        <Link key={item.id} href="/dashboard/bookings">
-                          <div className="flex items-center justify-between p-4 rounded-2xl hover:shadow-md transition-all"
-                            style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <p className="text-sm font-medium truncate" style={{ color: '#2b2b2b' }}>{item.title}</p>
-                                {isLive ? (
-                                  <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1"
-                                    style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
-                                    LIVE
-                                  </span>
-                                ) : (
-                                  <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
-                                    {isComplete ? 'Complete' : (STATUS_LABELS[rawStatus] ?? rawStatus)}
-                                  </span>
-                                )}
+                        <div key={booking.id} className="rounded-2xl overflow-hidden transition-all hover:shadow-md"
+                          style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
+                          <Link href={`/dashboard/bookings/${booking.id}`}>
+                            <div className="p-4 flex items-center gap-4 cursor-pointer">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-semibold text-sm truncate" style={{ color: '#2b2b2b' }}>{booking.listing_title}</h3>
+                                  {isLive ? (
+                                    <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1"
+                                      style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
+                                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />
+                                      LIVE
+                                    </span>
+                                  ) : (
+                                    <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
+                                      {isComplete ? 'Completed ✓' : (STATUS_LABELS[booking.status] ?? booking.status)}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs" style={{ color: '#888' }}>
+                                  {fmt(booking.start_date)} — {fmt(booking.end_date)}
+                                  {booking.total_price ? ` · $${booking.total_price.toFixed(2)}` : ''}
+                                </p>
                               </div>
-                              <p className="text-xs mt-0.5" style={{ color: '#888' }}>{item.time}</p>
+                              {booking.listing_image ? (
+                                <img src={booking.listing_image} alt={booking.listing_title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" style={{ border: '1px solid #e0e0d8' }} />
+                              ) : (
+                                <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+                                  <ImageIcon className="w-5 h-5" style={{ color: '#ccc' }} />
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        </Link>
+                          </Link>
+                        </div>
                       )
                     })}
                   </div>
@@ -824,23 +876,38 @@ function DashboardContent() {
 
             {/* ── Quick Actions Grid ────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              {links.map((link) => (
-                <Link key={link.href} href={link.href}
-                  className="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all hover:-translate-y-0.5"
-                  style={{ border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl" style={{ backgroundColor: '#f0f0ec' }}>
-                      <link.icon className="w-6 h-6" style={{ color: '#7ecfc0' }} />
+              {links.map((link) => {
+                const isMessages = link.href === '/dashboard/messages'
+                const showBadge = isMessages && unreadCount > 0
+                return (
+                  <Link key={link.href} href={link.href}
+                    className="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all hover:-translate-y-0.5"
+                    style={{ border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 rounded-xl relative" style={{ backgroundColor: '#f0f0ec' }}>
+                        <link.icon className="w-6 h-6" style={{ color: '#7ecfc0' }} />
+                        {showBadge && (
+                          <span style={{
+                            position: 'absolute', top: '-4px', right: '-4px',
+                            backgroundColor: '#ef4444', color: '#fff',
+                            borderRadius: '9999px', fontSize: '10px', fontWeight: 700,
+                            minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', padding: '0 4px', lineHeight: 1,
+                          }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1 group-hover:text-[#7ecfc0] transition-colors" style={{ color: '#2b2b2b' }}>
+                          {link.label}
+                        </h3>
+                        <p className="text-sm" style={{ color: '#888' }}>{link.desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold mb-1 group-hover:text-[#7ecfc0] transition-colors" style={{ color: '#2b2b2b' }}>
-                        {link.label}
-                      </h3>
-                      <p className="text-sm" style={{ color: '#888' }}>{link.desc}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                )
+              })}
             </div>
 
             {/* ── ADVERTISER: Recent Activity ───────────────────────────── */}
