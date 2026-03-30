@@ -5,7 +5,7 @@
  * Real-time via Supabase Realtime
  * v3: Progress bar, POP approval buttons, inline POP image display
  */
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Send, Loader2, ImageIcon, X, CheckCircle, RotateCcw, AlertCircle } from 'lucide-react'
@@ -301,7 +301,7 @@ function isSystemMessage(msg: Message): boolean {
 
 // ─── Main Chat Page ───────────────────────────────────────────────────────────
 
-export default function ChatPage() {
+function ChatPageInner() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -663,5 +663,17 @@ export default function ChatPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      </div>
+    }>
+      <ChatPageInner />
+    </Suspense>
   )
 }
