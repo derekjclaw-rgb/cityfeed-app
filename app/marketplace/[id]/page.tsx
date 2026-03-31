@@ -75,6 +75,8 @@ interface ListingData {
   host_id?: string
   creative_specs?: CreativeSpecs
   buy_now_enabled?: boolean
+  lat?: number
+  lng?: number
 }
 
 interface HostData {
@@ -483,6 +485,29 @@ export default function ListingDetailPage() {
                 </div>
               )}
             </div>
+
+            {/* Location Map */}
+            {listing.lat && listing.lng && (
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div className="p-6 pb-3">
+                  <h2 className="text-lg font-semibold mb-1" style={{ color: '#2b2b2b' }}>Location</h2>
+                  <div className="flex items-center gap-1.5 text-sm" style={{ color: '#888' }}>
+                    <MapPin className="w-3.5 h-3.5" />
+                    {listing.address ? `${listing.address}, ` : ''}{listing.city}, {listing.state}
+                  </div>
+                </div>
+                <div className="h-56 w-full">
+                  <iframe
+                    title="Listing location"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+7ecfc0(${listing.lng},${listing.lat})/${listing.lng},${listing.lat},14,0/600x300@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`}
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Creative Specs */}
             {listing.creative_specs && (
