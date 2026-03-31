@@ -60,6 +60,11 @@ const CATEGORIES = [
 ]
 
 const CATEGORY_MAP: Record<string, string> = {
+  billboard: 'Billboard',
+  digital_screen: 'Digital Screen',
+  window: 'Window',
+  storefront: 'Storefront',
+  vehicle_wrap: 'Vehicle Wrap',
   digital_billboards: 'Digital Billboard',
   static_billboards: 'Static Billboard',
   transit: 'Transit',
