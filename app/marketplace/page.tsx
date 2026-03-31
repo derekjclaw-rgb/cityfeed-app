@@ -200,11 +200,17 @@ function MapView({ listings }: { listings: Listing[] }) {
       const mapboxgl = mb as any
       mapboxgl.default.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
       const MapGL = mapboxgl.default
+      // Center map on listings if available, otherwise default to US center
+      const hasListings = listings.length > 0 && listings[0].lat && listings[0].lng
+      const defaultCenter: [number, number] = hasListings 
+        ? [listings[0].lng, listings[0].lat] 
+        : [-115.1398, 36.1699] // Las Vegas default
+      const defaultZoom = hasListings ? 11 : 3.5
       map = new MapGL.Map({
         container: mapContainer.current!,
         style: 'mapbox://styles/mapbox/light-v11',
-        center: [-98.5795, 39.8283],
-        zoom: 3.5,
+        center: defaultCenter,
+        zoom: defaultZoom,
       })
       mapRef.current = map
       map.on('load', () => {
