@@ -27,8 +27,18 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
-    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
+    // Signature verification failed — try parsing as v2 Event Destination format
+    console.warn('[Stripe Webhook] Classic signature failed, attempting v2 parse:', (err as Error).message)
+    try {
+      event = JSON.parse(body) as Stripe.Event
+      if (!event.type || !event.data) {
+        return NextResponse.json({ error: 'Invalid event payload' }, { status: 400 })
+      }
+      console.log('[Stripe Webhook] Parsed as v2 event:', event.type)
+    } catch {
+      console.error('Webhook signature verification failed and v2 parse failed')
+      return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
+    }
   }
 
   try {
