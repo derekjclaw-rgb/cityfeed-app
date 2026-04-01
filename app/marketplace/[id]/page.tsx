@@ -502,7 +502,7 @@ export default function ListingDetailPage() {
                   <img
                     alt={`Map showing ${listing.city}, ${listing.state}`}
                     className="w-full h-full object-cover"
-                    src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+7ecfc0(${listing.lng},${listing.lat})/${listing.lng},${listing.lat},14,0/600x300@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`}
+                    src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+7ecfc0(${listing.lng},${listing.lat})/${listing.lng},${listing.lat},13,0/600x300@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`}
                     loading="lazy"
                   />
                 </div>
