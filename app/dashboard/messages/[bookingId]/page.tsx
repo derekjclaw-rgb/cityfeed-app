@@ -28,32 +28,40 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative }: { status: 
   const isLive = status === 'completed' && end && now < end
   const isFullyComplete = status === 'completed' && end != null && now >= end
 
-  const steps = [
-    { label: 'Booked', done: true, live: false },
-    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow, live: false },
-    { label: 'Creative', done: hasCreative || ['active','pop_pending','pop_review','completed'].includes(status), live: false },
-    { label: isLive ? 'LIVE' : 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
-    { label: 'Complete', done: isFullyComplete, live: false },
+  const approved = ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow
+  const creative = hasCreative || ['active','pop_pending','pop_review','completed'].includes(status)
+  const proof = ['pop_pending','pop_review','completed'].includes(status)
+
+  const dots = [
+    { label: 'Booked', color: '#7ecfc0' },
+    { label: 'Approved', color: approved ? '#7ecfc0' : '#ddd' },
+    { label: 'Creative', color: creative ? '#7ecfc0' : '#ddd' },
+    { label: isLive ? 'LIVE' : 'Proof', color: isLive ? '#16a34a' : proof ? '#7ecfc0' : '#ddd' },
+    { label: 'Complete', color: isFullyComplete ? '#7ecfc0' : '#ddd' },
   ]
 
+  const lines = [
+    approved ? '#7ecfc0' : '#e0e0d8',
+    creative ? '#7ecfc0' : '#e0e0d8',
+    proof ? '#7ecfc0' : '#e0e0d8',
+    isFullyComplete ? '#7ecfc0' : '#e0e0d8',
+  ]
+
+  /* Two-row approach: row 1 = dots + lines, row 2 = labels. No overlap possible. */
   return (
-    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #e0e0d8', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', maxWidth: '400px', margin: '0 auto' }}>
-        {steps.map((step, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
-            <div style={{ textAlign: 'center', minWidth: '40px' }}>
-              <div style={{
-                width: 10, height: 10, borderRadius: '50%', margin: '0 auto',
-                backgroundColor: step.live ? '#16a34a' : step.done ? '#7ecfc0' : '#ddd',
-              }} />
-              <div style={{ fontSize: 8, marginTop: 4, color: step.done || step.live ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
-                {step.label}
-              </div>
-            </div>
-            {i < steps.length - 1 && (
-              <div style={{ flex: 1, height: 2, backgroundColor: steps[i + 1].done || steps[i + 1].live ? '#7ecfc0' : '#e0e0d8', minWidth: 8, marginTop: -8 }} />
-            )}
-          </div>
+    <div style={{ borderBottom: '1px solid #e0e0d8', padding: '12px 12px 8px' }}>
+      {/* Row 1: dots and lines */}
+      <div style={{ display: 'grid', gridTemplateColumns: `20px 1fr 20px 1fr 20px 1fr 20px 1fr 20px`, alignItems: 'center', maxWidth: 360, margin: '0 auto' }}>
+        {dots.map((d, i) => {
+          const els = [<div key={`d${i}`} style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: d.color, margin: '0 auto' }} />]
+          if (i < lines.length) els.push(<div key={`l${i}`} style={{ height: 2, backgroundColor: lines[i] }} />)
+          return els
+        }).flat()}
+      </div>
+      {/* Row 2: labels */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', maxWidth: 360, margin: '4px auto 0', textAlign: 'center' }}>
+        {dots.map((d, i) => (
+          <div key={i} style={{ fontSize: 8, color: d.color !== '#ddd' ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>{d.label}</div>
         ))}
       </div>
     </div>
