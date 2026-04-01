@@ -147,33 +147,19 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
   async function loadFiles() {
     setLoading(true)
-    const { data, error } = await supabase.storage
-      .from('booking-collateral')
-      .list(folderPath, { sortBy: { column: 'created_at', order: 'desc' } })
-
-    if (error) {
-      console.warn('[Collateral] Storage list error:', error.message)
+    try {
+      const res = await fetch(`/api/collateral/list?bookingId=${bookingId}`)
+      const json = await res.json()
+      if (json.files) {
+        setFiles(json.files)
+      } else {
+        console.warn('[Collateral] API error:', json.error)
+        setFiles([])
+      }
+    } catch (err) {
+      console.warn('[Collateral] Fetch error:', err)
       setFiles([])
-      setLoading(false)
-      return
     }
-
-    const withUrls: CollateralFile[] = await Promise.all(
-      (data ?? []).map(async (item) => {
-        const { data: urlData } = await supabase.storage
-          .from('booking-collateral')
-          .createSignedUrl(`${folderPath}/${item.name}`, 3600)
-        return {
-          name: item.name,
-          path: `${folderPath}/${item.name}`,
-          size: item.metadata?.size ?? 0,
-          type: item.metadata?.mimetype ?? '',
-          created_at: item.created_at,
-          url: urlData?.signedUrl,
-        }
-      })
-    )
-    setFiles(withUrls)
     setLoading(false)
   }
 
