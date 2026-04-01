@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutGrid, ClipboardList,
-  DollarSign, Loader2, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X, MessageCircle
+  DollarSign, Loader2, Heart, CreditCard, MapPin, Image as ImageIcon, CheckCircle, X, MessageCircle, Megaphone
 } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -601,6 +601,28 @@ function DashboardContent() {
 
         {!dataLoading && (
           <>
+            {/* ── ADVERTISER: Zero State ───────────────────────────────── */}
+            {!isHost && campaigns.length === 0 && !dataLoading && (
+              <div className="rounded-2xl p-10 mb-8 flex flex-col items-center text-center"
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ backgroundColor: 'rgba(222,187,115,0.12)', border: '1px solid rgba(222,187,115,0.3)' }}>
+                  <Megaphone className="w-8 h-8" style={{ color: '#debb73' }} />
+                </div>
+                <h2 className="text-lg font-bold mb-2" style={{ color: '#2b2b2b' }}>No campaigns yet</h2>
+                <p className="text-sm mb-6 max-w-xs" style={{ color: '#888' }}>
+                  Your booked campaigns will appear here. Browse the marketplace to find your first ad placement.
+                </p>
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                >
+                  Browse Marketplace →
+                </Link>
+              </div>
+            )}
+
             {/* ── ADVERTISER: My Campaigns ─────────────────────────────── */}
             {!isHost && campaigns.length > 0 && (
               <div className="mb-8">
@@ -678,33 +700,25 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* ── HOST: First-time onboarding ───────────────────────────── */}
-            {isHost && stats && stats.listings === 0 && (
-              <div className="rounded-2xl p-6 mb-6" style={{
-                background: 'linear-gradient(135deg, rgba(126,207,192,0.1), rgba(222,187,115,0.1))',
-                border: '1px solid rgba(126,207,192,0.3)'
-              }}>
-                <div className="flex items-start gap-4">
-                  <div className="text-3xl flex-shrink-0">🏙️</div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold mb-1" style={{ color: '#2b2b2b' }}>Welcome to City Feed!</h2>
-                    <p className="text-sm mb-4" style={{ color: '#555' }}>
-                      Let&apos;s get your first listing live. It takes about 5 minutes to list your ad space.
-                    </p>
-                    <div className="flex flex-wrap gap-3">
-                      <Link href="/dashboard/create-listing"
-                        className="font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
-                        Create Your First Listing →
-                      </Link>
-                      <Link href="/dashboard/stripe-onboarding"
-                        className="font-semibold px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}>
-                        Set Up Payouts
-                      </Link>
-                    </div>
-                  </div>
+            {/* ── HOST: Zero State (no listings yet) ───────────────────── */}
+            {isHost && stats && hostListings.length === 0 && !dataLoading && (
+              <div className="rounded-2xl p-10 mb-8 flex flex-col items-center text-center"
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+                  style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '1px solid rgba(126,207,192,0.3)' }}>
+                  <LayoutGrid className="w-8 h-8" style={{ color: '#7ecfc0' }} />
                 </div>
+                <h2 className="text-lg font-bold mb-2" style={{ color: '#2b2b2b' }}>No listings yet</h2>
+                <p className="text-sm mb-6 max-w-xs" style={{ color: '#888' }}>
+                  Your ad placements will show here once listed. Create your first listing to start earning.
+                </p>
+                <Link
+                  href="/dashboard/create-listing"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                >
+                  Create a Listing →
+                </Link>
               </div>
             )}
 
@@ -835,22 +849,22 @@ function DashboardContent() {
                 {isHost ? (
                   <>
                     <StatCard label="Earnings (completed)" value={stats.earnings.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
-                    <StatCard label="Active Bookings" value={stats.activeBookings} icon={ClipboardList} />
-                    <StatCard label="Listings" value={stats.listings} icon={LayoutGrid} />
                     <Link href="/dashboard/messages" className="relative">
                       <StatCard label="Messages" value={stats.unreadMessages || 0} icon={MessageCircle} color={stats.unreadMessages > 0 ? '#E63946' : undefined} />
                       {stats.unreadMessages > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: '#E63946' }} />}
                     </Link>
+                    <StatCard label="Active Bookings" value={stats.activeBookings} icon={ClipboardList} />
+                    <StatCard label="Listings" value={stats.listings} icon={LayoutGrid} />
                   </>
                 ) : (
                   <>
                     <StatCard label="Active Campaigns" value={stats.activeBookings} icon={ClipboardList} />
-                    <StatCard label="Total Spent" value={stats.totalSpent.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
-                    <StatCard label="Saved Listings" value={stats.savedListings} icon={Heart} />
                     <Link href="/dashboard/messages" className="relative">
                       <StatCard label="Messages" value={stats.unreadMessages || 0} icon={MessageCircle} color={stats.unreadMessages > 0 ? '#E63946' : undefined} />
                       {stats.unreadMessages > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: '#E63946' }} />}
                     </Link>
+                    <StatCard label="Total Spent" value={stats.totalSpent.toLocaleString()} icon={DollarSign} prefix="$" color="#16a34a" />
+                    <StatCard label="Saved Listings" value={stats.savedListings} icon={Heart} />
                   </>
                 )}
               </div>

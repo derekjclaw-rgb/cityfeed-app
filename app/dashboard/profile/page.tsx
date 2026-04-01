@@ -193,9 +193,9 @@ export default function ProfilePage() {
                 onChange={handlePhotoUpload}
               />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>{profile?.full_name}</h2>
-              <p className="text-sm mb-1" style={{ color: '#888' }}>{profile?.email}</p>
+              <p className="text-sm mb-2 break-all overflow-hidden" style={{ color: '#888' }}>{profile?.email}</p>
               <span
                 className="inline-block text-xs font-semibold px-3 py-1 rounded-full capitalize"
                 style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}
@@ -206,12 +206,12 @@ export default function ProfilePage() {
           </div>
 
           {/* Info rows */}
-          <div className="grid grid-cols-2 gap-4 mb-8 p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
-            <div className="flex items-center gap-3">
-              <Mail className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
-              <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
+            <div className="flex items-start gap-3 min-w-0">
+              <Mail className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#7ecfc0' }} />
+              <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium" style={{ color: '#aaa' }}>Email</p>
-                <p className="text-sm" style={{ color: '#2b2b2b' }}>{profile?.email}</p>
+                <p className="text-sm break-all overflow-hidden" style={{ color: '#2b2b2b' }}>{profile?.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -228,7 +228,6 @@ export default function ProfilePage() {
                 <p className="text-sm" style={{ color: '#2b2b2b' }}>{memberSince}</p>
               </div>
             </div>
-
           </div>
 
           {/* Edit form */}
