@@ -65,6 +65,11 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; d
   },
 }
 
+/** Derive a human-readable confirmation code from a booking UUID */
+function confirmationCode(bookingId: string): string {
+  return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
 function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string): { label: string; emoji: string; bg: string; text: string } {
   // Check if currently live
   if (['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) {
@@ -231,9 +236,20 @@ export default function BookingsPage() {
     )
   }
 
-  // Group by active/completed/cancelled for better UX
-  const active = bookings.filter(b => !['completed', 'cancelled', 'disputed'].includes(b.status))
-  const completed = bookings.filter(b => b.status === 'completed')
+  // Helper: is a booking currently live (within date range)?
+  function isBookingLive(b: Booking): boolean {
+    if (!['active', 'pop_pending', 'pop_review', 'completed'].includes(b.status)) return false
+    const now = new Date()
+    const start = b.start_date ? new Date(b.start_date) : null
+    const end = b.end_date ? new Date(b.end_date) : null
+    return !!(start && end && now >= start && now <= end)
+  }
+
+  // Group by LIVE / active / completed / cancelled for better UX
+  const live = bookings.filter(b => isBookingLive(b))
+  const liveIds = new Set(live.map(b => b.id))
+  const active = bookings.filter(b => !['completed', 'cancelled', 'disputed'].includes(b.status) && !liveIds.has(b.id))
+  const completed = bookings.filter(b => b.status === 'completed' && !liveIds.has(b.id))
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
   const totalEarnings = isHost
@@ -295,6 +311,27 @@ export default function BookingsPage() {
           </div>
         ) : (
           <div className="space-y-8">
+            {/* LIVE bookings — top priority */}
+            {live.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold mb-3 px-1 flex items-center gap-2" style={{ color: '#15803d' }}>
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
+                  LIVE ({live.length})
+                </h2>
+                <div className="space-y-4">
+                  {live.map(booking => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      isHost={isHost}
+                      onHostAction={handleHostAction}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Active bookings */}
             {active.length > 0 && (
               <section>
@@ -405,6 +442,7 @@ function BookingCard({
           <p className="text-xs mt-0.5" style={{ color: '#888' }}>
             {isHost ? `Advertiser: ${booking.other_party_name}` : `Host: ${booking.other_party_name}`}
           </p>
+          <p className="text-xs font-mono font-semibold mt-1" style={{ color: '#7ecfc0' }}>{confirmationCode(booking.id)}</p>
         </div>
         <span
           className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1"

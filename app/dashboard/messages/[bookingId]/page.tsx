@@ -12,6 +12,11 @@ import { ArrowLeft, Send, Loader2, ImageIcon, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
+/** Derive a human-readable confirmation code from a booking UUID */
+function confirmationCode(bookingId: string): string {
+  return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
 /** Format a full name as "First L." for privacy */
 function formatName(fullName: string): string {
   if (!fullName) return 'Unknown'
@@ -371,7 +376,7 @@ function ChatPageInner() {
         </Link>
         <div className="flex-1 min-w-0">
           <h1 className="font-semibold text-sm" style={{ color: '#2b2b2b' }}>{bookingTitle}</h1>
-          <p className="text-xs" style={{ color: '#888' }}>with {otherPartyName}</p>
+          <p className="text-xs" style={{ color: '#888' }}>with {otherPartyName} · <span className="font-mono font-semibold" style={{ color: '#7ecfc0' }}>{confirmationCode(bookingId)}</span></p>
         </div>
 
       </div>

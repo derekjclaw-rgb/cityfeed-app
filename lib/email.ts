@@ -28,9 +28,14 @@ function getTransporter() {
 const FROM = 'City Feed <derekjclaw@gmail.com>'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cityfeed.io'
 
+/** Derive a human-readable confirmation code from a booking UUID */
+function confirmationCode(bookingId: string): string {
+  return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
 export type EmailEvent =
-  | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number }
-  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number }
+  | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; bookingId?: string }
+  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
   | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser' }
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
   | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string }
@@ -69,6 +74,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
           subject: `Your booking is confirmed — "${event.listingTitle}"`,
           html: emailTemplate(`
             <h2 style="color:#2b2b2b;margin:0 0 16px">Booking Confirmed! 🎉</h2>
+            ${event.bookingId ? `<p style="font-family:monospace;font-size:14px;font-weight:700;color:#7ecfc0;margin:0 0 12px;letter-spacing:0.05em">${confirmationCode(event.bookingId)}</p>` : ''}
             <p style="color:#555;margin:0 0 12px">Great news — your booking has been confirmed.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
@@ -93,6 +99,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
           subject: `✅ Your booking has been approved — "${event.listingTitle}"`,
           html: emailTemplate(`
             <h2 style="color:#2b2b2b;margin:0 0 16px">Booking Approved ✅</h2>
+            <p style="font-family:monospace;font-size:14px;font-weight:700;color:#7ecfc0;margin:0 0 12px;letter-spacing:0.05em">${confirmationCode(event.bookingId)}</p>
             <p style="color:#555;margin:0 0 12px">The host has approved your booking request.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>

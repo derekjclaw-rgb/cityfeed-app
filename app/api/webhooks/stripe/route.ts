@@ -206,6 +206,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
       listingTitle,
       dates,
       total: booking.total_price,
+      bookingId,
     })
   }
 

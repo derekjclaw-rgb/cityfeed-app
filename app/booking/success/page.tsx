@@ -6,6 +6,11 @@ import Link from 'next/link'
 import { CheckCircle, Loader2, Upload, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+/** Derive a human-readable confirmation code from a booking UUID */
+function confirmationCode(bookingId: string): string {
+  return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
 interface BookingDetails {
   id: string
   start_date: string
@@ -105,6 +110,11 @@ function SuccessPageInner() {
               <CheckCircle className="w-10 h-10" style={{ color: '#7ecfc0' }} />
             </div>
             <h1 className="text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Booking confirmed!</h1>
+            {resolvedBookingId && (
+              <p className="text-sm font-mono font-semibold mb-2" style={{ color: '#7ecfc0' }}>
+                {confirmationCode(resolvedBookingId)}
+              </p>
+            )}
             <p className="text-sm mb-6" style={{ color: '#888' }}>
               Your payment was processed successfully. The host has been notified.
             </p>

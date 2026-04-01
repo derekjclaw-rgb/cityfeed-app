@@ -140,6 +140,11 @@ function ModeToggle({ mode, onChange }: { mode: DashMode; onChange: (m: DashMode
 
 // ─── Status maps ──────────────────────────────────────────────────────────────
 
+/** Derive a human-readable confirmation code from a booking UUID */
+function confirmationCode(bookingId: string): string {
+  return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
 /** Returns true if campaign is currently live (between start/end dates with approved POP) */
 function isCampaignLive(status: string, startDate: string, endDate: string): boolean {
   if (!['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) return false
@@ -670,6 +675,7 @@ function DashboardContent() {
                                 {fmt(campaign.start_date)} — {fmt(campaign.end_date)}
                                 {campaign.total_price ? ` · $${campaign.total_price.toFixed(2)}` : ''}
                               </p>
+                              <p className="text-xs font-mono font-semibold mt-0.5" style={{ color: '#7ecfc0' }}>{confirmationCode(campaign.id)}</p>
                             </div>
                             {campaign.listing_image ? (
                               <img src={campaign.listing_image} alt={campaign.listing_title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" style={{ border: '1px solid #e0e0d8' }} />
@@ -821,6 +827,7 @@ function DashboardContent() {
                                   {fmt(booking.start_date)} — {fmt(booking.end_date)}
                                   {booking.total_price ? ` · $${booking.total_price.toFixed(2)}` : ''}
                                 </p>
+                              <p className="text-xs font-mono font-semibold mt-0.5" style={{ color: '#7ecfc0' }}>{confirmationCode(booking.id)}</p>
                               </div>
                               {booking.listing_image ? (
                                 <img src={booking.listing_image} alt={booking.listing_title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" style={{ border: '1px solid #e0e0d8' }} />

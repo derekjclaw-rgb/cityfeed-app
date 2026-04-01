@@ -25,6 +25,11 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+/** Derive a human-readable confirmation code from a booking UUID */
+function confirmationCode(bookingId: string): string {
+  return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface Booking {
@@ -930,6 +935,9 @@ export default function BookingDetailPage() {
             {listing && (
               <p className="text-sm" style={{ color: '#888' }}>{listing.city}, {listing.state}</p>
             )}
+            <p className="text-xs font-mono font-semibold mt-1.5 tracking-wider" style={{ color: '#7ecfc0' }}>
+              {confirmationCode(bookingId)}
+            </p>
           </div>
           {isLive ? (
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1 flex items-center gap-1.5" style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
