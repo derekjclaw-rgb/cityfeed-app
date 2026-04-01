@@ -273,6 +273,8 @@ export default function ListingDetailPage() {
           review_count: 0,
           host_id: row.host_id,
           buy_now_enabled: row.buy_now_enabled ?? false,
+          lat: row.lat ?? null,
+          lng: row.lng ?? null,
           creative_specs: (row.creative_formats || row.creative_dimensions || row.creative_max_file_size) ? {
             formats: row.creative_formats,
             dimensions: row.creative_dimensions,
