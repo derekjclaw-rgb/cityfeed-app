@@ -10,7 +10,10 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   )
 
-  const folderPath = `bookings/${bookingId}`
+  // Support both regular collateral (bookings/UUID) and POP files (pop/UUID)
+  const folderPath = bookingId.startsWith('pop-') 
+    ? `pop/${bookingId.replace('pop-', '')}` 
+    : `bookings/${bookingId}`
   const { data, error } = await supabase.storage
     .from('booking-collateral')
     .list(folderPath, { sortBy: { column: 'created_at', order: 'desc' } })

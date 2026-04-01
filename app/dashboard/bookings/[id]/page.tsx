@@ -608,18 +608,21 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Get signed URLs for photos just uploaded to send in chat
-          const { data: popItems } = await supabase.storage
-            .from('booking-collateral')
-            .list(folderPath)
-
+          // Get public URLs for POP photos to send in chat
           const photoUrls: string[] = []
-          if (popItems && popItems.length > 0) {
-            for (const item of popItems) {
-              const { data: urlData } = await supabase.storage
-                .from('booking-collateral')
-                .createSignedUrl(`${folderPath}/${item.name}`, 86400)
-              if (urlData?.signedUrl) photoUrls.push(urlData.signedUrl)
+          try {
+            const popRes = await fetch(`/api/collateral/list?bookingId=pop-${bookingId}`)
+            const popJson = await popRes.json()
+            if (popJson.files) {
+              for (const f of popJson.files) {
+                if (f.url) photoUrls.push(f.url)
+              }
+            }
+          } catch { /* non-fatal */ }
+          // Fallback: use the files we just uploaded (already in state)
+          if (photoUrls.length === 0 && files.length > 0) {
+            for (const f of files) {
+              if (f.url) photoUrls.push(f.url)
             }
           }
 
