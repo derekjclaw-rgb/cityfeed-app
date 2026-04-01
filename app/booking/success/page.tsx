@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, Loader2, Upload, MessageSquare } from 'lucide-react'
@@ -17,29 +17,88 @@ interface BookingDetails {
 
 function SuccessPageInner() {
   const searchParams = useSearchParams()
-  const bookingId = searchParams.get('booking_id')
-  const [booking, setBooking] = useState<BookingDetails | null>(null)
-  const [loading, setLoading] = useState(true)
+  const bookingIdParam = searchParams.get('booking_id')
+  const sessionId = searchParams.get('session_id')
 
+  const [booking, setBooking] = useState<BookingDetails | null>(null)
+  const [resolvedBookingId, setResolvedBookingId] = useState<string | null>(
+    bookingIdParam && bookingIdParam !== 'pending' ? bookingIdParam : null
+  )
+  const [loading, setLoading] = useState(true)
+  const [polling, setPolling] = useState(bookingIdParam === 'pending')
+
+  const pollCountRef = useRef(0)
+  const MAX_POLLS = 20 // 20 × 1.5s ≈ 30s max
+
+  // ─── Resolve booking_id when 'pending' ───────────────────────────────────
   useEffect(() => {
-    if (!bookingId) { setLoading(false); return }
+    if (!polling || !sessionId) return
+
+    let cancelled = false
+
+    async function pollForBooking() {
+      while (pollCountRef.current < MAX_POLLS && !cancelled) {
+        await new Promise((r) => setTimeout(r, 1500))
+        if (cancelled) break
+
+        try {
+          const res = await fetch(`/api/checkout/booking-status?session_id=${sessionId}`)
+          const data = await res.json()
+
+          if (data.booking_id) {
+            if (!cancelled) {
+              setResolvedBookingId(data.booking_id)
+              setPolling(false)
+            }
+            return
+          }
+        } catch {
+          // network hiccup — keep retrying
+        }
+
+        pollCountRef.current += 1
+      }
+
+      // Timed out — stop polling, show page without booking details
+      if (!cancelled) setPolling(false)
+    }
+
+    pollForBooking()
+    return () => { cancelled = true }
+  }, [polling, sessionId])
+
+  // ─── Fetch booking details once ID is resolved ───────────────────────────
+  useEffect(() => {
+    if (!resolvedBookingId) {
+      if (!polling) setLoading(false)
+      return
+    }
+
     const supabase = createClient()
     supabase
       .from('bookings')
       .select('id, start_date, end_date, total_price, status, listings(title, city, state)')
-      .eq('id', bookingId)
+      .eq('id', resolvedBookingId)
       .single()
       .then(({ data }) => {
         if (data) setBooking(data as unknown as BookingDetails)
         setLoading(false)
       })
-  }, [bookingId])
+  }, [resolvedBookingId, polling])
+
+  // Still resolving booking ID
+  const isProcessing = polling
 
   return (
     <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="text-center max-w-md w-full">
-        {loading ? (
-          <Loader2 className="w-8 h-8 animate-spin mx-auto" style={{ color: '#7ecfc0' }} />
+        {loading || isProcessing ? (
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#7ecfc0' }} />
+            {isProcessing && (
+              <p className="text-sm" style={{ color: '#888' }}>Processing your booking…</p>
+            )}
+          </div>
         ) : (
           <>
             <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '2px solid rgba(222,187,115,0.3)' }}>
@@ -108,9 +167,9 @@ function SuccessPageInner() {
             </div>
 
             <div className="flex gap-3 justify-center">
-              {bookingId ? (
+              {resolvedBookingId ? (
                 <Link
-                  href={`/dashboard/bookings/${bookingId}`}
+                  href={`/dashboard/bookings/${resolvedBookingId}`}
                   className="flex items-center gap-2 font-semibold px-5 py-3 rounded-xl hover:opacity-90 text-sm"
                   style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
                 >
@@ -123,12 +182,12 @@ function SuccessPageInner() {
                   className="font-semibold px-5 py-3 rounded-xl hover:opacity-90 text-sm"
                   style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
                 >
-                  View Booking
+                  View Bookings
                 </Link>
               )}
-              {bookingId && (
+              {resolvedBookingId && (
                 <Link
-                  href={`/dashboard/messages/${bookingId}`}
+                  href={`/dashboard/messages/${resolvedBookingId}`}
                   className="flex items-center gap-2 font-semibold px-5 py-3 rounded-xl hover:opacity-90 text-sm"
                   style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
                 >

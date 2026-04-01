@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
+
 export async function POST(req: NextRequest) {
   const stripe = getStripe()
   const supabase = getSupabase()
@@ -17,7 +18,6 @@ export async function POST(req: NextRequest) {
 
     // Check if this is a mock listing (simple numeric ID vs UUID)
     const isMockListing = /^\d+$/.test(listingId)
-    let bookingId = `mock-${listingId}-${Date.now()}`
 
     // Calculate fees up front
     // subtotal = days * pricePerDay (base cost before buyer fee)
@@ -31,57 +31,50 @@ export async function POST(req: NextRequest) {
     const platformFee = Math.round((buyerFee + sellerFee) * 100) / 100
 
     let hostStripeAccountId: string | null = null
+    let hostId: string | null = null
+    let buyNowEnabled = false
 
     if (!isMockListing) {
-      // Create a real booking record for real listings
-      // Look up the listing to get the host_id and buy_now_enabled
+      // Check date availability BEFORE creating the Stripe session (prevents phantom blocked dates)
+      const { data: conflictingBookings } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('listing_id', listingId)
+        .neq('status', 'cancelled')
+        .lte('start_date', endDate)
+        .gte('end_date', startDate)
+        .limit(1)
+
+      if (conflictingBookings && conflictingBookings.length > 0) {
+        return NextResponse.json({ error: 'These dates are no longer available' }, { status: 409 })
+      }
+
+      // Look up the listing to get host_id and buy_now_enabled
       const { data: listing } = await supabase
         .from('listings')
         .select('host_id, buy_now_enabled')
         .eq('id', listingId)
         .single()
 
+      hostId = listing?.host_id ?? null
+      buyNowEnabled = listing?.buy_now_enabled ?? false
+
       // Fetch host's Stripe connected account for destination charges
-      if (listing?.host_id) {
+      if (hostId) {
         const { data: hostProfile } = await supabase
           .from('profiles')
           .select('stripe_account_id')
-          .eq('id', listing.host_id)
+          .eq('id', hostId)
           .single()
         hostStripeAccountId = hostProfile?.stripe_account_id ?? null
       }
-
-      // If buy_now_enabled, skip host approval — set to confirmed immediately
-      const initialStatus = listing?.buy_now_enabled ? 'confirmed' : 'pending'
-
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          listing_id: listingId,
-          advertiser_id: userId,
-          host_id: listing?.host_id,
-          start_date: startDate,
-          end_date: endDate,
-          total_price: total,
-          // platform_fee = buyer fee (7%) + seller fee (7%) — City Feed's total cut
-          platform_fee: platformFee,
-          status: initialStatus,
-        })
-        .select('id')
-        .single()
-
-      if (bookingError) {
-        console.error('Booking insert error:', bookingError)
-        return NextResponse.json({ error: bookingError.message }, { status: 500 })
-      }
-      bookingId = booking.id
     }
 
-    // Create Stripe Checkout session with destination charges.
-    // If the host has connected their Stripe account, Stripe automatically splits the payment:
-    //   - City Feed keeps application_fee_amount (buyer fee + seller fee)
-    //   - The remainder is transferred to the host's connected account immediately
-    // If the host has NOT connected Stripe yet, the full amount goes to the platform (fallback).
+    // Truncate listing title to stay within Stripe metadata 500-char-per-value limit
+    const safeTitleForMeta = (listingTitle ?? '').slice(0, 490)
+
+    // Create Stripe Checkout session. Booking is NOT created yet — it will be created in the
+    // webhook handler AFTER payment succeeds, preventing phantom/orphaned bookings.
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -107,12 +100,22 @@ export async function POST(req: NextRequest) {
           },
         },
       } : {}),
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingId}`,
+      // booking_id=pending — the real ID is unknown until the webhook creates it post-payment
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_id=pending`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/marketplace/${listingId}/book`,
       metadata: {
-        booking_id: bookingId,
         listing_id: listingId,
         user_id: userId,
+        host_id: hostId ?? '',
+        start_date: startDate,
+        end_date: endDate,
+        days: String(days),
+        price_per_day: String(pricePerDay),
+        total: String(total),
+        platform_fee: String(platformFee),
+        buy_now_enabled: String(buyNowEnabled),
+        listing_title: safeTitleForMeta,
+        is_mock: String(isMockListing),
       },
     })
 
