@@ -756,6 +756,43 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   )
 }
 
+// ─── Booking Progress Bar (copied from messages/[bookingId]/page.tsx) ─────────
+
+function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDate?: string; buyNow?: boolean }) {
+  const now = new Date()
+  const end = endDate ? new Date(endDate) : null
+  const isLive = status === 'completed' && end && now < end
+  const isFullyComplete = status === 'completed' && end != null && now >= end
+
+  const steps = [
+    { label: 'Booked', done: true, live: false },
+    { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow, live: false },
+    { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status), live: false },
+    { label: 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
+    { label: 'LIVE', done: ['active','pop_pending','pop_review','completed'].includes(status), live: false },
+    { label: 'Complete', done: isFullyComplete, live: false },
+  ]
+
+  const dotColor = (s: typeof steps[0]) => s.live ? '#16a34a' : s.done ? '#7ecfc0' : '#ddd'
+  const lineColor = (next: typeof steps[0]) => next.done ? '#7ecfc0' : '#e0e0d8'
+
+  return (
+    <div style={{ padding: '14px 16px 10px', borderRadius: '16px', backgroundColor: '#fff', border: '1px solid #e0e0d8', textAlign: 'center', lineHeight: 1, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      {steps.map((step, i) => (
+        <span key={i} style={{ display: 'inline-block', verticalAlign: 'top', textAlign: 'center' }}>
+          {i > 0 && <span style={{ display: 'inline-block', width: '24px', height: '2px', backgroundColor: lineColor(step), verticalAlign: 'middle', margin: '0 -1px' }} />}
+          <span style={{ display: 'inline-block', verticalAlign: 'middle', textAlign: 'center', width: '50px' }}>
+            <span style={{ display: 'block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: dotColor(step), margin: '0 auto' }} />
+            <span style={{ display: 'block', fontSize: '8px', marginTop: '4px', color: step.done ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
+              {step.live ? '🟢 LIVE' : step.label}
+            </span>
+          </span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
 // ─── Status badge ──────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -886,6 +923,12 @@ export default function BookingDetailPage() {
         </div>
 
         <div className="space-y-4">
+          {/* Progress bar */}
+          <BookingProgressBar
+            status={booking.status}
+            endDate={booking.end_date ?? undefined}
+          />
+
           {/* Booking details card */}
           <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Booking Details</h2>

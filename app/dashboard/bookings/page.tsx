@@ -361,31 +361,6 @@ export default function BookingsPage() {
   )
 }
 
-// Next-action hint per status and role
-function getNextAction(status: string, isHost: boolean): string | null {
-  if (isHost) {
-    const map: Record<string, string> = {
-      pending: 'Review and accept or decline this booking',
-      confirmed: 'Waiting for advertiser to upload creative files',
-      active: 'Upload proof of posting once ad is live',
-      pop_pending: 'Proof submitted — awaiting advertiser approval',
-      pop_review: 'Proof submitted — awaiting advertiser approval',
-      completed: 'Campaign complete — payout released',
-    }
-    return map[status] ?? null
-  } else {
-    const map: Record<string, string> = {
-      pending: 'Waiting for host to review your booking',
-      confirmed: 'Upload your creative files to proceed',
-      active: 'Campaign running — host will upload proof of posting',
-      pop_pending: 'Review proof of posting from host',
-      pop_review: 'Review proof of posting from host',
-      completed: 'Campaign complete',
-    }
-    return map[status] ?? null
-  }
-}
-
 function BookingCard({
   booking,
   isHost,
@@ -397,7 +372,6 @@ function BookingCard({
   onHostAction: (id: string, status: 'confirmed' | 'cancelled') => void
   actionLoading: string | null
 }) {
-  const statusConfig = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status, description: '' }
   const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date)
   const isLiveNow = simpleBadge.label === 'LIVE'
   const canReview = booking.status === 'completed'
@@ -406,21 +380,10 @@ function BookingCard({
   const showCancelBtn = ['confirmed', 'pending'].includes(booking.status)
   const showReceipt = booking.status === 'completed'
   const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
-  const nextAction = getNextAction(booking.status, isHost)
 
   const earnings = isHost && booking.status === 'completed'
     ? (booking.payout_amount ?? booking.total_price * 0.93)
     : null
-
-  // Progress steps: pending → confirmed → active/pop_pending → pop_review → completed
-  const steps = ['⏳', '📂', '📸', '🟢', '✅']
-  const stepLabels = ['Pending', 'Creative', 'Proof', 'Live', 'Done']
-  const stepStatuses = ['pending', 'confirmed', 'pop_pending', 'active', 'completed']
-  const currentStepIdx = isLiveNow ? 3 : (() => {
-    const idx = stepStatuses.indexOf(booking.status)
-    if (booking.status === 'pop_review') return 2
-    return idx >= 0 ? idx : 0
-  })()
 
   function navigateToBooking(e: React.MouseEvent) {
     // Navigate to booking detail unless clicking an interactive element
@@ -435,26 +398,6 @@ function BookingCard({
       style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
       onClick={navigateToBooking}
     >
-      {/* Progress indicator */}
-      <div className="flex items-center gap-1 mb-4 pb-3" style={{ borderBottom: '1px solid #f0f0ec' }}>
-        {steps.map((emoji, i) => (
-          <div key={i} className="flex items-center gap-1">
-            <div className="flex flex-col items-center">
-              <span className={`text-sm leading-none ${i <= currentStepIdx ? 'opacity-100' : 'opacity-25'}`}>{emoji}</span>
-              <span className="text-[9px] mt-0.5 font-medium" style={{ color: i <= currentStepIdx ? '#7ecfc0' : '#ccc' }}>{stepLabels[i]}</span>
-            </div>
-            {i < steps.length - 1 && (
-              <div className="h-px w-4 flex-shrink-0 mb-3" style={{ backgroundColor: i < currentStepIdx ? '#7ecfc0' : '#e0e0d8' }} />
-            )}
-          </div>
-        ))}
-        {nextAction && (
-          <p className="ml-auto text-[10px] font-medium truncate max-w-[140px]" style={{ color: '#aaa' }}>
-            Next: {nextAction}
-          </p>
-        )}
-      </div>
-
       {/* Top row */}
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="flex-1 min-w-0">
