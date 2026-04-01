@@ -32,32 +32,30 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative }: { status: 
     { label: 'Booked', done: true, live: false },
     { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow, live: false },
     { label: 'Creative', done: hasCreative || ['active','pop_pending','pop_review','completed'].includes(status), live: false },
-    { label: 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
+    { label: isLive ? 'LIVE' : 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
     { label: 'Complete', done: isFullyComplete, live: false },
   ]
 
-  const dotColor = (s: typeof steps[0]) => s.live ? '#16a34a' : s.done ? '#7ecfc0' : '#ddd'
-  const lineColor = (next: typeof steps[0]) => next.done ? '#7ecfc0' : '#e0e0d8'
-
-  /* Ultra-simple: one row of inline-block spans. No flex, no table, no absolute. */
   return (
-    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #e0e0d8', textAlign: 'center', lineHeight: 1 }}>
-      {steps.map((step, i) => {
-        const isLast = i === steps.length - 1
-        return (
-          <span key={i} style={{ display: 'inline-block', verticalAlign: 'top', textAlign: 'center' }}>
-            {/* Line before dot (except first) */}
-            {i > 0 && <span style={{ display: 'inline-block', width: '24px', height: '2px', backgroundColor: lineColor(step), verticalAlign: 'middle', margin: '0 -1px' }} />}
-            {/* Dot + label stack */}
-            <span style={{ display: 'inline-block', verticalAlign: 'middle', textAlign: 'center', width: '50px' }}>
-              <span style={{ display: 'block', width: '10px', height: '10px', borderRadius: '50%', backgroundColor: dotColor(step), margin: '0 auto' }} />
-              <span style={{ display: 'block', fontSize: '8px', marginTop: '4px', color: step.done ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
-                {step.live ? '🟢 LIVE' : step.label}
-              </span>
-            </span>
-          </span>
-        )
-      })}
+    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #e0e0d8', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', maxWidth: '400px', margin: '0 auto' }}>
+        {steps.map((step, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+            <div style={{ textAlign: 'center', minWidth: '40px' }}>
+              <div style={{
+                width: 10, height: 10, borderRadius: '50%', margin: '0 auto',
+                backgroundColor: step.live ? '#16a34a' : step.done ? '#7ecfc0' : '#ddd',
+              }} />
+              <div style={{ fontSize: 8, marginTop: 4, color: step.done || step.live ? '#555' : '#bbb', whiteSpace: 'nowrap' }}>
+                {step.label}
+              </div>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{ flex: 1, height: 2, backgroundColor: steps[i + 1].done || steps[i + 1].live ? '#7ecfc0' : '#e0e0d8', minWidth: 8, marginTop: -8 }} />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
