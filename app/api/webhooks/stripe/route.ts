@@ -31,11 +31,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
-  await handleEvent(event)
-  return NextResponse.json({ received: true })
-
-  // suppress unused warning
-  void supabase
+  try {
+    await handleEvent(event)
+    return NextResponse.json({ received: true })
+  } catch (err) {
+    console.error('[Stripe Webhook] handleEvent error:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
 }
 
 async function handleEvent(event: Stripe.Event) {
@@ -148,7 +150,7 @@ async function handleEvent(event: Stripe.Event) {
       .single()
 
     if (bookingError) {
-      console.error('[Stripe Webhook] Failed to create booking:', bookingError)
+      console.error("[Stripe Webhook] Failed to create booking:", bookingError); throw new Error("Booking insert failed: " + bookingError.message)
       return
     }
 
