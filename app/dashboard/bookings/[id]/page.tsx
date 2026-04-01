@@ -758,18 +758,19 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
 
 // ─── Booking Progress Bar (copied from messages/[bookingId]/page.tsx) ─────────
 
-function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDate?: string; buyNow?: boolean }) {
+function BookingProgressBar({ status, endDate, buyNow, hasCreative }: { status: string; endDate?: string; buyNow?: boolean; hasCreative?: boolean }) {
   const now = new Date()
   const end = endDate ? new Date(endDate) : null
   const isLive = status === 'completed' && end && now < end
   const isFullyComplete = status === 'completed' && end != null && now >= end
+  const creativeUploaded = hasCreative || ['active','pop_pending','pop_review','completed'].includes(status)
 
   const steps = [
     { label: 'Booked', done: true, live: false },
     { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow, live: false },
-    { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status), live: false },
+    { label: 'Creative', done: creativeUploaded, live: false },
     { label: 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
-    { label: 'LIVE', done: ['active','pop_pending','pop_review','completed'].includes(status), live: false },
+    { label: 'LIVE', done: isLive || isFullyComplete, live: isLive },
     { label: 'Complete', done: isFullyComplete, live: false },
   ]
 
@@ -821,6 +822,7 @@ export default function BookingDetailPage() {
 
   const [booking, setBooking] = useState<Booking | null>(null)
   const [listing, setListing] = useState<Listing | null>(null)
+  const [hasCreativeFiles, setHasCreativeFiles] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -846,6 +848,15 @@ export default function BookingDetailPage() {
         return
       }
       setBooking(bk)
+
+      // Check if creative files exist
+      try {
+        const filesRes = await fetch(`/api/collateral/list?bookingId=${bookingId}`)
+        const filesJson = await filesRes.json()
+        if (filesJson.files && filesJson.files.length > 0) {
+          setHasCreativeFiles(true)
+        }
+      } catch { /* non-fatal */ }
 
       if (bk.listing_id) {
         const { data: lst } = await supabase
@@ -927,6 +938,7 @@ export default function BookingDetailPage() {
           <BookingProgressBar
             status={booking.status}
             endDate={booking.end_date ?? undefined}
+            hasCreative={hasCreativeFiles}
           />
 
           {/* Booking details card */}

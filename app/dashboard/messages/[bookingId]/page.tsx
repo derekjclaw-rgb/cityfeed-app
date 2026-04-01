@@ -22,7 +22,7 @@ function formatName(fullName: string): string {
 
 // ─── Booking Progress Bar ─────────────────────────────────────────────────────
 
-function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDate?: string; buyNow?: boolean }) {
+function BookingProgressBar({ status, endDate, buyNow, hasCreative }: { status: string; endDate?: string; buyNow?: boolean; hasCreative?: boolean }) {
   const now = new Date()
   const end = endDate ? new Date(endDate) : null
   const isLive = status === 'completed' && end && now < end
@@ -31,7 +31,7 @@ function BookingProgressBar({ status, endDate, buyNow }: { status: string; endDa
   const steps = [
     { label: 'Booked', done: true, live: false },
     { label: 'Approved', done: ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow, live: false },
-    { label: 'Creative', done: ['active','pop_pending','pop_review','completed'].includes(status), live: false },
+    { label: 'Creative', done: hasCreative || ['active','pop_pending','pop_review','completed'].includes(status), live: false },
     { label: 'Proof', done: ['pop_pending','pop_review','completed'].includes(status), live: isLive },
     { label: 'Complete', done: isFullyComplete, live: false },
   ]
