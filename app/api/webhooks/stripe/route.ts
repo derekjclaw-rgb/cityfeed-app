@@ -70,7 +70,7 @@ async function handleEvent(event: Stripe.Event) {
           stripe_payment_intent_id: session.payment_intent as string,
         })
         .eq('id', bookingId)
-        .select('*, listings(title, host_id, images, start_date, end_date)')
+        .select('*, listings(title, host_id, images)')
         .single()
 
       if (error) {
@@ -156,7 +156,7 @@ async function handleEvent(event: Stripe.Event) {
         status: initialStatus,
         stripe_payment_intent_id: paymentIntentId || null,
       })
-      .select('*, listings(title, host_id, images, start_date, end_date)')
+      .select('*, listings(title, host_id, images)')
       .single()
 
     if (bookingError) {
