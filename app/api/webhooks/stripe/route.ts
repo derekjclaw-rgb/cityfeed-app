@@ -13,13 +13,14 @@ export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature')
 
   if (!sig || !process.env.STRIPE_WEBHOOK_SECRET) {
-    console.warn('[Stripe Webhook] No signature or secret — processing without verification (dev only)')
+    console.warn('[Stripe Webhook] No signature or secret — processing without verification')
     try {
       const event = JSON.parse(body) as Stripe.Event
       await handleEvent(event)
       return NextResponse.json({ received: true })
-    } catch {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    } catch (err) {
+      console.error('[Stripe Webhook] No-sig path error:', err)
+      return NextResponse.json({ error: String(err) }, { status: 500 })
     }
   }
 
@@ -53,9 +54,12 @@ export async function POST(req: NextRequest) {
 async function handleEvent(event: Stripe.Event) {
   const supabase = getSupabase()
 
+  console.log('[Stripe Webhook] Event type:', event.type)
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
     const meta = session.metadata ?? {}
+    console.log('[Stripe Webhook] Metadata:', JSON.stringify(meta))
+    console.log('[Stripe Webhook] booking_id in meta:', meta.booking_id)
 
     // ──────────────────────────────────────────────────────────────────────────
     // LEGACY PATH: session created before this fix — booking already exists.
