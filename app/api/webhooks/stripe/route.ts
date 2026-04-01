@@ -112,6 +112,22 @@ async function handleEvent(event: Stripe.Event) {
       }
     }
 
+    // Ensure we have a host_id — fetch from listing if metadata was empty
+    let resolvedHostId = hostId
+    if (!resolvedHostId) {
+      const { data: listing } = await supabase
+        .from('listings')
+        .select('host_id')
+        .eq('id', listingId)
+        .single()
+      resolvedHostId = listing?.host_id
+    }
+
+    if (!resolvedHostId) {
+      console.error('[Stripe Webhook] Could not resolve host_id for listing', listingId)
+      return
+    }
+
     const buyNowEnabled = buyNowEnabledStr === 'true'
     const initialStatus = buyNowEnabled ? 'confirmed' : 'pending'
 
@@ -120,7 +136,7 @@ async function handleEvent(event: Stripe.Event) {
       .insert({
         listing_id: listingId,
         advertiser_id: userId,
-        host_id: hostId || null,
+        host_id: resolvedHostId,
         start_date: startDate,
         end_date: endDate,
         total_price: parseFloat(total),
