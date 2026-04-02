@@ -271,7 +271,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
   }
 
   const hasFiles = files.length > 0
-  const canUpload = !isHost && ['confirmed', 'active', 'pop_pending', 'pop_review'].includes(bookingStatus)
+  const canUpload = !isHost && ['confirmed'].includes(bookingStatus)
   // Show success state if upload was just completed OR if files already exist (returning to page)
   const showSuccessState = canUpload && (uploadComplete || hasFiles)
 
@@ -550,7 +550,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   const supabase = createClient()
   const folderPath = `pop/${bookingId}`
 
-  const alreadySubmitted = submitted || ['pop_pending', 'pop_review', 'completed'].includes(bookingStatus)
+  const alreadySubmitted = submitted || bookingStatus === 'completed'
 
   async function loadPOPFiles() {
     const { data } = await supabase.storage.from('booking-collateral').list(folderPath)
@@ -635,22 +635,15 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             ? `\n\n${photoUrls.join('\n')}`
             : ''
 
-          // Message to advertiser — transparency, they can see proof but no action needed
+          // Message to advertiser — host informs them proof is uploaded
           await supabase.from('messages').insert({
             booking_id: bookingId,
-            sender_id: user.id,
+            sender_id: hostId,
             recipient_id: advertiserId,
             content: `📸 Your host has confirmed your ad placement is live! Here's the proof. If anything looks wrong, message your host directly.${photoText}`,
             image_url: photoUrls[0] ?? null,
           })
-
-          // Message to host — confirmation payout initiated
-          await supabase.from('messages').insert({
-            booking_id: bookingId,
-            sender_id: user.id,
-            recipient_id: user.id,
-            content: `✅ Proof of posting received! Your payout has been initiated. Expected within 2 business days.`,
-          })
+          // Note: self-message (host → host) removed — host receives the pop_submitted notification instead
 
           // Notify advertiser
           await supabase.from('notifications').insert({
@@ -667,8 +660,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
 
   if (!isHost) return null
 
-  // Only show for relevant statuses
-  const showStatuses = ['confirmed', 'active', 'pop_pending', 'pop_review', 'completed']
+  // Only show for relevant statuses (simplified flow: confirmed → completed)
+  const showStatuses = ['confirmed', 'completed']
   if (!showStatuses.includes(bookingStatus)) return null
 
   if (alreadySubmitted) {
@@ -766,15 +759,17 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
 
 // ─── Booking Progress Bar (copied from messages/[bookingId]/page.tsx) ─────────
 
-function BookingProgressBar({ status, endDate, buyNow, hasCreative }: { status: string; endDate?: string; buyNow?: boolean; hasCreative?: boolean }) {
+function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: { status: string; endDate?: string; buyNow?: boolean; hasCreative?: boolean; hasProof?: boolean }) {
   const now = new Date()
   const end = endDate ? new Date(endDate) : null
   const isLive = status === 'completed' && end && now < end
   const isFullyComplete = status === 'completed' && end != null && now >= end
 
-  const approved = ['confirmed','active','pop_pending','pop_review','completed'].includes(status) || !!buyNow
-  const creative = hasCreative || ['active','pop_pending','pop_review','completed'].includes(status)
-  const proof = ['pop_pending','pop_review','completed'].includes(status)
+  // Simplified flow: pending → confirmed → completed
+  const approved = ['confirmed', 'completed'].includes(status) || !!buyNow
+  const creative = hasCreative || status === 'completed'
+  // proof = POP files exist OR status is completed
+  const proof = hasProof || status === 'completed'
 
   const dots = [
     { label: 'Booked', color: '#7ecfc0' },
@@ -838,6 +833,7 @@ export default function BookingDetailPage() {
   const [booking, setBooking] = useState<Booking | null>(null)
   const [listing, setListing] = useState<Listing | null>(null)
   const [hasCreativeFiles, setHasCreativeFiles] = useState(false)
+  const [hasProofFiles, setHasProofFiles] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -870,6 +866,15 @@ export default function BookingDetailPage() {
         const filesJson = await filesRes.json()
         if (filesJson.files && filesJson.files.length > 0) {
           setHasCreativeFiles(true)
+        }
+      } catch { /* non-fatal */ }
+
+      // Check if POP files exist
+      try {
+        const popRes = await fetch(`/api/collateral/list?bookingId=pop-${bookingId}`)
+        const popJson = await popRes.json()
+        if (popJson.files && popJson.files.length > 0) {
+          setHasProofFiles(true)
         }
       } catch { /* non-fatal */ }
 
@@ -916,7 +921,7 @@ export default function BookingDetailPage() {
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
 
-  const showCollateralSection = ['confirmed', 'active', 'pop_pending', 'pop_review', 'completed'].includes(booking.status)
+  const showCollateralSection = ['confirmed', 'completed'].includes(booking.status)
 
   return (
     <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
@@ -957,6 +962,7 @@ export default function BookingDetailPage() {
             status={booking.status}
             endDate={booking.end_date ?? undefined}
             hasCreative={hasCreativeFiles}
+            hasProof={hasProofFiles}
           />
 
           {/* Booking details card */}
@@ -1076,7 +1082,7 @@ export default function BookingDetailPage() {
             >
               Messages
             </Link>
-            {['pop_pending', 'pop_review', 'completed'].includes(booking.status) && !isHost && (
+            {booking.status === 'completed' && !isHost && (
               <Link
                 href={`/dashboard/messages/${bookingId}`}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"

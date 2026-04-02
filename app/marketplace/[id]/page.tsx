@@ -3,12 +3,12 @@
 /**
  * Listing Detail Page — Phase 3: real Supabase data with mock fallback
  */
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   MapPin, Star, Eye, Lightbulb, Ruler, Clock, ArrowLeft,
-  ChevronRight, Shield, CheckCircle, Loader2
+  ChevronRight, ChevronLeft, Shield, CheckCircle, Loader2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../page'
@@ -108,6 +108,132 @@ const MOCK_DETAILS: Record<string, { description: string; dimensions: string; pr
   '7': { description: 'Bus stop shelter advertising panel on Metro Line 12, one of Seattle\'s busiest transit corridors.', dimensions: '4ft × 5ft', production_time: '3-5 business days', min_days: 14, max_days: 90, content_restrictions: 'No tobacco, alcohol, or political content.' },
   '8': { description: 'Rooftop LED ticker-style screen visible from multiple city blocks in Midtown East.', dimensions: '60ft × 10ft', production_time: '5-7 business days', min_days: 7, max_days: 30, content_restrictions: 'No adult content. All artwork subject to approval.' },
   '9': { description: 'Blank white wall in a community arts space in East Village.', dimensions: '20ft × 15ft', production_time: '7-10 business days', min_days: 14, max_days: 60, content_restrictions: 'Community review required. No political content.' },
+}
+
+// ─── Photo Carousel ───────────────────────────────────────────────────────────
+
+interface PhotoCarouselProps {
+  images: string[]
+  title: string
+  listingId: string
+}
+
+function PhotoCarousel({ images, title, listingId }: PhotoCarouselProps) {
+  const [current, setCurrent] = useState(0)
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
+  const isReal = !/^\d+$/.test(listingId)
+
+  function prev() { setCurrent(i => (i - 1 + images.length) % images.length) }
+  function next() { setCurrent(i => (i + 1) % images.length) }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.targetTouches[0].clientX
+    touchEndX.current = null
+  }
+  function handleTouchMove(e: React.TouchEvent) {
+    touchEndX.current = e.targetTouches[0].clientX
+  }
+  function handleTouchEnd() {
+    if (touchStartX.current === null || touchEndX.current === null) return
+    const diff = touchStartX.current - touchEndX.current
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) next()
+      else prev()
+    }
+    touchStartX.current = null
+    touchEndX.current = null
+  }
+
+  return (
+    <div className="space-y-3">
+      <div
+        className="h-72 md:h-96 rounded-2xl overflow-hidden relative select-none"
+        style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <img
+          src={images[current]}
+          alt={`${title} photo ${current + 1}`}
+          className="w-full h-full object-cover transition-opacity duration-200"
+        />
+
+        {/* Prev / Next arrows — only if multiple images */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-90"
+              style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+              aria-label="Previous photo"
+            >
+              <ChevronLeft className="w-5 h-5" style={{ color: '#2b2b2b' }} />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-14 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-90"
+              style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+              aria-label="Next photo"
+            >
+              <ChevronRight className="w-5 h-5" style={{ color: '#2b2b2b' }} />
+            </button>
+            {/* Dot indicators */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className="rounded-full transition-all"
+                  style={{
+                    width: i === current ? '20px' : '8px',
+                    height: '8px',
+                    backgroundColor: i === current ? '#fff' : 'rgba(255,255,255,0.55)',
+                  }}
+                  aria-label={`Go to photo ${i + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Favorite button */}
+        {isReal && (
+          <div className="absolute top-4 right-4">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+              <FavoriteButton listingId={listingId} size={20} />
+            </div>
+          </div>
+        )}
+
+        {/* Counter badge */}
+        {images.length > 1 && (
+          <div className="absolute top-4 left-4">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
+              {current + 1} / {images.length}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Thumbnail strip */}
+      {images.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden transition-all"
+              style={{ border: i === current ? '2px solid #7ecfc0' : '2px solid transparent', opacity: i === current ? 1 : 0.65 }}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Booking Widget ────────────────────────────────────────────────────────────
@@ -225,6 +351,134 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
   )
 }
 
+// ─── Mobile Booking Bottom Sheet ──────────────────────────────────────────────
+
+interface MobileBookingSheetProps {
+  listing: ListingData
+  onClose: () => void
+}
+
+function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
+  const router = useRouter()
+  const [internalStart, setInternalStart] = useState('')
+  const [internalEnd, setInternalEnd] = useState('')
+  const [bookedRanges, setBookedRanges] = useState<DisabledRange[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.all([
+      supabase.from('bookings').select('start_date, end_date').eq('listing_id', listing.id).in('status', ['pending', 'confirmed', 'active']),
+      supabase.from('listings').select('availability').eq('id', listing.id).single(),
+    ]).then(([bookingsRes, listingRes]) => {
+      const ranges: DisabledRange[] = []
+      if (bookingsRes.data) bookingsRes.data.forEach(b => ranges.push({ start: b.start_date, end: b.end_date }))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const avail = (listingRes.data as any)?.availability as { blocked?: Array<{ start: string; end: string }> } | null
+      if (avail?.blocked) avail.blocked.forEach(b => ranges.push({ start: b.start, end: b.end }))
+      if (ranges.length > 0) setBookedRanges(ranges)
+    })
+  }, [listing.id])
+
+  const { days, subtotal, fee, total } = useMemo(() => {
+    if (!internalStart || !internalEnd) return { days: 0, subtotal: 0, fee: 0, total: 0 }
+    const start = new Date(internalStart)
+    const end = new Date(internalEnd)
+    const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    const subtotal = days * listing.price_per_day
+    const fee = Math.round(subtotal * 0.07 * 100) / 100
+    return { days, subtotal, fee, total: subtotal + fee }
+  }, [internalStart, internalEnd, listing.price_per_day])
+
+  function handleBook() {
+    if (!internalStart || !internalEnd || days < 1) return
+    router.push(`/marketplace/${listing.id}/book?start=${internalStart}&end=${internalEnd}&days=${days}&total=${total}`)
+  }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-50 bg-black/40"
+        onClick={onClose}
+        style={{ backdropFilter: 'blur(2px)' }}
+      />
+      {/* Sheet */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl overflow-hidden"
+        style={{ backgroundColor: '#fff', boxShadow: '0 -4px 32px rgba(0,0,0,0.18)', maxHeight: '90vh', overflowY: 'auto' }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full" style={{ backgroundColor: '#e0e0d8' }} />
+        </div>
+        {/* Close button */}
+        <div className="flex items-center justify-between px-6 pb-2">
+          <div>
+            <span className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>${listing.price_per_day}</span>
+            <span className="text-sm ml-1" style={{ color: '#888' }}>/day</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full"
+            style={{ backgroundColor: '#f0f0ec' }}
+            aria-label="Close"
+          >
+            <span style={{ color: '#888', fontSize: '18px', lineHeight: 1 }}>×</span>
+          </button>
+        </div>
+
+        <div className="px-6 pb-8 space-y-4">
+          {/* Date picker */}
+          <div>
+            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Select Dates</label>
+            <DateRangePicker
+              startDate={internalStart}
+              endDate={internalEnd}
+              onChange={(s, e) => { setInternalStart(s); setInternalEnd(e) }}
+              placeholder="Pick start & end date"
+              disabledRanges={bookedRanges}
+            />
+          </div>
+
+          {/* Price breakdown */}
+          {days > 0 && (
+            <div className="rounded-xl p-4 space-y-2" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+              <div className="flex justify-between text-sm" style={{ color: '#555' }}>
+                <span>${listing.price_per_day} × {days} day{days !== 1 ? 's' : ''}</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm" style={{ color: '#888' }}>
+                <span>City Feed fee (7%)</span>
+                <span>${fee.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
+                <span>Total</span>
+                <span>${total.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* CTA */}
+          <button
+            onClick={handleBook}
+            disabled={!internalStart || !internalEnd || days < 1}
+            className="w-full font-semibold py-4 rounded-xl text-base flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
+          >
+            {listing.buy_now_enabled ? 'Book Now' : 'Request to Book'}
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center justify-center gap-1.5 text-xs" style={{ color: '#888' }}>
+            <Shield className="w-3.5 h-3.5" />
+            {listing.buy_now_enabled ? "You'll be charged immediately" : "You won't be charged until confirmed"}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function ListingDetailPage() {
   const params = useParams()
@@ -232,9 +486,9 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState<ListingData | null>(null)
   const [host, setHost] = useState<HostData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activePhoto, setActivePhoto] = useState(0)
   const [selectedStart, setSelectedStart] = useState('')
   const [selectedEnd, setSelectedEnd] = useState('')
+  const [mobileModalOpen, setMobileModalOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -371,34 +625,13 @@ export default function ListingDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           <div className="lg:col-span-2 space-y-8 order-1">
-            {/* Photo gallery */}
+            {/* Photo gallery / carousel */}
             {listing.images.length > 0 ? (
-              <div className="space-y-3">
-                <div className="h-72 md:h-96 rounded-2xl overflow-hidden relative" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
-                  <img src={listing.images[activePhoto]} alt={listing.title} className="w-full h-full object-cover" />
-                  {!/^\d+$/.test(listing.id) && (
-                    <div className="absolute top-4 right-4">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                        <FavoriteButton listingId={listing.id} size={20} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {listing.images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto">
-                    {listing.images.map((img, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActivePhoto(i)}
-                        className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden transition-all"
-                        style={{ border: i === activePhoto ? '2px solid #7ecfc0' : '2px solid transparent' }}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <PhotoCarousel
+                images={listing.images}
+                title={listing.title}
+                listingId={listing.id}
+              />
             ) : (
               <div className={`h-72 md:h-96 rounded-2xl bg-gradient-to-br ${listing.image_placeholder} relative overflow-hidden`} style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.08)' }}>
                 <div className="absolute top-4 left-4">
@@ -606,23 +839,29 @@ export default function ListingDetailPage() {
       </div>
 
       {/* Mobile sticky CTA ribbon */}
-      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 px-4 py-3" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-40 px-4 py-3" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', boxShadow: '0 -2px 12px rgba(0,0,0,0.08)' }}>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-bold" style={{ color: '#debb73' }}>${listing.price_per_day}<span className="text-xs font-normal" style={{ color: '#888' }}>/day</span></div>
             <div className="text-xs" style={{ color: '#888' }}>Min. {listing.min_days} days</div>
           </div>
-          <Link
-            href={selectedStart && selectedEnd
-              ? `/marketplace/${listing.id}/book?start=${selectedStart}&end=${selectedEnd}`
-              : `/marketplace/${listing.id}/book`}
+          <button
+            onClick={() => setMobileModalOpen(true)}
             className="font-semibold px-6 py-3 rounded-xl text-sm"
             style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
           >
             {listing.buy_now_enabled ? 'Book Now' : 'Request to Book'}
-          </Link>
+          </button>
         </div>
       </div>
+
+      {/* Mobile booking bottom sheet */}
+      {mobileModalOpen && (
+        <MobileBookingSheet
+          listing={listing}
+          onClose={() => setMobileModalOpen(false)}
+        />
+      )}
 
       {/* Bottom padding on mobile for sticky CTA */}
       <div className="h-20 lg:hidden" />

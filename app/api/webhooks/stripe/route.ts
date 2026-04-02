@@ -83,7 +83,7 @@ async function handleEvent(event: Stripe.Event) {
       }
 
       console.log(`[Stripe Webhook] Legacy booking ${bookingId} confirmed`)
-      if (booking) await sendBookingNotifications(supabase, booking, bookingId)
+      if (booking) await sendBookingNotifications(supabase, booking, bookingId, 'confirmed')
       return
     }
 
@@ -171,12 +171,14 @@ async function handleEvent(event: Stripe.Event) {
     const bookingId = booking.id
     console.log(`[Stripe Webhook] Booking ${bookingId} created with status=${initialStatus}`)
 
-    await sendBookingNotifications(supabase, booking, bookingId)
+    await sendBookingNotifications(supabase, booking, bookingId, initialStatus as 'pending' | 'confirmed')
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>, booking: any, bookingId: string) {
+async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>, booking: any, bookingId: string, initialStatus: 'pending' | 'confirmed' = 'confirmed') {
+  const isPending = initialStatus === 'pending'
+
   // Fetch advertiser profile
   const { data: advertiserProfile } = await supabase
     .from('profiles')
@@ -198,7 +200,8 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   const listingImages = listingData?.images as string[] | null | undefined
   const listingPhoto = Array.isArray(listingImages) && listingImages.length > 0 ? listingImages[0] : null
 
-  // Send confirmation email to advertiser
+  // Send email to advertiser — always use booking_confirmed template for now
+  // (the in-app notification and auto-message carry the correct pending/confirmed messaging)
   if (advertiserProfile?.email) {
     sendEmail({
       type: 'booking_confirmed',
@@ -210,7 +213,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     })
   }
 
-  // Send new booking notification to host
+  // Send email to host — content depends on status
   if (hostProfile?.email) {
     sendEmail({
       type: 'new_booking_request',
@@ -222,34 +225,48 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     })
   }
 
-  // Auto-message to advertiser with next steps
+  // Auto-message to advertiser — content depends on status
   const priceSummary = booking.total_price
     ? `$${Number(booking.total_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
     : ''
-  const systemMessage = `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nHere's what to do next:\n\n1. Upload your creative/collateral files in the booking detail page\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
+
+  const systemMessage = isPending
+    ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nQuestions? Send a message here!`
+    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nHere's what to do next:\n\n1. Upload your creative/collateral files in the booking detail page\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
 
   const msgInsert = await supabase.from('messages').insert({
     booking_id: bookingId,
-    sender_id: booking.host_id,
+    sender_id: booking.advertiser_id,
     recipient_id: booking.advertiser_id,
     content: systemMessage,
     ...(listingPhoto ? { image_url: listingPhoto } : {}),
   })
   console.log(`[Stripe Webhook] Auto-message insert:`, msgInsert.error ?? 'OK', { bookingId })
 
-  // Insert notifications
+  // Insert notifications — content depends on status
+  const advertiserNotifTitle = isPending
+    ? 'Booking request submitted'
+    : 'Your booking is confirmed!'
+  const advertiserNotifBody = isPending
+    ? `"${listingTitle}" — awaiting host approval`
+    : `"${listingTitle}" — ${dates}`
+
+  const hostNotifTitle = isPending
+    ? `New booking request for "${listingTitle}"`
+    : `New instant booking for "${listingTitle}"!`
+
   await supabase.from('notifications').insert([
     {
       user_id: booking.advertiser_id,
-      type: 'booking_confirmed',
-      title: 'Your booking is confirmed!',
-      body: `"${listingTitle}" — ${dates}`,
+      type: isPending ? 'booking_pending' : 'booking_confirmed',
+      title: advertiserNotifTitle,
+      body: advertiserNotifBody,
       href: `/dashboard/bookings/${bookingId}`,
     },
     {
       user_id: booking.host_id,
       type: 'new_booking',
-      title: `New booking request for "${listingTitle}"`,
+      title: hostNotifTitle,
       body: `From ${advertiserProfile?.full_name ?? 'An advertiser'} — ${dates}`,
       href: `/dashboard/bookings`,
     },

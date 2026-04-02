@@ -369,13 +369,26 @@ function DashboardContent() {
             const title = (pendingBooking as any).listings?.title ?? 'a listing'
             setActionBanner({ message: `New booking request for "${title}"`, href: `/dashboard/bookings`, cta: 'Review Now' })
           } else {
-            const { data: collateralBooking } = await supabase
+            // Check confirmed bookings for actual uploaded files
+            const { data: confirmedHostBookings } = await supabase
               .from('bookings').select('id, listings(title)').eq('host_id', uid).eq('status', 'confirmed')
-              .order('updated_at', { ascending: false }).limit(1).single()
-            if (collateralBooking) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const title = (collateralBooking as any).listings?.title ?? 'a booking'
-              setActionBanner({ message: `Creative may be ready for "${title}" — check the booking`, href: `/dashboard/bookings/${collateralBooking.id}`, cta: 'View Booking' })
+              .order('updated_at', { ascending: false }).limit(3)
+            if (confirmedHostBookings && confirmedHostBookings.length > 0) {
+              let collateralBookingId: string | null = null
+              let collateralTitle: string | null = null
+              for (const bk of confirmedHostBookings) {
+                const { data: storageFiles } = await supabase.storage
+                  .from('booking-collateral').list(`bookings/${bk.id}`, { limit: 1 })
+                if (storageFiles && storageFiles.length > 0) {
+                  collateralBookingId = bk.id
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  collateralTitle = (bk as any).listings?.title ?? 'a booking'
+                  break
+                }
+              }
+              if (collateralBookingId && collateralTitle) {
+                setActionBanner({ message: `Creative may be ready for "${collateralTitle}" — check the booking`, href: `/dashboard/bookings/${collateralBookingId}`, cta: 'View Booking' })
+              }
             }
           }
         } catch { /* non-critical */ }
@@ -441,27 +454,25 @@ function DashboardContent() {
             .order('created_at', { ascending: false }).limit(3)
 
           if (confirmedBookings && confirmedBookings.length > 0) {
-            let hasCollateral = false
+            let collateralBookingId: string | null = null
+            let noCollateralBookingId: string | null = null
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let noCollateralTitle: string | null = null
             for (const bk of confirmedBookings) {
               const { data: storageFiles } = await supabase.storage.from('booking-collateral').list(`bookings/${bk.id}`)
-              if (storageFiles && storageFiles.length > 0) { hasCollateral = true; break }
+              if (storageFiles && storageFiles.length > 0) {
+                collateralBookingId = bk.id
+                break
+              } else if (!noCollateralBookingId) {
+                noCollateralBookingId = bk.id
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                noCollateralTitle = (bk as any).listings?.title ?? 'your listing'
+              }
             }
-            if (hasCollateral) {
-              const firstBookingId = confirmedBookings[0].id
-              setActionBanner({ message: `Creative files are with the host — stand by for Proof of Posting`, href: `/dashboard/messages/${firstBookingId}`, cta: 'Message Host' })
-            } else {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const title = (confirmedBookings[0] as any).listings?.title ?? 'your listing'
-              setActionBanner({ message: `Upload your creative for "${title}"`, href: `/dashboard/bookings/${confirmedBookings[0].id}`, cta: 'Upload Creative' })
-            }
-          } else {
-            const { data: popBooking } = await supabase
-              .from('bookings').select('id, listings(title)').eq('advertiser_id', uid).in('status', ['pop_pending', 'pop_review'])
-              .limit(1).single()
-            if (popBooking) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const title = (popBooking as any).listings?.title ?? 'your listing'
-              setActionBanner({ message: `Review proof of posting for "${title}"`, href: `/dashboard/bookings/${popBooking.id}`, cta: 'Review Now' })
+            if (collateralBookingId) {
+              setActionBanner({ message: `Creative files are with the host — stand by for Proof of Posting`, href: `/dashboard/messages/${collateralBookingId}`, cta: 'Message Host' })
+            } else if (noCollateralBookingId) {
+              setActionBanner({ message: `Upload your creative for "${noCollateralTitle}"`, href: `/dashboard/bookings/${noCollateralBookingId}`, cta: 'Upload Creative' })
             }
           }
         } catch { /* non-critical */ }

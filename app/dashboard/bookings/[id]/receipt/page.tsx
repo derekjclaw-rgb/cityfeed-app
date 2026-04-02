@@ -35,6 +35,7 @@ export default function ReceiptPage() {
 
   const [receipt, setReceipt] = useState<ReceiptData | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [isHost, setIsHost] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -49,6 +50,7 @@ export default function ReceiptPage() {
         .select(`
           id, status, start_date, end_date, total_price, platform_fee,
           payout_amount, payout_at, created_at, stripe_payment_intent_id,
+          host_id, advertiser_id,
           listings(title, price_per_day),
           host:profiles!bookings_host_id_fkey(full_name),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
@@ -64,6 +66,8 @@ export default function ReceiptPage() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const d = data as any
+      const userIsHost = user.id === d.host_id
+      setIsHost(userIsHost)
       const pricePerDay = d.listings?.price_per_day ?? 0
       const start = new Date(d.start_date)
       const end = new Date(d.end_date)
@@ -115,6 +119,19 @@ export default function ReceiptPage() {
   const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   const fmtMoney = (n: number) => `$${n.toFixed(2)}`
 
+  // Confirmation code from UUID
+  const confirmationCode = `CF-${receipt.id.replace(/-/g, '').substring(0, 6).toUpperCase()}`
+
+  // Is campaign currently live?
+  const now = new Date()
+  const campStart = new Date(receipt.start_date)
+  const campEnd = new Date(receipt.end_date)
+  const isLive = receipt.status === 'completed' && now >= campStart && now <= campEnd
+
+  // Host view: payout = total - seller fee (7%)
+  const sellerFee = Math.round(receipt.subtotal * 0.07 * 100) / 100
+  const hostPayout = receipt.payout_amount ?? Math.round((receipt.subtotal - sellerFee) * 100) / 100
+
   return (
     <>
       {/* Print styles */}
@@ -158,10 +175,17 @@ export default function ReceiptPage() {
                   <p className="text-lg font-bold" style={{ color: '#7ecfc0' }}>City Feed</p>
                   <p className="text-xs mt-0.5" style={{ color: '#888' }}>Real World Advertising Marketplace</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
-                  <span className="text-sm font-semibold" style={{ color: '#16a34a' }}>Completed</span>
-                </div>
+                {isLive ? (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.2)' }}>
+                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: '#16a34a' }} />
+                    <span className="text-sm font-bold" style={{ color: '#4ade80' }}>LIVE</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
+                    <span className="text-sm font-semibold" style={{ color: '#16a34a' }}>Completed</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -170,8 +194,8 @@ export default function ReceiptPage() {
               {/* Booking ID & Date */}
               <div className="flex items-start justify-between text-xs" style={{ color: '#888' }}>
                 <div>
-                  <p className="font-medium mb-0.5" style={{ color: '#aaa' }}>BOOKING ID</p>
-                  <p className="font-mono" style={{ color: '#555', fontSize: '11px' }}>{receipt.id}</p>
+                  <p className="font-medium mb-0.5" style={{ color: '#aaa' }}>CONFIRMATION</p>
+                  <p className="font-mono font-bold text-sm" style={{ color: '#7ecfc0' }}>{confirmationCode}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-medium mb-0.5" style={{ color: '#aaa' }}>PAYMENT DATE</p>
@@ -211,9 +235,11 @@ export default function ReceiptPage() {
 
               <hr style={{ borderColor: '#f0f0ea' }} />
 
-              {/* Price Breakdown */}
+              {/* Price Breakdown — role-aware */}
               <div>
-                <p className="text-xs font-semibold mb-3" style={{ color: '#aaa' }}>PRICE BREAKDOWN</p>
+                <p className="text-xs font-semibold mb-3" style={{ color: '#aaa' }}>
+                  {isHost ? 'PAYOUT BREAKDOWN' : 'PRICE BREAKDOWN'}
+                </p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>
@@ -221,19 +247,30 @@ export default function ReceiptPage() {
                     </span>
                     <span style={{ color: '#2b2b2b' }}>{fmtMoney(receipt.subtotal ?? receipt.price_per_day * receipt.total_days)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: '#888' }}>Buyer service fee (7%)</span>
-                    <span style={{ color: '#2b2b2b' }}>{fmtMoney(receipt.buyer_fee)}</span>
-                  </div>
+                  {isHost ? (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#888' }}>Seller fee (7%)</span>
+                      <span style={{ color: '#dc2626' }}>-{fmtMoney(sellerFee)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#888' }}>Buyer service fee (7%)</span>
+                      <span style={{ color: '#2b2b2b' }}>{fmtMoney(receipt.buyer_fee)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-between mt-4 pt-4" style={{ borderTop: '2px solid #f0f0ea' }}>
-                  <span className="font-bold" style={{ color: '#2b2b2b' }}>Total Charged</span>
-                  <span className="font-bold text-lg" style={{ color: '#7ecfc0' }}>{fmtMoney(receipt.total_price)}</span>
+                  <span className="font-bold" style={{ color: '#2b2b2b' }}>
+                    {isHost ? 'Your Payout' : 'Total Charged'}
+                  </span>
+                  <span className="font-bold text-lg" style={{ color: '#7ecfc0' }}>
+                    {isHost ? fmtMoney(hostPayout) : fmtMoney(receipt.total_price)}
+                  </span>
                 </div>
               </div>
 
-              {receipt.payout_amount && (
+              {!isHost && receipt.payout_amount && (
                 <>
                   <hr style={{ borderColor: '#f0f0ea' }} />
                   <div>

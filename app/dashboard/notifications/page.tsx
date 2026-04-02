@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Bell, Loader2, CheckCircle } from 'lucide-react'
@@ -69,6 +69,17 @@ export default function NotificationsPage() {
     })
   }, [router])
 
+  const handleNotifClick = useCallback(async (notif: Notification) => {
+    if (!notif.read) {
+      const supabase = createClient()
+      await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n))
+    }
+    if (notif.href) {
+      router.push(notif.href)
+    }
+  }, [router])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
@@ -104,12 +115,14 @@ export default function NotificationsPage() {
             {notifications.map(notif => (
               <div
                 key={notif.id}
-                className="rounded-2xl p-4"
+                onClick={() => handleNotifClick(notif)}
+                className="rounded-2xl p-4 transition-all"
                 style={{
                   backgroundColor: '#fff',
-                  border: '1px solid #e0e0d8',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                  border: notif.read ? '1px solid #e0e0d8' : '1px solid rgba(126,207,192,0.4)',
+                  boxShadow: notif.read ? '0 1px 4px rgba(0,0,0,0.05)' : '0 1px 8px rgba(126,207,192,0.15)',
                   opacity: notif.read ? 0.8 : 1,
+                  cursor: notif.href ? 'pointer' : 'default',
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -125,19 +138,14 @@ export default function NotificationsPage() {
                       <p className="text-xs mt-0.5" style={{ color: '#888' }}>{notif.body}</p>
                     )}
                     {notif.href && (
-                      <Link
-                        href={notif.href}
-                        className="inline-block text-xs mt-2 font-medium hover:opacity-70"
-                        style={{ color: '#7ecfc0' }}
-                      >
+                      <p className="text-xs mt-1.5 font-medium" style={{ color: '#7ecfc0' }}>
                         View →
-                      </Link>
+                      </p>
                     )}
                   </div>
-                  {notif.read && (
+                  {notif.read ? (
                     <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#e0e0d8' }} />
-                  )}
-                  {!notif.read && (
+                  ) : (
                     <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: '#7ecfc0' }} />
                   )}
                 </div>
