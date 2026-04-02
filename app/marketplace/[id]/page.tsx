@@ -404,8 +404,8 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
       />
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl overflow-hidden"
-        style={{ backgroundColor: '#fff', boxShadow: '0 -4px 32px rgba(0,0,0,0.18)', maxHeight: '90vh', overflowY: 'auto' }}
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl"
+        style={{ backgroundColor: '#fff', boxShadow: '0 -4px 32px rgba(0,0,0,0.18)', maxHeight: '90vh', overflowY: 'auto', top: 'auto' }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">

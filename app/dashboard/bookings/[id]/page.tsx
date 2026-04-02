@@ -915,8 +915,9 @@ export default function BookingDetailPage() {
   const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
   const now = new Date()
   const isLive = booking.status === 'completed' &&
-    booking.start_date && booking.end_date &&
-    now >= new Date(booking.start_date) && now <= new Date(booking.end_date)
+    !!booking.start_date && !!booking.end_date &&
+    now >= new Date(booking.start_date) &&
+    now <= new Date(booking.end_date.includes('T') ? booking.end_date : booking.end_date + 'T23:59:59')
   const days = booking.start_date && booking.end_date
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
