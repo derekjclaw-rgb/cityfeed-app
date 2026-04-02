@@ -154,11 +154,18 @@ function confirmationCode(bookingId: string): string {
 
 /** Returns true if campaign is currently live (between start/end dates with approved POP) */
 function isCampaignLive(status: string, startDate: string, endDate: string): boolean {
-  if (!['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) return false
+  if (!['confirmed', 'active', 'completed'].includes(status)) return false
   const now = new Date()
-  const start = startDate ? new Date(startDate) : null
-  const end = endDate ? new Date(endDate) : null
+  const start = startDate ? new Date(startDate + 'T00:00:00') : null
+  const end = endDate ? new Date(endDate + 'T23:59:59') : null
   return !!(start && end && now >= start && now <= end)
+}
+
+function isCampaignComplete(status: string, endDate: string): boolean {
+  if (status !== 'completed') return false
+  const now = new Date()
+  const end = endDate ? new Date(endDate + 'T23:59:59') : null
+  return !!(end && now > end)
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -675,9 +682,10 @@ function DashboardContent() {
             {/* ── ADVERTISER: My Campaigns ─────────────────────────────── */}
             {!isHost && campaigns.length > 0 && (() => {
               const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
+              // Three simple buckets: Confirmed (upcoming), Active/LIVE (running now), Complete (past)
               const liveCampaigns = campaigns.filter(c => isCampaignLive(c.status, c.start_date, c.end_date))
-              const activeCampaigns = campaigns.filter(c => !isCampaignLive(c.status, c.start_date, c.end_date) && ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review'].includes(c.status))
-              const completedCampaigns = campaigns.filter(c => c.status === 'completed' && !isCampaignLive(c.status, c.start_date, c.end_date))
+              const activeCampaigns = campaigns.filter(c => !isCampaignLive(c.status, c.start_date, c.end_date) && !isCampaignComplete(c.status, c.end_date) && c.status !== 'cancelled')
+              const completedCampaigns = campaigns.filter(c => isCampaignComplete(c.status, c.end_date))
               const cancelledCampaigns = campaigns.filter(c => c.status === 'cancelled')
 
               function CampaignCard({ campaign }: { campaign: Campaign }) {
@@ -870,8 +878,8 @@ function DashboardContent() {
             {isHost && (() => {
               const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
               const liveBookings = hostBookings.filter(b => isCampaignLive(b.status, b.start_date, b.end_date))
-              const activeBookings = hostBookings.filter(b => !isCampaignLive(b.status, b.start_date, b.end_date) && ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review'].includes(b.status))
-              const completedBookings = hostBookings.filter(b => b.status === 'completed' && !isCampaignLive(b.status, b.start_date, b.end_date))
+              const activeBookings = hostBookings.filter(b => !isCampaignLive(b.status, b.start_date, b.end_date) && !isCampaignComplete(b.status, b.end_date) && b.status !== 'cancelled')
+              const completedBookings = hostBookings.filter(b => isCampaignComplete(b.status, b.end_date))
 
               function HostBookingCard({ booking }: { booking: HostBooking }) {
                 const isLive = isCampaignLive(booking.status, booking.start_date, booking.end_date)

@@ -914,10 +914,10 @@ export default function BookingDetailPage() {
   const isHost = currentUserId === booking.host_id
   const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
   const now = new Date()
-  const isLive = booking.status === 'completed' &&
+  const isLive = ['confirmed', 'active', 'completed'].includes(booking.status) &&
     !!booking.start_date && !!booking.end_date &&
-    now >= new Date(booking.start_date) &&
-    now <= new Date(booking.end_date.includes('T') ? booking.end_date : booking.end_date + 'T23:59:59')
+    now >= new Date(booking.start_date + 'T00:00:00') &&
+    now <= new Date(booking.end_date + 'T23:59:59')
   const days = booking.start_date && booking.end_date
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
