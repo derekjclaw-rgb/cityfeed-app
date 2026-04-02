@@ -161,11 +161,10 @@ function isCampaignLive(status: string, startDate: string, endDate: string): boo
   return !!(start && end && now >= start && now < end)
 }
 
-function isCampaignComplete(status: string, endDate: string): boolean {
-  if (status !== 'completed') return false
-  const now = new Date()
-  const end = endDate ? new Date(endDate + 'T00:00:00') : null
-  return !!(end && now >= end)
+function isCampaignComplete(status: string, _endDate: string): boolean {
+  // Any booking with 'completed' status that is NOT currently live = complete
+  // The isCampaignLive check handles whether it's within the active date range
+  return status === 'completed'
 }
 
 function isCampaignConfirmed(status: string, startDate: string): boolean {
@@ -693,7 +692,7 @@ function DashboardContent() {
               // Three buckets: Active (running now), Confirmed (future), Complete (past)
               const liveCampaigns = campaigns.filter(c => isCampaignLive(c.status, c.start_date, c.end_date))
               const activeCampaigns = campaigns.filter(c => isCampaignConfirmed(c.status, c.start_date) || (c.status === 'pending'))
-              const completedCampaigns = campaigns.filter(c => isCampaignComplete(c.status, c.end_date))
+              const completedCampaigns = campaigns.filter(c => isCampaignComplete(c.status, c.end_date) && !isCampaignLive(c.status, c.start_date, c.end_date))
               const cancelledCampaigns = campaigns.filter(c => c.status === 'cancelled')
 
               function CampaignCard({ campaign }: { campaign: Campaign }) {
@@ -887,7 +886,7 @@ function DashboardContent() {
               const fmt = (d: string) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
               const liveBookings = hostBookings.filter(b => isCampaignLive(b.status, b.start_date, b.end_date))
               const activeBookings = hostBookings.filter(b => isCampaignConfirmed(b.status, b.start_date) || b.status === 'pending')
-              const completedBookings = hostBookings.filter(b => isCampaignComplete(b.status, b.end_date))
+              const completedBookings = hostBookings.filter(b => isCampaignComplete(b.status, b.end_date) && !isCampaignLive(b.status, b.start_date, b.end_date))
 
               function HostBookingCard({ booking }: { booking: HostBooking }) {
                 const isLive = isCampaignLive(booking.status, booking.start_date, booking.end_date)
@@ -959,7 +958,7 @@ function DashboardContent() {
                       )}
                       {activeBookings.length > 0 && (
                         <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Active</h3>
+                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Confirmed</h3>
                           <div className="space-y-3">
                             {activeBookings.map(b => <HostBookingCard key={b.id} booking={b} />)}
                           </div>
@@ -967,7 +966,7 @@ function DashboardContent() {
                       )}
                       {completedBookings.length > 0 && (
                         <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Completed</h3>
+                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Complete</h3>
                           <div className="space-y-3">
                             {completedBookings.slice(0, 3).map(b => <HostBookingCard key={b.id} booking={b} />)}
                           </div>
