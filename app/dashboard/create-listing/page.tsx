@@ -327,6 +327,12 @@ export default function CreateListingPage() {
 
     const imageUrls = await uploadPhotos(userId)
 
+    // Warn if some photos failed to upload
+    if (imageUrls.length < photos.length) {
+      const failed = photos.length - imageUrls.length
+      setError(`${failed} photo${failed > 1 ? 's' : ''} failed to upload. The listing will be created with ${imageUrls.length} photo${imageUrls.length !== 1 ? 's' : ''}.`)
+    }
+
     // Geocode
     let lat: number | null = null
     let lng: number | null = null

@@ -43,7 +43,7 @@ interface PayoutLineItem {
   bookingId: string
   listingTitle: string
   amount: number
-  status: 'paid' | 'pending' | 'processing'
+  status: 'paid' | 'pending'
 }
 
 interface Activity {
@@ -376,7 +376,7 @@ function DashboardContent() {
             bookingId: b.id,
             listingTitle: b.listings?.title ?? 'Listing',
             amount: payoutAmt,
-            status: isPaid ? 'paid' : isLiveNow ? 'processing' : 'pending',
+            status: isPaid ? 'paid' : 'pending',
           }
         })
         setPayoutLineItems(lineItems)
@@ -1013,11 +1013,9 @@ function DashboardContent() {
                           style={
                             item.status === 'paid'
                               ? { backgroundColor: '#dcfce7', color: '#16a34a' }
-                              : item.status === 'processing'
-                              ? { backgroundColor: '#dbeafe', color: '#1d4ed8' }
                               : { backgroundColor: '#fef9ec', color: '#b45309' }
                           }>
-                          {item.status === 'paid' ? 'Paid ✓' : item.status === 'processing' ? 'Processing' : 'Pending'}
+                          {item.status === 'paid' ? 'Paid ✓' : 'Pending'}
                         </span>
                       </div>
                     ))}

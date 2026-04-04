@@ -405,6 +405,7 @@ export default function EditListingPage() {
     if (updateError) {
       setError(updateError.message)
       setLoading(false)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       setSuccess(true)
     }
@@ -461,9 +462,12 @@ export default function EditListingPage() {
         <p className="text-sm mb-8" style={{ color: '#888' }}>Update your listing details below.</p>
 
         {error && (
-          <div className="rounded-xl px-4 py-3 text-sm flex items-center gap-2 mb-6" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
+          <div className="rounded-xl px-5 py-4 text-sm flex items-start gap-3 mb-6" style={{ backgroundColor: '#fef2f2', border: '2px solid #fca5a5', color: '#dc2626', boxShadow: '0 4px 12px rgba(220,38,38,0.15)' }}>
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Save failed</p>
+              <p className="mt-0.5 text-xs" style={{ color: '#b91c1c' }}>{error}</p>
+            </div>
           </div>
         )}
 

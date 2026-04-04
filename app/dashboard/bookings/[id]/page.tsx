@@ -51,6 +51,7 @@ interface Listing {
   category: string
   city: string
   state: string
+  dimensions?: string
   production_time?: string
   delivery_instructions?: string
   creative_formats?: string[]
@@ -553,28 +554,38 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   const alreadySubmitted = submitted || bookingStatus === 'completed'
 
   async function loadPOPFiles() {
-    const { data } = await supabase.storage.from('booking-collateral').list(folderPath)
-    if (!data || data.length === 0) return
-    const withUrls: CollateralFile[] = await Promise.all(
-      data.map(async (item) => {
-        const { data: urlData } = await supabase.storage
-          .from('booking-collateral')
-          .createSignedUrl(`${folderPath}/${item.name}`, 3600)
-        return {
-          name: item.name,
-          path: `${folderPath}/${item.name}`,
-          size: item.metadata?.size ?? 0,
-          type: item.metadata?.mimetype ?? '',
-          url: urlData?.signedUrl,
-        }
-      })
-    )
-    setFiles(withUrls)
-    if (withUrls.length > 0) setSubmitted(true)
+    try {
+      const res = await fetch(`/api/collateral/list?bookingId=pop-${bookingId}`)
+      const json = await res.json()
+      if (json.files && json.files.length > 0) {
+        setFiles(json.files)
+        setSubmitted(true)
+      }
+    } catch {
+      // Fallback to direct storage list for host
+      const { data } = await supabase.storage.from('booking-collateral').list(folderPath)
+      if (!data || data.length === 0) return
+      const withUrls: CollateralFile[] = await Promise.all(
+        data.map(async (item) => {
+          const { data: urlData } = await supabase.storage
+            .from('booking-collateral')
+            .createSignedUrl(`${folderPath}/${item.name}`, 3600)
+          return {
+            name: item.name,
+            path: `${folderPath}/${item.name}`,
+            size: item.metadata?.size ?? 0,
+            type: item.metadata?.mimetype ?? '',
+            url: urlData?.signedUrl,
+          }
+        })
+      )
+      setFiles(withUrls)
+      if (withUrls.length > 0) setSubmitted(true)
+    }
   }
 
   useEffect(() => {
-    if (isHost) loadPOPFiles()
+    loadPOPFiles()
   }, [bookingId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handlePOPUpload(incoming: FileList | null) {
@@ -584,12 +595,14 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     // Reset input so same file can be re-selected if needed
     if (fileInputRef.current) fileInputRef.current.value = ''
 
+    const uploadedNames: string[] = []
     for (const file of Array.from(incoming)) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
       const { error: uploadErr } = await supabase.storage
         .from('booking-collateral')
         .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
       if (uploadErr) setError(uploadErr.message)
+      else uploadedNames.push(safeName)
     }
 
     // Update booking status → completed immediately (no advertiser approval gate)
@@ -613,23 +626,11 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Get public URLs for POP photos to send in chat
-          const photoUrls: string[] = []
-          try {
-            const popRes = await fetch(`/api/collateral/list?bookingId=pop-${bookingId}`)
-            const popJson = await popRes.json()
-            if (popJson.files) {
-              for (const f of popJson.files) {
-                if (f.url) photoUrls.push(f.url)
-              }
-            }
-          } catch { /* non-fatal */ }
-          // Fallback: use the files we just uploaded (already in state)
-          if (photoUrls.length === 0 && files.length > 0) {
-            for (const f of files) {
-              if (f.url) photoUrls.push(f.url)
-            }
-          }
+          // Construct public URLs directly from uploaded filenames
+          const BUCKET_BASE = 'https://eaelpaivjzwidnawijlu.supabase.co/storage/v1/object/public/booking-collateral'
+          const photoUrls: string[] = uploadedNames.map(
+            name => `${BUCKET_BASE}/pop/${bookingId}/${name}`
+          )
 
           const photoText = photoUrls.length > 0
             ? `\n\n${photoUrls.join('\n')}`
@@ -658,11 +659,52 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     }
   }
 
-  if (!isHost) return null
-
   // Only show for relevant statuses (simplified flow: confirmed → completed)
   const showStatuses = ['confirmed', 'completed']
   if (!showStatuses.includes(bookingStatus)) return null
+
+  // Advertiser view: show POP photos if they exist
+  if (!isHost) {
+    if (files.length === 0) return null
+    return (
+      <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.08)' }}>
+            <Camera className="w-5 h-5" style={{ color: '#16a34a' }} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Proof of Posting</p>
+            <p className="text-xs mt-0.5" style={{ color: '#888' }}>Your host uploaded these photos as proof your ad is live.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          {files.filter(f => f.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(f.name)).map(f => (
+            <div key={f.path} className="rounded-xl overflow-hidden aspect-video" style={{ border: '1px solid #e0e0d8' }}>
+              <img src={f.url} alt={f.name} className="w-full h-full object-cover" />
+            </div>
+          ))}
+        </div>
+        <div className="space-y-2">
+          {files.map(f => (
+            <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+              <FileIcon type={f.type} name={f.name} />
+              <span className="text-sm flex-1 truncate" style={{ color: '#555' }}>{f.name}</span>
+              {f.url && (
+                <button
+                  type="button"
+                  onClick={() => forceDownload(f.url!, f.name)}
+                  className="p-1.5 rounded hover:bg-white transition-colors"
+                  title="Download"
+                >
+                  <Download className="w-3.5 h-3.5" style={{ color: '#888' }} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   if (alreadySubmitted) {
     return (
@@ -881,7 +923,7 @@ export default function BookingDetailPage() {
       if (bk.listing_id) {
         const { data: lst } = await supabase
           .from('listings')
-          .select('id, title, category, city, state, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed')
+          .select('id, title, category, city, state, dimensions, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed')
           .eq('id', bk.listing_id)
           .single()
         if (lst) setListing(lst)
@@ -1005,10 +1047,16 @@ export default function BookingDetailPage() {
 
           {/* Creative specs */}
           {showCollateralSection &&
-            (listing?.creative_formats?.length || listing?.creative_dimensions || listing?.creative_max_file_size) && (
+            (listing?.dimensions || listing?.creative_formats?.length || listing?.creative_dimensions || listing?.creative_max_file_size) && (
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Requirements</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
+                {listing?.dimensions && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>Listing Dimensions</p>
+                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.dimensions}</p>
+                  </div>
+                )}
                 {listing?.creative_formats && listing.creative_formats.length > 0 && (
                   <div>
                     <p style={{ color: '#aaa' }}>Accepted Formats</p>
