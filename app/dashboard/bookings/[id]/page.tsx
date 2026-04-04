@@ -198,12 +198,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
     for (const file of pendingFiles) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-      const { error } = await supabase.storage
-        .from('booking-collateral')
-        .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
-      if (error) {
-        setUploadError(error.message)
-        console.error('[Collateral] Upload error:', error)
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('path', `${folderPath}/${safeName}`)
+      const res = await fetch('/api/collateral/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        setUploadError(data.error || 'Upload failed')
+        console.error('[Collateral] Upload error:', data.error)
       }
     }
 
@@ -258,8 +260,10 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
     setUploading(true)
     for (const file of Array.from(incoming)) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-      await supabase.storage.from('booking-collateral')
-        .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('path', `${folderPath}/${safeName}`)
+      await fetch('/api/collateral/upload', { method: 'POST', body: fd })
     }
     setUploading(false)
     setShowAdditional(false)
@@ -598,10 +602,12 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     const uploadedNames: string[] = []
     for (const file of Array.from(incoming)) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
-      const { error: uploadErr } = await supabase.storage
-        .from('booking-collateral')
-        .upload(`${folderPath}/${safeName}`, file, { cacheControl: '3600', upsert: false })
-      if (uploadErr) setError(uploadErr.message)
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('path', `${folderPath}/${safeName}`)
+      const uploadRes = await fetch('/api/collateral/upload', { method: 'POST', body: fd })
+      const uploadData = await uploadRes.json()
+      if (!uploadRes.ok) setError(uploadData.error || 'Upload failed')
       else uploadedNames.push(safeName)
     }
 
