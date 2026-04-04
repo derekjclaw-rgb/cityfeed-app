@@ -347,63 +347,66 @@ export default function EditListingPage() {
       console.warn('Geocoding failed:', geoErr)
     }
 
-    const supabase = createClient()
-    const { error: updateError } = await supabase
-      .from('listings')
-      .update({
-        title: form.title,
-        description: form.description,
-        category: form.category,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        zip: form.zip,
-        lat,
-        lng,
-        dimensions: form.dimensions,
-        daily_impressions: parseInt(form.daily_impressions) || 0,
-        illuminated: form.illuminated,
-        production_time: form.production_time,
-        price_per_day: parseFloat(form.price_per_day) || 0,
-        min_days: parseInt(form.min_days) || 1,
-        max_days: parseInt(form.max_days) || 365,
-        buy_now_enabled: form.buy_now_enabled,
-        content_restrictions: form.content_restrictions,
-        images: imageUrls,
-        delivery_instructions: isStaticCat(form.category)
-          ? form.delivery_instructions || null
-          : null,
-        creative_formats: form.creative_formats.length > 0 ? form.creative_formats : null,
-        creative_dimensions: form.creative_dimensions || null,
-        creative_max_file_size: form.creative_max_file_size || null,
-        ...(form.accepts_video
-          ? {
-              creative_video_duration: form.creative_video_duration || null,
-              creative_audio_allowed: form.creative_audio_allowed,
-              creative_loop_count: form.creative_loop_count
-                ? parseInt(form.creative_loop_count)
+    // Use server-side API route to bypass RLS issues
+    const updateData = {
+      title: form.title,
+      description: form.description,
+      category: form.category,
+      address: form.address,
+      city: form.city,
+      state: form.state,
+      zip: form.zip,
+      lat,
+      lng,
+      dimensions: form.dimensions,
+      daily_impressions: parseInt(form.daily_impressions) || 0,
+      illuminated: form.illuminated,
+      production_time: form.production_time,
+      price_per_day: parseFloat(form.price_per_day) || 0,
+      min_days: parseInt(form.min_days) || 1,
+      max_days: parseInt(form.max_days) || 365,
+      buy_now_enabled: form.buy_now_enabled,
+      content_restrictions: form.content_restrictions,
+      images: imageUrls,
+      delivery_instructions: isStaticCat(form.category)
+        ? form.delivery_instructions || null
+        : null,
+      creative_formats: form.creative_formats.length > 0 ? form.creative_formats : null,
+      creative_dimensions: form.creative_dimensions || null,
+      creative_max_file_size: form.creative_max_file_size || null,
+      ...(form.accepts_video
+        ? {
+            creative_video_duration: form.creative_video_duration || null,
+            creative_audio_allowed: form.creative_audio_allowed,
+            creative_loop_count: form.creative_loop_count
+              ? parseInt(form.creative_loop_count)
+              : null,
+          }
+        : {
+            creative_video_duration: null,
+            creative_audio_allowed: false,
+            creative_loop_count: null,
+          }),
+      ...(isStaticCat(form.category)
+        ? {
+            creative_host_prints: form.creative_host_prints,
+            creative_print_cost:
+              form.creative_host_prints && form.creative_print_cost
+                ? parseFloat(form.creative_print_cost)
                 : null,
-            }
-          : {
-              creative_video_duration: null,
-              creative_audio_allowed: false,
-              creative_loop_count: null,
-            }),
-        ...(isStaticCat(form.category)
-          ? {
-              creative_host_prints: form.creative_host_prints,
-              creative_print_cost:
-                form.creative_host_prints && form.creative_print_cost
-                  ? parseFloat(form.creative_print_cost)
-                  : null,
-            }
-          : {}),
-      })
-      .eq('id', listingId)
-      .eq('host_id', userId)
+          }
+        : {}),
+    }
 
-    if (updateError) {
-      setError(updateError.message)
+    const res = await fetch('/api/listings/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, userId, updates: updateData }),
+    })
+    const result = await res.json()
+
+    if (!res.ok) {
+      setError(result.error || 'Failed to update listing')
       setLoading(false)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
