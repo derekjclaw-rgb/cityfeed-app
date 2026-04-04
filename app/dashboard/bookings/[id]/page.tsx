@@ -608,14 +608,22 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     // Update booking status → completed immediately (no advertiser approval gate)
     await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId)
 
-    // Trigger payout immediately
+    // Trigger payout immediately (escrow model — transfer from platform to host)
     try {
-      await fetch('/api/stripe/payout', {
+      const payoutRes = await fetch('/api/stripe/payout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ booking_id: bookingId }),
       })
-    } catch { /* non-fatal — payout logged server-side */ }
+      const payoutData = await payoutRes.json()
+      if (!payoutRes.ok) {
+        console.error('[POP] Payout failed:', payoutData.error)
+      } else {
+        console.log('[POP] Payout success:', payoutData)
+      }
+    } catch (err) {
+      console.error('[POP] Payout fetch error:', err)
+    }
 
     setUploading(false)
     setSubmitted(true)

@@ -141,6 +141,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('[Payout] Error:', err)
-    return NextResponse.json({ error: 'Failed to process payout' }, { status: 500 })
+    const message = err instanceof Error ? err.message : 'Failed to process payout'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
