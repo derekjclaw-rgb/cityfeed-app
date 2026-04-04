@@ -70,7 +70,7 @@ function confirmationCode(bookingId: string): string {
   return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
 }
 
-function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string): { label: string; emoji: string; bg: string; text: string } {
+function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string, hasCreative?: boolean): { label: string; emoji: string; bg: string; text: string } {
   // Check if currently live
   if (['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) {
     const now = new Date()
@@ -83,7 +83,9 @@ function getSimpleStatusBadge(status: string, startDate?: string, endDate?: stri
   const map: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
     pending_payment: { label: 'Awaiting Payment', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
     pending: { label: 'Pending Review', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
-    confirmed: { label: 'Awaiting Creative', emoji: '📂', bg: '#eff6ff', text: '#1d4ed8' },
+    confirmed: hasCreative
+      ? { label: 'Creative Received', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' }
+      : { label: 'Awaiting Creative', emoji: '📂', bg: '#eff6ff', text: '#1d4ed8' },
     active: { label: 'Active', emoji: '📍', bg: '#f0fdf4', text: '#16a34a' },
     pop_pending: { label: 'Proof Submitted', emoji: '📸', bg: '#f0f8f5', text: '#7ecfc0' },
     pop_review: { label: 'Proof Submitted', emoji: '📸', bg: '#f0f8f5', text: '#7ecfc0' },
@@ -409,7 +411,20 @@ function BookingCard({
   onHostAction: (id: string, status: 'confirmed' | 'cancelled') => void
   actionLoading: string | null
 }) {
-  const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date)
+  const [hasCreative, setHasCreative] = useState(false)
+
+  useEffect(() => {
+    if (booking.status === 'confirmed') {
+      fetch(`/api/collateral/list?bookingId=${booking.id}`)
+        .then(r => r.json())
+        .then(json => {
+          if (json.files && json.files.length > 0) setHasCreative(true)
+        })
+        .catch(() => {})
+    }
+  }, [booking.id, booking.status])
+
+  const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date, hasCreative)
   const isLiveNow = simpleBadge.label === 'LIVE'
   const canReview = booking.status === 'completed'
   const showAcceptDecline = isHost && booking.status === 'pending'

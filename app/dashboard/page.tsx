@@ -157,14 +157,16 @@ function isCampaignLive(status: string, startDate: string, endDate: string): boo
   if (!['confirmed', 'active', 'completed'].includes(status)) return false
   const now = new Date()
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
-  const end = endDate ? new Date(endDate + 'T00:00:00') : null // Campaign ends at start of end date
-  return !!(start && end && now >= start && now < end)
+  const end = endDate ? new Date(endDate + 'T23:59:59') : null // Campaign is LIVE through end of last day
+  return !!(start && end && now >= start && now <= end)
 }
 
-function isCampaignComplete(status: string, _endDate: string): boolean {
-  // Any booking with 'completed' status that is NOT currently live = complete
-  // The isCampaignLive check handles whether it's within the active date range
-  return status === 'completed'
+function isCampaignComplete(status: string, endDate: string): boolean {
+  if (status !== 'completed') return false
+  // Only complete once the end date has fully passed
+  const now = new Date()
+  const end = endDate ? new Date(endDate + 'T23:59:59') : null
+  return !!(end && now > end)
 }
 
 function isCampaignConfirmed(status: string, startDate: string): boolean {

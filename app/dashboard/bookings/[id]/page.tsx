@@ -664,6 +664,25 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           })
         }
       } catch { /* non-fatal */ }
+
+      // Send email notification to advertiser about POP
+      try {
+        const { data: advProfile } = await supabase
+          .from('profiles').select('email').eq('id', advertiserId).single()
+        if (advProfile?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'pop_submitted',
+              advertiserEmail: advProfile.email,
+              listingTitle: listingTitle ?? 'your listing',
+              bookingId,
+              bookingUrl: `${window.location.origin}/dashboard/bookings/${bookingId}`,
+            }),
+          })
+        }
+      } catch { /* email failure non-fatal */ }
     }
   }
 
