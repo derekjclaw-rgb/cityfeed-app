@@ -157,7 +157,7 @@ function isCampaignLive(status: string, startDate: string, endDate: string): boo
   if (!['confirmed', 'active', 'completed'].includes(status)) return false
   const now = new Date()
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
-  const end = endDate ? new Date(endDate + 'T23:59:59') : null // Campaign is LIVE through end of last day
+  const end = endDate ? new Date(endDate + 'T00:00:00') : null // Campaign is LIVE through end of last day
   return !!(start && end && now >= start && now <= end)
 }
 
@@ -165,7 +165,7 @@ function isCampaignComplete(status: string, endDate: string): boolean {
   if (status !== 'completed') return false
   // Only complete once the end date has fully passed
   const now = new Date()
-  const end = endDate ? new Date(endDate + 'T23:59:59') : null
+  const end = endDate ? new Date(endDate + 'T00:00:00') : null
   return !!(end && now > end)
 }
 
@@ -359,7 +359,7 @@ function DashboardContent() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const pendingPayoutBookings = completedBookings.filter((b: any) => {
           const start = b.start_date ? new Date(b.start_date) : null
-          const end = b.end_date ? new Date(b.end_date.includes('T') ? b.end_date : b.end_date + 'T23:59:59') : null
+          const end = b.end_date ? new Date(b.end_date.includes('T') ? b.end_date : b.end_date + 'T00:00:00') : null
           return start && end && nowTs >= start && nowTs <= end
         })
         // Build line items for display
@@ -370,7 +370,7 @@ function DashboardContent() {
           const payoutAmt = b.payout_amount ?? Math.round((price - fee) * 0.93 * 100) / 100
           const isLiveNow = (() => {
             const start = b.start_date ? new Date(b.start_date) : null
-            const end = b.end_date ? new Date(b.end_date.includes('T') ? b.end_date : b.end_date + 'T23:59:59') : null
+            const end = b.end_date ? new Date(b.end_date.includes('T') ? b.end_date : b.end_date + 'T00:00:00') : null
             return !!(start && end && nowTs >= start && nowTs <= end)
           })()
           const isPaid = !!b.payout_amount && !!b.stripe_transfer_id
