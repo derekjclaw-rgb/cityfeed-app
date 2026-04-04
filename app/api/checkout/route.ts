@@ -27,10 +27,8 @@ export async function POST(req: NextRequest) {
     const subtotal = days * pricePerDay
     const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
     const sellerFee = Math.round(subtotal * 0.07 * 100) / 100
-    const applicationFeeCents = Math.round((buyerFee + sellerFee) * 100)
     const platformFee = Math.round((buyerFee + sellerFee) * 100) / 100
 
-    let hostStripeAccountId: string | null = null
     let hostId: string | null = null
     let buyNowEnabled = false
 
@@ -59,22 +57,16 @@ export async function POST(req: NextRequest) {
       hostId = listing?.host_id ?? null
       buyNowEnabled = listing?.buy_now_enabled ?? false
 
-      // Fetch host's Stripe connected account for destination charges
-      if (hostId) {
-        const { data: hostProfile } = await supabase
-          .from('profiles')
-          .select('stripe_account_id')
-          .eq('id', hostId)
-          .single()
-        hostStripeAccountId = hostProfile?.stripe_account_id ?? null
-      }
+      // Note: host's Stripe account is not needed at checkout time (escrow model)
+      // Payout happens later via /api/stripe/payout after POP upload
     }
 
     // Truncate listing title to stay within Stripe metadata 500-char-per-value limit
     const safeTitleForMeta = (listingTitle ?? '').slice(0, 490)
 
-    // Create Stripe Checkout session. Booking is NOT created yet — it will be created in the
-    // webhook handler AFTER payment succeeds, preventing phantom/orphaned bookings.
+    // ESCROW MODEL: Money stays in City Feed's platform account until host uploads
+    // Proof of Posting (POP). Only then does /api/stripe/payout transfer funds to host.
+    // This protects advertisers — no POP = no payment to host.
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -91,15 +83,8 @@ export async function POST(req: NextRequest) {
         },
       ],
       mode: 'payment',
-      // Destination charge: auto-split payment to host at checkout time
-      ...(hostStripeAccountId ? {
-        payment_intent_data: {
-          application_fee_amount: applicationFeeCents, // City Feed keeps this (buyer fee + seller fee)
-          transfer_data: {
-            destination: hostStripeAccountId, // Host receives the remainder automatically
-          },
-        },
-      } : {}),
+      // NO destination charge — money stays in platform (escrow) until POP is uploaded
+      // Payout to host is triggered by /api/stripe/payout after POP upload
       // booking_id=pending — the real ID is unknown until the webhook creates it post-payment
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/booking/success?session_id={CHECKOUT_SESSION_ID}&booking_id=pending`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'}/marketplace/${listingId}/book`,

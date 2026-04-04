@@ -1,17 +1,16 @@
 /**
- * /api/stripe/payout — Manual payout fallback
+ * /api/stripe/payout — Escrow payout trigger
  *
- * NOTE: This route is mostly unnecessary now that checkout uses Stripe Connect
- * destination charges (see /api/checkout/route.ts). With destination charges,
- * Stripe automatically splits the payment at checkout time — no manual transfer needed.
+ * ESCROW MODEL: Money stays in City Feed's platform account after checkout.
+ * This route transfers funds to the host ONLY after they upload Proof of Posting (POP).
+ * Called automatically by the POP upload flow in bookings/[id]/page.tsx.
  *
- * This route is kept as a fallback for:
- *   - Bookings made before destination charges were implemented
- *   - Hosts who were not connected to Stripe at checkout time (no stripe_account_id)
- *   - Admin-initiated manual payouts or corrections
+ * Flow:
+ *   1. Advertiser pays → money goes to City Feed platform (no destination charge)
+ *   2. Host uploads POP → this route fires → stripe.transfers.create() to host
+ *   3. Host gets paid, advertiser is protected
  *
- * For new bookings with connected hosts, funds arrive in the host's Stripe account
- * automatically within 2 business days of the payment being captured.
+ * Safety: If host never uploads POP, money stays in platform. Cron can auto-refund.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'

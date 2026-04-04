@@ -303,7 +303,7 @@ function DashboardContent() {
         const [listingsRes, bookingsRes, messagesRes, popRes] = await Promise.all([
           supabase.from('listings').select('id, title, city, state, status, images, price_per_day, category', { count: 'exact' }).eq('host_id', uid).eq('status', 'active'),
           supabase.from('bookings').select(`
-            id, total_price, payout_amount, status, start_date, end_date, listing_id,
+            id, total_price, payout_amount, stripe_transfer_id, status, start_date, end_date, listing_id,
             listings(title, images),
             advertiser:profiles!bookings_advertiser_id_fkey(full_name)
           `).eq('host_id', uid).in('status', ['active', 'confirmed', 'pending', 'completed', 'pop_pending', 'pop_review']).order('created_at', { ascending: false }).limit(10),
@@ -371,7 +371,7 @@ function DashboardContent() {
             const end = b.end_date ? new Date(b.end_date.includes('T') ? b.end_date : b.end_date + 'T23:59:59') : null
             return !!(start && end && nowTs >= start && nowTs <= end)
           })()
-          const isPaid = !!b.payout_amount
+          const isPaid = !!b.payout_amount && !!b.stripe_transfer_id
           return {
             bookingId: b.id,
             listingTitle: b.listings?.title ?? 'Listing',
