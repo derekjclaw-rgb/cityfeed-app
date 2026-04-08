@@ -703,7 +703,7 @@ function DashboardContent() {
                 const isLive = isCampaignLive(campaign.status, campaign.start_date, campaign.end_date)
                 const isFuture = isCampaignConfirmed(campaign.status, campaign.start_date)
                 const isComplete = campaign.status === 'completed' && !isLive && !isFuture
-                const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[campaign.status] ?? { bg: '#f8f8f5', text: '#888' })
+                const sc = isLive ? STATUS_COLORS.live : isFuture ? { bg: '#eff6ff', text: '#1d4ed8' } : (STATUS_COLORS[campaign.status] ?? { bg: '#f8f8f5', text: '#888' })
                 return (
                   <div className="rounded-2xl overflow-hidden transition-all hover:shadow-md"
                     style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
@@ -778,7 +778,7 @@ function DashboardContent() {
                   {/* Confirmed group (future bookings) */}
                   {confirmedCampaigns.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#1d4ed8' }}>Confirmed</h3>
+                      <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Confirmed</h3>
                       <div className="space-y-3">
                         {confirmedCampaigns.map(c => <CampaignCard key={c.id} campaign={c} />)}
                       </div>
@@ -897,7 +897,7 @@ function DashboardContent() {
                 const isLive = isCampaignLive(booking.status, booking.start_date, booking.end_date)
                 const isFuture = isCampaignConfirmed(booking.status, booking.start_date)
                 const isComplete = booking.status === 'completed' && !isLive && !isFuture
-                const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[booking.status] ?? { bg: '#f8f8f5', text: '#888' })
+                const sc = isLive ? STATUS_COLORS.live : isFuture ? { bg: '#eff6ff', text: '#1d4ed8' } : (STATUS_COLORS[booking.status] ?? { bg: '#f8f8f5', text: '#888' })
                 return (
                   <div className="rounded-2xl overflow-hidden transition-all hover:shadow-md"
                     style={{ backgroundColor: '#fff', border: isLive ? '1px solid #86efac' : '1px solid #e0e0d8', boxShadow: isLive ? '0 1px 8px rgba(34,197,94,0.12)' : '0 1px 4px rgba(0,0,0,0.05)' }}>
@@ -964,7 +964,7 @@ function DashboardContent() {
                       )}
                       {confirmedBookings.length > 0 && (
                         <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#1d4ed8' }}>Confirmed</h3>
+                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Confirmed</h3>
                           <div className="space-y-3">
                             {confirmedBookings.map(b => <HostBookingCard key={b.id} booking={b} />)}
                           </div>
