@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         .from('bookings')
         .select('id')
         .eq('listing_id', listingId)
-        .in('status', ['pending', 'confirmed', 'active'])
+        .in('status', ['pending', 'confirmed', 'active', 'completed'])
         .lte('start_date', endDate)
         .gte('end_date', startDate)
         .limit(1)

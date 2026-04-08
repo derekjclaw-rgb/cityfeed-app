@@ -260,7 +260,7 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
         .from('bookings')
         .select('start_date, end_date')
         .eq('listing_id', listing.id)
-        .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review']),
+        .in('status', ['pending', 'confirmed', 'active', 'completed']),
       supabase
         .from('listings')
         .select('availability')
@@ -367,7 +367,7 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
   useEffect(() => {
     const supabase = createClient()
     Promise.all([
-      supabase.from('bookings').select('start_date, end_date').eq('listing_id', listing.id).in('status', ['pending', 'confirmed', 'active']),
+      supabase.from('bookings').select('start_date, end_date').eq('listing_id', listing.id).in('status', ['pending', 'confirmed', 'active', 'completed']),
       supabase.from('listings').select('availability').eq('id', listing.id).single(),
     ]).then(([bookingsRes, listingRes]) => {
       const ranges: DisabledRange[] = []
