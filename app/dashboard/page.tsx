@@ -701,7 +701,8 @@ function DashboardContent() {
 
               function CampaignCard({ campaign }: { campaign: Campaign }) {
                 const isLive = isCampaignLive(campaign.status, campaign.start_date, campaign.end_date)
-                const isComplete = campaign.status === 'completed' && !isLive
+                const isFuture = isCampaignConfirmed(campaign.status, campaign.start_date)
+                const isComplete = campaign.status === 'completed' && !isLive && !isFuture
                 const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[campaign.status] ?? { bg: '#f8f8f5', text: '#888' })
                 return (
                   <div className="rounded-2xl overflow-hidden transition-all hover:shadow-md"
@@ -719,7 +720,7 @@ function DashboardContent() {
                               </span>
                             ) : (
                               <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
-                                {isComplete ? 'Completed ✓' : (STATUS_LABELS[campaign.status] ?? campaign.status)}
+                                {isComplete ? 'Completed ✓' : isFuture ? 'Confirmed' : (STATUS_LABELS[campaign.status] ?? campaign.status)}
                               </span>
                             )}
                           </div>
@@ -894,7 +895,8 @@ function DashboardContent() {
 
               function HostBookingCard({ booking }: { booking: HostBooking }) {
                 const isLive = isCampaignLive(booking.status, booking.start_date, booking.end_date)
-                const isComplete = booking.status === 'completed' && !isLive
+                const isFuture = isCampaignConfirmed(booking.status, booking.start_date)
+                const isComplete = booking.status === 'completed' && !isLive && !isFuture
                 const sc = isLive ? STATUS_COLORS.live : (STATUS_COLORS[booking.status] ?? { bg: '#f8f8f5', text: '#888' })
                 return (
                   <div className="rounded-2xl overflow-hidden transition-all hover:shadow-md"
@@ -912,7 +914,7 @@ function DashboardContent() {
                               </span>
                             ) : (
                               <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: sc.bg, color: sc.text }}>
-                                {isComplete ? 'Completed ✓' : (STATUS_LABELS[booking.status] ?? booking.status)}
+                                {isComplete ? 'Completed ✓' : isFuture ? 'Confirmed' : (STATUS_LABELS[booking.status] ?? booking.status)}
                               </span>
                             )}
                           </div>
