@@ -778,7 +778,7 @@ function DashboardContent() {
                   {/* Confirmed group (future bookings) */}
                   {confirmedCampaigns.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Confirmed</h3>
+                      <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#1d4ed8' }}>Confirmed</h3>
                       <div className="space-y-3">
                         {confirmedCampaigns.map(c => <CampaignCard key={c.id} campaign={c} />)}
                       </div>
@@ -964,7 +964,7 @@ function DashboardContent() {
                       )}
                       {confirmedBookings.length > 0 && (
                         <div>
-                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#888' }}>Confirmed</h3>
+                          <h3 className="text-sm font-semibold uppercase tracking-wide mb-3" style={{ color: '#1d4ed8' }}>Confirmed</h3>
                           <div className="space-y-3">
                             {confirmedBookings.map(b => <HostBookingCard key={b.id} booking={b} />)}
                           </div>

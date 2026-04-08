@@ -71,15 +71,25 @@ function confirmationCode(bookingId: string): string {
 }
 
 function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string, hasCreative?: boolean): { label: string; emoji: string; bg: string; text: string } {
-  // Check if currently live
-  if (['active', 'pop_pending', 'pop_review', 'completed'].includes(status)) {
-    const now = new Date()
-    const start = startDate ? new Date(startDate) : null
-    const end = endDate ? new Date(endDate) : null
-    if (start && end && now >= start && now <= end) {
-      return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
-    }
+  const now = new Date()
+  const start = startDate ? new Date(startDate + 'T00:00:00') : null
+  const end = endDate ? new Date(endDate + 'T00:00:00') : null
+
+  // Check if currently live (within date range)
+  if (['confirmed', 'active', 'completed'].includes(status) && start && end && now >= start && now < end) {
+    return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
   }
+
+  // Check if future (not started yet)
+  if (['confirmed', 'completed', 'active', 'pending'].includes(status) && start && now < start) {
+    return { label: 'Confirmed', emoji: '📋', bg: '#eff6ff', text: '#1d4ed8' }
+  }
+
+  // Check if past complete
+  if (status === 'completed' && end && now >= end) {
+    return { label: 'Complete', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' }
+  }
+
   const map: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
     pending_payment: { label: 'Awaiting Payment', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
     pending: { label: 'Pending Review', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
@@ -87,8 +97,6 @@ function getSimpleStatusBadge(status: string, startDate?: string, endDate?: stri
       ? { label: 'Creative Received', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' }
       : { label: 'Awaiting Creative', emoji: '📂', bg: '#eff6ff', text: '#1d4ed8' },
     active: { label: 'Active', emoji: '📍', bg: '#f0fdf4', text: '#16a34a' },
-    pop_pending: { label: 'Proof Submitted', emoji: '📸', bg: '#f0f8f5', text: '#7ecfc0' },
-    pop_review: { label: 'Proof Submitted', emoji: '📸', bg: '#f0f8f5', text: '#7ecfc0' },
     completed: { label: 'Complete', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' },
     cancelled: { label: 'Cancelled', emoji: '❌', bg: '#fef2f2', text: '#dc2626' },
     disputed: { label: 'Disputed', emoji: '⚠️', bg: '#fef2f2', text: '#dc2626' },
@@ -240,18 +248,32 @@ export default function BookingsPage() {
 
   // Helper: is a booking currently live (within date range)?
   function isBookingLive(b: Booking): boolean {
-    if (!['active', 'pop_pending', 'pop_review', 'completed'].includes(b.status)) return false
+    if (!['confirmed', 'active', 'completed'].includes(b.status)) return false
     const now = new Date()
-    const start = b.start_date ? new Date(b.start_date) : null
-    const end = b.end_date ? new Date(b.end_date) : null
-    return !!(start && end && now >= start && now <= end)
+    const start = b.start_date ? new Date(b.start_date + 'T00:00:00') : null
+    const end = b.end_date ? new Date(b.end_date + 'T00:00:00') : null
+    return !!(start && end && now >= start && now < end)
   }
 
-  // Group by LIVE / active / completed / cancelled for better UX
+  function isBookingConfirmed(b: Booking): boolean {
+    if (!['confirmed', 'pending', 'completed', 'active'].includes(b.status)) return false
+    const now = new Date()
+    const start = b.start_date ? new Date(b.start_date + 'T00:00:00') : null
+    return !!(start && now < start)
+  }
+
+  function isBookingComplete(b: Booking): boolean {
+    if (b.status !== 'completed') return false
+    const now = new Date()
+    const end = b.end_date ? new Date(b.end_date + 'T00:00:00') : null
+    return !!(end && now >= end)
+  }
+
+  // Mutually exclusive buckets
   const live = bookings.filter(b => isBookingLive(b))
-  const liveIds = new Set(live.map(b => b.id))
-  const active = bookings.filter(b => !['completed', 'cancelled', 'disputed'].includes(b.status) && !liveIds.has(b.id))
-  const completed = bookings.filter(b => b.status === 'completed' && !liveIds.has(b.id))
+  const confirmed = bookings.filter(b => !isBookingLive(b) && isBookingConfirmed(b))
+  const completed = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && isBookingComplete(b))
+  const active = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !['cancelled', 'disputed'].includes(b.status))
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
   const totalEarnings = isHost
@@ -334,7 +356,27 @@ export default function BookingsPage() {
               </section>
             )}
 
-            {/* Active bookings */}
+            {/* Confirmed bookings (future) */}
+            {confirmed.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#1d4ed8' }}>
+                  CONFIRMED ({confirmed.length})
+                </h2>
+                <div className="space-y-4">
+                  {confirmed.map(booking => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      isHost={isHost}
+                      onHostAction={handleHostAction}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Active bookings (pending etc) */}
             {active.length > 0 && (
               <section>
                 <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
