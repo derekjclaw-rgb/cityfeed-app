@@ -989,10 +989,13 @@ export default function BookingDetailPage() {
   const isHost = currentUserId === booking.host_id
   const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
   const now = new Date()
+  const startD = booking.start_date ? new Date(booking.start_date + 'T00:00:00') : null
+  const endD = booking.end_date ? new Date(booking.end_date + 'T00:00:00') : null
   const isLive = ['confirmed', 'active', 'completed'].includes(booking.status) &&
-    !!booking.start_date && !!booking.end_date &&
-    now >= new Date(booking.start_date + 'T00:00:00') &&
-    now <= new Date(booking.end_date + 'T23:59:59')
+    !!startD && !!endD && now >= startD && now < endD
+  const isConfirmedFuture = ['confirmed', 'completed'].includes(booking.status) &&
+    !!startD && now < startD
+  const isPastComplete = booking.status === 'completed' && !!endD && now >= endD
   const days = booking.start_date && booking.end_date
     ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
     : 0
@@ -1024,6 +1027,14 @@ export default function BookingDetailPage() {
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1 flex items-center gap-1.5" style={{ backgroundColor: '#dcfce7', color: '#15803d' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a', display: 'inline-block', boxShadow: '0 0 6px #16a34a', animation: 'pulse 2s infinite' }} />
               LIVE
+            </span>
+          ) : isConfirmedFuture ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+              Confirmed
+            </span>
+          ) : isPastComplete ? (
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
+              Completed ✓
             </span>
           ) : (
             <span className="text-xs font-semibold px-3 py-1.5 rounded-full mt-1" style={{ backgroundColor: statusCfg.bg, color: statusCfg.text }}>
