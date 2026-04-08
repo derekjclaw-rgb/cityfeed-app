@@ -123,16 +123,7 @@ export async function POST(req: NextRequest) {
       }).catch(err => console.warn('[Payout] Email notification failed:', err))
     }
 
-    // Auto-message in chat to confirm payout initiated
-    const payoutMsg = `💰 Your payout of $${(payoutAmount / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })} has been initiated for "${listingTitle}". Funds will arrive in 2–3 business days.`
-    await supabase.from('messages').insert({
-      booking_id,
-      sender_id: booking.advertiser_id,
-      recipient_id: booking.host_id,
-      content: payoutMsg,
-    }).then(({ error }) => {
-      if (error) console.warn('[Payout] Auto-message insert failed:', error.message)
-    })
+    // Payout notification via dashboard + email only (no chat message — was confusing coming from advertiser)
 
     return NextResponse.json({
       success: true,
