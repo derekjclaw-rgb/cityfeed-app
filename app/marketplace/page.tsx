@@ -235,11 +235,15 @@ function MapView({ listings }: { listings: Listing[] }) {
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
       {selectedListing && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-          {selectedListing.images?.[0] ? (
-            <img src={selectedListing.images[0]} alt={selectedListing.title} className="h-28 w-full object-cover" />
-          ) : (
-            <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
-          )}
+          {selectedListing.images && selectedListing.images.length > 0 && selectedListing.images[0] ? (
+            <img
+              src={selectedListing.images[0]}
+              alt={selectedListing.title}
+              className="h-28 w-full object-cover"
+              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)?.style.setProperty('display', 'block') }}
+            />
+          ) : null}
+          <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} style={{ display: selectedListing.images && selectedListing.images.length > 0 && selectedListing.images[0] ? 'none' : 'block' }} />
           <div className="p-4">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>{selectedListing.title}</h3>

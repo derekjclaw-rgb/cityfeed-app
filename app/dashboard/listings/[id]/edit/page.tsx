@@ -272,7 +272,6 @@ export default function EditListingPage() {
   }
 
   async function uploadNewPhotos(uid: string): Promise<string[]> {
-    const supabase = createClient()
     const urls: string[] = []
 
     for (let i = 0; i < photos.length; i++) {
@@ -290,24 +289,25 @@ export default function EditListingPage() {
       const ext = photo.file.name.split('.').pop() ?? 'jpg'
       const path = `${uid}/${Date.now()}-${i}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('listing-images')
-        .upload(path, photo.file, { cacheControl: '3600', upsert: false })
+      const fd = new FormData()
+      fd.append('file', photo.file)
+      fd.append('path', path)
+      const res = await fetch('/api/listings/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
 
-      if (uploadError) {
+      if (!res.ok) {
         setPhotos(prev =>
           prev.map((p, idx) =>
-            idx === i ? { ...p, uploading: false, error: uploadError.message } : p
+            idx === i ? { ...p, uploading: false, error: data.error || 'Upload failed' } : p
           )
         )
         continue
       }
 
-      const { data: urlData } = supabase.storage.from('listing-images').getPublicUrl(path)
-      urls.push(urlData.publicUrl)
+      urls.push(data.url)
       setPhotos(prev =>
         prev.map((p, idx) =>
-          idx === i ? { ...p, uploading: false, url: urlData.publicUrl } : p
+          idx === i ? { ...p, uploading: false, url: data.url } : p
         )
       )
     }

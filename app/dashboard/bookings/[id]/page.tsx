@@ -599,6 +599,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     // Reset input so same file can be re-selected if needed
     if (fileInputRef.current) fileInputRef.current.value = ''
 
+    const uploadedUrls: string[] = []
     const uploadedNames: string[] = []
     for (const file of Array.from(incoming)) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
@@ -607,8 +608,12 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       fd.append('path', `${folderPath}/${safeName}`)
       const uploadRes = await fetch('/api/collateral/upload', { method: 'POST', body: fd })
       const uploadData = await uploadRes.json()
-      if (!uploadRes.ok) setError(uploadData.error || 'Upload failed')
-      else uploadedNames.push(safeName)
+      if (!uploadRes.ok) {
+        setError(uploadData.error || 'Upload failed')
+      } else {
+        uploadedNames.push(safeName)
+        if (uploadData.url) uploadedUrls.push(uploadData.url)
+      }
     }
 
     // Update booking status → completed immediately (no advertiser approval gate)
@@ -640,11 +645,11 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Construct public URLs directly from uploaded filenames
-          const BUCKET_BASE = 'https://eaelpaivjzwidnawijlu.supabase.co/storage/v1/object/public/booking-collateral'
-          const photoUrls: string[] = uploadedNames.map(
-            name => `${BUCKET_BASE}/pop/${bookingId}/${name}`
-          )
+          // Use URLs returned from the upload API, fall back to constructing from filenames
+          const BUCKET_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/booking-collateral`
+          const photoUrls: string[] = uploadedUrls.length > 0
+            ? uploadedUrls
+            : uploadedNames.map(name => `${BUCKET_BASE}/pop/${bookingId}/${name}`)
 
           const photoText = photoUrls.length > 0
             ? `\n\n${photoUrls.join('\n')}`

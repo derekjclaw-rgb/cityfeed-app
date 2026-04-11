@@ -290,8 +290,16 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
     return { days, subtotal, fee, total: subtotal + fee }
   }, [startDate, endDate, listing.price_per_day])
 
+  const tooShort = listing.min_days && days > 0 && days < listing.min_days
+  const tooLong = listing.max_days && days > 0 && days > listing.max_days
+  const daysError = tooShort
+    ? `Minimum booking is ${listing.min_days} days`
+    : tooLong
+    ? `Maximum booking is ${listing.max_days} days`
+    : null
+
   function handleBook() {
-    if (!startDate || !endDate || days < 1) return
+    if (!startDate || !endDate || days < 1 || daysError) return
     router.push(`/marketplace/${listing.id}/book?start=${startDate}&end=${endDate}&days=${days}&total=${total}`)
   }
 
@@ -302,7 +310,12 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
         <span className="text-sm" style={{ color: '#888' }}>/day</span>
       </div>
       <div className="mb-5">
-        <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Select Dates</label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs font-medium uppercase tracking-wide" style={{ color: '#888' }}>Select Dates</label>
+          {listing.min_days > 1 && (
+            <span className="text-xs" style={{ color: '#888' }}>Min {listing.min_days} days</span>
+          )}
+        </div>
         <DateRangePicker
           startDate={startDate}
           endDate={endDate}
@@ -317,6 +330,9 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
           placeholder="Pick start & end date"
           disabledRanges={bookedRanges}
         />
+        {daysError && days > 0 && (
+          <p className="text-xs font-medium mt-1.5" style={{ color: '#E63946' }}>{daysError}</p>
+        )}
       </div>
       {days > 0 && (
         <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
@@ -336,7 +352,7 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
       )}
       <button
         onClick={handleBook}
-        disabled={!startDate || !endDate || days < 1}
+        disabled={!startDate || !endDate || days < 1 || !!daysError}
         className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
       >
@@ -389,8 +405,16 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
     return { days, subtotal, fee, total: subtotal + fee }
   }, [internalStart, internalEnd, listing.price_per_day])
 
+  const mobileTooShort = listing.min_days && days > 0 && days < listing.min_days
+  const mobileTooLong = listing.max_days && days > 0 && days > listing.max_days
+  const mobileDaysError = mobileTooShort
+    ? `Minimum booking is ${listing.min_days} days`
+    : mobileTooLong
+    ? `Maximum booking is ${listing.max_days} days`
+    : null
+
   function handleBook() {
-    if (!internalStart || !internalEnd || days < 1) return
+    if (!internalStart || !internalEnd || days < 1 || mobileDaysError) return
     router.push(`/marketplace/${listing.id}/book?start=${internalStart}&end=${internalEnd}&days=${days}&total=${total}`)
   }
 
@@ -430,7 +454,12 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
         <div className="px-6 pb-8 space-y-4">
           {/* Date picker */}
           <div>
-            <label className="block text-xs font-medium mb-1.5 uppercase tracking-wide" style={{ color: '#888' }}>Select Dates</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium uppercase tracking-wide" style={{ color: '#888' }}>Select Dates</label>
+              {listing.min_days > 1 && (
+                <span className="text-xs" style={{ color: '#888' }}>Min {listing.min_days} days</span>
+              )}
+            </div>
             <DateRangePicker
               startDate={internalStart}
               endDate={internalEnd}
@@ -438,6 +467,9 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
               placeholder="Pick start & end date"
               disabledRanges={bookedRanges}
             />
+            {mobileDaysError && days > 0 && (
+              <p className="text-xs font-medium mt-1.5" style={{ color: '#E63946' }}>{mobileDaysError}</p>
+            )}
           </div>
 
           {/* Price breakdown */}
@@ -461,7 +493,7 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
           {/* CTA */}
           <button
             onClick={handleBook}
-            disabled={!internalStart || !internalEnd || days < 1}
+            disabled={!internalStart || !internalEnd || days < 1 || !!mobileDaysError}
             className="w-full font-semibold py-4 rounded-xl text-base flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
           >

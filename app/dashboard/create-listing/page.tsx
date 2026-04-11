@@ -213,6 +213,10 @@ export default function CreateListingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState<FormData>(INITIAL_FORM)
+  const [blockedRanges, setBlockedRanges] = useState<{ start: string; end: string; reason: string }[]>([])
+  const [blockStart, setBlockStart] = useState('')
+  const [blockEnd, setBlockEnd] = useState('')
+  const [blockReason, setBlockReason] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
@@ -273,7 +277,6 @@ export default function CreateListingPage() {
 
   async function uploadPhotos(uid: string): Promise<string[]> {
     if (photos.length === 0) return []
-    const supabase = createClient()
     const urls: string[] = []
 
     for (let i = 0; i < photos.length; i++) {
@@ -284,27 +287,25 @@ export default function CreateListingPage() {
       const ext = photo.file.name.split('.').pop() ?? 'jpg'
       const path = `${uid}/${Date.now()}-${i}.${ext}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('listing-images')
-        .upload(path, photo.file, { cacheControl: '3600', upsert: false })
+      const fd = new FormData()
+      fd.append('file', photo.file)
+      fd.append('path', path)
+      const res = await fetch('/api/listings/upload-image', { method: 'POST', body: fd })
+      const data = await res.json()
 
-      if (uploadError) {
+      if (!res.ok) {
         setPhotos(prev =>
           prev.map((p, idx) =>
-            idx === i ? { ...p, uploading: false, error: uploadError.message } : p
+            idx === i ? { ...p, uploading: false, error: data.error || 'Upload failed' } : p
           )
         )
         continue
       }
 
-      const { data: urlData } = supabase.storage
-        .from('listing-images')
-        .getPublicUrl(path)
-
-      urls.push(urlData.publicUrl)
+      urls.push(data.url)
       setPhotos(prev =>
         prev.map((p, idx) =>
-          idx === i ? { ...p, uploading: false, url: urlData.publicUrl } : p
+          idx === i ? { ...p, uploading: false, url: data.url } : p
         )
       )
     }
@@ -393,6 +394,8 @@ export default function CreateListingPage() {
               : null,
           }
         : {}),
+      // Availability — blocked date ranges
+      availability: blockedRanges.length > 0 ? { blocked: blockedRanges } : null,
       // Printing (static categories only)
       ...(isStaticCat(form.category)
         ? {
@@ -1050,6 +1053,93 @@ export default function CreateListingPage() {
               </FormField>
             </div>
           )}
+
+          {/* Blocked Dates / Availability Calendar */}
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <div>
+              <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+                Blocked dates
+              </h2>
+              <p className="text-xs mt-1" style={{ color: '#aaa' }}>
+                Block dates when your space is unavailable. Advertisers won&apos;t be able to book these dates.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Start date">
+                <input
+                  type="date"
+                  value={blockStart}
+                  onChange={e => setBlockStart(e.target.value)}
+                  className={inputClass}
+                  style={inputStyle}
+                />
+              </FormField>
+              <FormField label="End date">
+                <input
+                  type="date"
+                  value={blockEnd}
+                  onChange={e => setBlockEnd(e.target.value)}
+                  min={blockStart || undefined}
+                  className={inputClass}
+                  style={inputStyle}
+                />
+              </FormField>
+            </div>
+            <FormField label="Reason (optional)" hint="e.g. Holiday, maintenance, personal use">
+              <input
+                type="text"
+                value={blockReason}
+                onChange={e => setBlockReason(e.target.value)}
+                placeholder="Holiday closure"
+                className={inputClass}
+                style={inputStyle}
+              />
+            </FormField>
+            <button
+              type="button"
+              onClick={() => {
+                if (!blockStart || !blockEnd) return
+                setBlockedRanges(prev => [...prev, { start: blockStart, end: blockEnd, reason: blockReason }])
+                setBlockStart('')
+                setBlockEnd('')
+                setBlockReason('')
+              }}
+              disabled={!blockStart || !blockEnd}
+              className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+              style={{ backgroundColor: '#7ecfc0', color: '#fff' }}
+            >
+              Add blocked range
+            </button>
+
+            {blockedRanges.length > 0 && (
+              <div className="space-y-2">
+                {blockedRanges.map((range, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between px-4 py-3 rounded-xl"
+                    style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+                  >
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>
+                        {range.start} &rarr; {range.end}
+                      </p>
+                      {range.reason && (
+                        <p className="text-xs" style={{ color: '#888' }}>{range.reason}</p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setBlockedRanges(prev => prev.filter((_, idx) => idx !== i))}
+                      className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white"
+                    >
+                      <X className="w-3.5 h-3.5" style={{ color: '#aaa' }} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Stripe Connect warning — show if host hasn't connected their bank account */}
           {hasStripeConnected === false && (
