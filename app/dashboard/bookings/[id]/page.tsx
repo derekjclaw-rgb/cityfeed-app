@@ -223,7 +223,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             booking_id: bookingId,
             sender_id: user.id,
             recipient_id: hostId,
-            content: `📎 Creative files have been uploaded for "${listingTitle ?? 'your listing'}"\n\nPlease review and begin setup when ready.`,
+            content: `📎 Creative files have been uploaded for "${listingTitle ?? 'your listing'}"\n\nPlease review and begin setup when ready.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
           })
           await supabase.from('notifications').insert({
             user_id: hostId,
@@ -660,7 +660,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             booking_id: bookingId,
             sender_id: hostId,
             recipient_id: advertiserId,
-            content: `📸 Your host has confirmed your ad placement is live! Here's the proof. If anything looks wrong, message your host directly.${photoText}`,
+            content: `📸 Your host has confirmed your ad placement is live! Here's the proof. If anything looks wrong, message your host directly.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}${photoText}`,
             image_url: photoUrls[0] ?? null,
           })
           // Note: self-message (host → host) removed — host receives the pop_submitted notification instead

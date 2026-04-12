@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, Loader2, Upload, MessageSquare } from 'lucide-react'
+import { CheckCircle, Clock, Loader2, Upload, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 /** Derive a human-readable confirmation code from a booking UUID */
@@ -72,6 +72,12 @@ function SuccessPageInner() {
     return () => { cancelled = true }
   }, [polling, sessionId])
 
+  // ─── Re-establish auth session after returning from Stripe ────────────────
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getSession()
+  }, [])
+
   // ─── Fetch booking details once ID is resolved ───────────────────────────
   useEffect(() => {
     if (!resolvedBookingId) {
@@ -93,6 +99,7 @@ function SuccessPageInner() {
 
   // Still resolving booking ID
   const isProcessing = polling
+  const isPending = booking?.status === 'pending'
 
   return (
     <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#f0f0ec' }}>
@@ -106,17 +113,19 @@ function SuccessPageInner() {
           </div>
         ) : (
           <>
-            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', border: '2px solid rgba(222,187,115,0.3)' }}>
-              <CheckCircle className="w-10 h-10" style={{ color: '#7ecfc0' }} />
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: isPending ? 'rgba(222,187,115,0.12)' : 'rgba(126,207,192,0.12)', border: `2px solid ${isPending ? 'rgba(222,187,115,0.3)' : 'rgba(126,207,192,0.3)'}` }}>
+              {isPending ? <Clock className="w-10 h-10" style={{ color: '#debb73' }} /> : <CheckCircle className="w-10 h-10" style={{ color: '#7ecfc0' }} />}
             </div>
-            <h1 className="text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>Booking confirmed!</h1>
+            <h1 className="text-3xl font-bold mb-3" style={{ color: '#2b2b2b' }}>{isPending ? 'Booking submitted — awaiting host approval' : 'Booking confirmed!'}</h1>
             {resolvedBookingId && (
               <p className="text-sm font-mono font-semibold mb-2" style={{ color: '#7ecfc0' }}>
                 {confirmationCode(resolvedBookingId)}
               </p>
             )}
             <p className="text-sm mb-6" style={{ color: '#888' }}>
-              Your payment was processed successfully. The host has been notified.
+              {isPending
+                ? 'Your payment was processed successfully. The host will review your request within 24 hours.'
+                : 'Your payment was processed successfully. The host has been notified.'}
             </p>
 
             {booking && (
@@ -158,33 +167,50 @@ function SuccessPageInner() {
             )}
 
             {/* What's Next section */}
-            <div className="rounded-2xl p-5 mb-6 text-left" style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9' }}>
+            <div className="rounded-2xl p-5 mb-6 text-left" style={{ backgroundColor: isPending ? '#fef9ec' : '#f0f8f5', border: `1px solid ${isPending ? '#f5e6b8' : '#d0ede9'}` }}>
               <h3 className="font-semibold text-sm mb-3" style={{ color: '#2b2b2b' }}>What happens next</h3>
-              <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
-                <li className="flex gap-3">
-                  <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>1</span>
-                  <span>Upload your creative files in the booking dashboard</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>2</span>
-                  <span>The host will review your materials and begin setup</span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>3</span>
-                  <span>You'll receive proof of posting when your ad goes live</span>
-                </li>
-              </ol>
+              {isPending ? (
+                <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#debb73', color: '#fff' }}>1</span>
+                    <span>The host will review your request within 24 hours</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#debb73', color: '#fff' }}>2</span>
+                    <span>You&apos;ll be notified once the host approves your booking</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#debb73', color: '#fff' }}>3</span>
+                    <span>After approval, upload your creative files to get started</span>
+                  </li>
+                </ol>
+              ) : (
+                <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>1</span>
+                    <span>Upload your creative files in the booking dashboard</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>2</span>
+                    <span>The host will review your materials and begin setup</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>3</span>
+                    <span>You&apos;ll receive proof of posting when your ad goes live</span>
+                  </li>
+                </ol>
+              )}
             </div>
 
             <div className="flex gap-3 justify-center">
               {resolvedBookingId ? (
                 <Link
-                  href={`/dashboard/bookings/${resolvedBookingId}`}
+                  href={isPending ? '/dashboard/bookings' : `/dashboard/bookings/${resolvedBookingId}`}
                   className="flex items-center gap-2 font-semibold px-5 py-3 rounded-xl hover:opacity-90 text-sm"
                   style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
                 >
-                  <Upload className="w-4 h-4" />
-                  Upload Creative
+                  {isPending ? null : <Upload className="w-4 h-4" />}
+                  {isPending ? 'View Bookings' : 'Upload Creative'}
                 </Link>
               ) : (
                 <Link

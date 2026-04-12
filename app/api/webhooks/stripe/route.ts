@@ -222,6 +222,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
       advertiserName: advertiserProfile?.full_name ?? 'An advertiser',
       dates,
       total: booking.total_price,
+      platformFee: booking.platform_fee ?? 0,
     })
   }
 
@@ -230,9 +231,11 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     ? `$${Number(booking.total_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
     : ''
 
+  const bookingUrl = `https://www.cityfeed.io/dashboard/bookings/${bookingId}`
+
   const systemMessage = isPending
-    ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nQuestions? Send a message here!`
-    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nHere's what to do next:\n\n1. Upload your creative/collateral files in the booking detail page\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
+    ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nView your booking: ${bookingUrl}\n\nQuestions? Send a message here!`
+    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nHere's what to do next:\n\n1. Upload your creative files: ${bookingUrl}\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
 
   const msgInsert = await supabase.from('messages').insert({
     booking_id: bookingId,
