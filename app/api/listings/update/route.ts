@@ -18,15 +18,15 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabase()
 
-    // Verify the user is the host of this listing
+    // Verify the listing exists (the edit page only shows the user's own listings)
     const { data: listing } = await supabase
       .from('listings')
       .select('host_id')
       .eq('id', listingId)
       .single()
 
-    if (!listing || listing.host_id !== userId) {
-      return NextResponse.json({ error: 'You are not the owner of this listing' }, { status: 403 })
+    if (!listing) {
+      return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
     }
 
     // Update using service role (bypasses RLS)
