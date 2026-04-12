@@ -56,8 +56,8 @@ function formatDateRange(dates: string): string {
 }
 
 export type EmailEvent =
-  | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string }
-  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
+  | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
+  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean }
   | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser' }
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
   | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string }
@@ -90,7 +90,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0 0 4px;color:#888">City Feed fee (7%): <strong style="color:#dc2626">-$${sellerFee.toFixed(2)}</strong></p>
               <p style="margin:0;color:#888">Your expected payout: <strong style="color:#16a34a">$${payout.toFixed(2)}</strong></p>
             </div>
-            <p style="color:#555;margin:0 0 20px">Log in to review and accept or decline this booking.</p>
+            <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'Once confirmed, creative files will be uploaded by the advertiser.'} Log in to review and accept or decline this booking.</p>
             <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review Booking →</a>
           `),
         })
@@ -112,11 +112,17 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0;color:#888">Total charged: <strong style="color:#2b2b2b">$${event.total.toLocaleString()}</strong></p>
             </div>
             <p style="color:#555;margin:0 0 8px"><strong>Next steps:</strong></p>
+            ${event.isStatic ? `
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Prepare your printed materials to match the creative specs</li>
+              <li style="margin-bottom:6px">Coordinate delivery timing with your host via messenger</li>
+              <li>You'll receive proof of posting when your ad goes live</li>
+            </ol>` : `
             <ol style="color:#555;margin:0 0 20px;padding-left:20px">
               <li style="margin-bottom:6px">Upload your creative files in the booking dashboard</li>
               <li style="margin-bottom:6px">The host will review and begin setup</li>
               <li>You'll receive proof of posting when your ad goes live</li>
-            </ol>
+            </ol>`}
             <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })

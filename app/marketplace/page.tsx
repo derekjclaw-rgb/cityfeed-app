@@ -200,15 +200,17 @@ function MapView({ listings }: { listings: Listing[] }) {
     if (!mapContainer.current) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let map: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let MapGL: any
     import('mapbox-gl').then((mb) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mapboxgl = mb as any
       mapboxgl.default.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
-      const MapGL = mapboxgl.default
+      MapGL = mapboxgl.default
       // Center map on listings if available, otherwise default to US center
       const hasListings = listings.length > 0 && listings[0].lat && listings[0].lng
-      const defaultCenter: [number, number] = hasListings 
-        ? [listings[0].lng, listings[0].lat] 
+      const defaultCenter: [number, number] = hasListings
+        ? [listings[0].lng, listings[0].lat]
         : [-115.1398, 36.1699] // Las Vegas default
       const defaultZoom = hasListings ? 11 : 3.5
       map = new MapGL.Map({
@@ -218,10 +220,11 @@ function MapView({ listings }: { listings: Listing[] }) {
         zoom: defaultZoom,
       })
       mapRef.current = map
-      // Add markers after map loads AND also try immediately for cached maps
+      // Add markers after style loads (more reliable than 'load')
       function addMarkers() {
+        console.log('[MapView] addMarkers called, listings:', listings.length)
         listings.forEach((listing) => {
-          if (!listing.lat || !listing.lng) return
+          if (listing.lat == null || listing.lng == null) return
           const el = document.createElement('div')
           el.style.cursor = 'pointer'
           el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;z-index:10;">$${listing.price_per_day}</div>`
@@ -229,8 +232,8 @@ function MapView({ listings }: { listings: Listing[] }) {
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       }
-      if (map.loaded()) addMarkers()
-      else map.on('load', addMarkers)
+      if (map.isStyleLoaded()) addMarkers()
+      map.on('style.load', addMarkers)
     })
     return () => { map?.remove() }
   }, [listings])

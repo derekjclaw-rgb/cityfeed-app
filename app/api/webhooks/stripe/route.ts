@@ -74,7 +74,7 @@ async function handleEvent(event: Stripe.Event) {
           stripe_payment_intent_id: session.payment_intent as string,
         })
         .eq('id', bookingId)
-        .select('*, listings(title, host_id, images)')
+        .select('*, listings(title, host_id, images, category)')
         .single()
 
       if (error) {
@@ -160,7 +160,7 @@ async function handleEvent(event: Stripe.Event) {
         status: initialStatus,
         stripe_payment_intent_id: paymentIntentId || null,
       })
-      .select('*, listings(title, host_id, images)')
+      .select('*, listings(title, host_id, images, category)')
       .single()
 
     if (bookingError) {
@@ -196,9 +196,14 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const listingData = booking.listings as any
   const listingTitle = listingData?.title ?? 'your listing'
+  const listingCategory = (listingData?.category ?? '') as string
   const dates = `${booking.start_date} → ${booking.end_date}`
   const listingImages = listingData?.images as string[] | null | undefined
   const listingPhoto = Array.isArray(listingImages) && listingImages.length > 0 ? listingImages[0] : null
+
+  // Determine if this is a static (physical) placement
+  const STATIC_CATEGORIES = ['outdoor_static', 'static_billboards', 'billboard', 'storefront', 'window', 'vehicle_wrap']
+  const isStaticListing = STATIC_CATEGORIES.includes(listingCategory.toLowerCase())
 
   // Send email to advertiser — always use booking_confirmed template for now
   // (the in-app notification and auto-message carry the correct pending/confirmed messaging)
@@ -210,6 +215,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
       dates,
       total: booking.total_price,
       bookingId,
+      isStatic: isStaticListing,
     })
   }
 
@@ -223,6 +229,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
       dates,
       total: booking.total_price,
       platformFee: booking.platform_fee ?? 0,
+      isStatic: isStaticListing,
     })
   }
 
@@ -233,9 +240,13 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
 
   const bookingUrl = `https://www.cityfeed.io/dashboard/bookings/${bookingId}`
 
+  const staticNextSteps = `📋 Next steps for your placement:\n\n1. Prepare your printed materials to match the creative specs\n2. Coordinate delivery timing with your host via messenger\n3. Host will confirm receipt and installation\n4. Your host will submit proof of posting once your ad is live\n\nNeed to discuss delivery details? Send a message below!`
+
+  const digitalNextSteps = `Here's what to do next:\n\n1. Upload your creative files: ${bookingUrl}\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
+
   const systemMessage = isPending
     ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nView your booking: ${bookingUrl}\n\nQuestions? Send a message here!`
-    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nHere's what to do next:\n\n1. Upload your creative files: ${bookingUrl}\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
+    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\n${isStaticListing ? staticNextSteps : digitalNextSteps}`
 
   const msgInsert = await supabase.from('messages').insert({
     booking_id: bookingId,
