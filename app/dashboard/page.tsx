@@ -855,6 +855,14 @@ function DashboardContent() {
                   <h2 className="text-lg font-bold" style={{ color: '#2b2b2b' }}>My Listings</h2>
                   <Link href="/dashboard/listings" className="text-xs font-medium hover:underline" style={{ color: '#7ecfc0' }}>Manage all</Link>
                 </div>
+                <Link
+                  href="/dashboard/create-listing"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity mb-4"
+                  style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.35)' }}
+                >
+                  <Megaphone className="w-4 h-4" />
+                  Create New Listing
+                </Link>
                 <div className="space-y-3">
                   {hostListings.map(lst => {
                     const lstStyle = LISTING_STATUS_STYLES[lst.status] ?? LISTING_STATUS_STYLES.pending

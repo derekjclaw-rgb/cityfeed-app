@@ -136,6 +136,12 @@ export default function EditListingPage() {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [blockedDates, setBlockedDates] = useState<string[]>([])
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
+
   const [form, setForm] = useState<FormData>({
     title: '',
     description: '',
@@ -216,6 +222,11 @@ export default function EditListingPage() {
         creative_host_prints: listing.creative_host_prints ?? false,
         creative_print_cost: listing.creative_print_cost?.toString() ?? '',
       })
+
+      // Load existing blocked dates
+      if (listing.availability?.blocked && Array.isArray(listing.availability.blocked)) {
+        setBlockedDates(listing.availability.blocked)
+      }
 
       // Load existing images
       if (listing.images && listing.images.length > 0) {
@@ -367,6 +378,7 @@ export default function EditListingPage() {
       max_days: parseInt(form.max_days) || 365,
       buy_now_enabled: form.buy_now_enabled,
       content_restrictions: form.content_restrictions,
+      availability: blockedDates.length > 0 ? { blocked: blockedDates } : null,
       images: imageUrls,
       delivery_instructions: isStaticCat(form.category)
         ? form.delivery_instructions || null
@@ -831,6 +843,110 @@ export default function EditListingPage() {
                 style={inputStyle}
               />
             </FormField>
+          </div>
+
+          {/* Restricted Dates Calendar */}
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <div>
+              <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Restricted Dates</h2>
+              <p className="text-xs mt-1" style={{ color: '#aaa' }}>
+                Click dates when your space is unavailable. Advertisers won&apos;t be able to book these dates.
+              </p>
+            </div>
+
+            {(() => {
+              const { year, month } = calendarMonth
+              const firstDay = new Date(year, month, 1).getDay()
+              const daysInMonth = new Date(year, month + 1, 0).getDate()
+              const monthLabel = new Date(year, month).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
+
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setCalendarMonth(prev => {
+                        const d = new Date(prev.year, prev.month - 1)
+                        return { year: d.getFullYear(), month: d.getMonth() }
+                      })}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-sm font-medium"
+                      style={{ color: '#555' }}
+                    >
+                      ‹
+                    </button>
+                    <span className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>{monthLabel}</span>
+                    <button
+                      type="button"
+                      onClick={() => setCalendarMonth(prev => {
+                        const d = new Date(prev.year, prev.month + 1)
+                        return { year: d.getFullYear(), month: d.getMonth() }
+                      })}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-sm font-medium"
+                      style={{ color: '#555' }}
+                    >
+                      ›
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center">
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                      <div key={d} className="text-xs font-medium py-1" style={{ color: '#aaa' }}>{d}</div>
+                    ))}
+                    {Array.from({ length: firstDay }).map((_, i) => (
+                      <div key={`empty-${i}`} />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const day = i + 1
+                      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                      const isBlocked = blockedDates.includes(dateStr)
+                      const dateObj = new Date(year, month, day)
+                      const isPast = dateObj < today
+
+                      return (
+                        <button
+                          key={dateStr}
+                          type="button"
+                          disabled={isPast}
+                          onClick={() => {
+                            setBlockedDates(prev =>
+                              prev.includes(dateStr)
+                                ? prev.filter(d => d !== dateStr)
+                                : [...prev, dateStr]
+                            )
+                          }}
+                          className="w-full aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-colors"
+                          style={{
+                            backgroundColor: isBlocked ? '#ef4444' : isPast ? '#f5f5f5' : '#f8f8f5',
+                            color: isBlocked ? '#fff' : isPast ? '#ccc' : '#2b2b2b',
+                            cursor: isPast ? 'default' : 'pointer',
+                            border: isBlocked ? '1px solid #dc2626' : '1px solid #e0e0d8',
+                          }}
+                        >
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {blockedDates.length > 0 && (
+              <div>
+                <p className="text-xs font-medium mb-2" style={{ color: '#555' }}>
+                  {blockedDates.length} date{blockedDates.length !== 1 ? 's' : ''} restricted
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setBlockedDates([])}
+                  className="text-xs font-medium hover:underline"
+                  style={{ color: '#dc2626' }}
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Submit */}

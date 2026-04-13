@@ -238,11 +238,12 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     ? `$${Number(booking.total_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
     : ''
 
-  const bookingUrl = `https://www.cityfeed.io/dashboard/bookings/${bookingId}`
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.cityfeed.io'
+  const bookingUrl = `${baseUrl}/dashboard/bookings/${bookingId}`
 
-  const staticNextSteps = `📋 Next steps for your placement:\n\n1. Prepare your printed materials to match the creative specs\n2. Coordinate delivery timing with your host via messenger\n3. Host will confirm receipt and installation\n4. Your host will submit proof of posting once your ad is live\n\nNeed to discuss delivery details? Send a message below!`
+  const staticNextSteps = `📋 Next steps for your placement:\n\n1. Prepare your printed materials to match the creative specs\n2. Coordinate delivery timing with your host via messenger\n3. Host will confirm receipt and installation\n4. Your host will submit proof of posting once your ad is live\n\nView your booking: ${bookingUrl}\n\nNeed to discuss delivery details? Send a message below!`
 
-  const digitalNextSteps = `Here's what to do next:\n\n1. Upload your creative files: ${bookingUrl}\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nQuestions? Send a message here!`
+  const digitalNextSteps = `Here's what to do next:\n\n1. Upload your creative files: ${bookingUrl}\n2. Review the creative specs and delivery instructions\n3. The host will begin setup once they receive your materials\n\nView your booking: ${bookingUrl}\n\nQuestions? Send a message here!`
 
   const systemMessage = isPending
     ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nView your booking: ${bookingUrl}\n\nQuestions? Send a message here!`

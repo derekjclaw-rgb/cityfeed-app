@@ -213,10 +213,11 @@ export default function CreateListingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState<FormData>(INITIAL_FORM)
-  const [blockedRanges, setBlockedRanges] = useState<{ start: string; end: string; reason: string }[]>([])
-  const [blockStart, setBlockStart] = useState('')
-  const [blockEnd, setBlockEnd] = useState('')
-  const [blockReason, setBlockReason] = useState('')
+  const [blockedDates, setBlockedDates] = useState<string[]>([])
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
 
   useEffect(() => {
     const supabase = createClient()
@@ -394,8 +395,8 @@ export default function CreateListingPage() {
               : null,
           }
         : {}),
-      // Availability — blocked date ranges
-      availability: blockedRanges.length > 0 ? { blocked: blockedRanges } : null,
+      // Availability — blocked individual dates
+      availability: blockedDates.length > 0 ? { blocked: blockedDates } : null,
       // Printing (static categories only)
       ...(isStaticCat(form.category)
         ? {
@@ -1054,89 +1055,108 @@ export default function CreateListingPage() {
             </div>
           )}
 
-          {/* Blocked Dates / Availability Calendar */}
+          {/* Restricted Dates Calendar */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
             <div>
               <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
-                Blocked dates
+                Restricted Dates
               </h2>
               <p className="text-xs mt-1" style={{ color: '#aaa' }}>
-                Block dates when your space is unavailable. Advertisers won&apos;t be able to book these dates.
+                Click dates when your space is unavailable. Advertisers won&apos;t be able to book these dates.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField label="Start date">
-                <input
-                  type="date"
-                  value={blockStart}
-                  onChange={e => setBlockStart(e.target.value)}
-                  className={inputClass}
-                  style={inputStyle}
-                />
-              </FormField>
-              <FormField label="End date">
-                <input
-                  type="date"
-                  value={blockEnd}
-                  onChange={e => setBlockEnd(e.target.value)}
-                  min={blockStart || undefined}
-                  className={inputClass}
-                  style={inputStyle}
-                />
-              </FormField>
-            </div>
-            <FormField label="Reason (optional)" hint="e.g. Holiday, maintenance, personal use">
-              <input
-                type="text"
-                value={blockReason}
-                onChange={e => setBlockReason(e.target.value)}
-                placeholder="Holiday closure"
-                className={inputClass}
-                style={inputStyle}
-              />
-            </FormField>
-            <button
-              type="button"
-              onClick={() => {
-                if (!blockStart || !blockEnd) return
-                setBlockedRanges(prev => [...prev, { start: blockStart, end: blockEnd, reason: blockReason }])
-                setBlockStart('')
-                setBlockEnd('')
-                setBlockReason('')
-              }}
-              disabled={!blockStart || !blockEnd}
-              className="px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
-              style={{ backgroundColor: '#7ecfc0', color: '#fff' }}
-            >
-              Add blocked range
-            </button>
+            {(() => {
+              const { year, month } = calendarMonth
+              const firstDay = new Date(year, month, 1).getDay()
+              const daysInMonth = new Date(year, month + 1, 0).getDate()
+              const monthLabel = new Date(year, month).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
 
-            {blockedRanges.length > 0 && (
-              <div className="space-y-2">
-                {blockedRanges.map((range, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl"
-                    style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
-                  >
-                    <div>
-                      <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>
-                        {range.start} &rarr; {range.end}
-                      </p>
-                      {range.reason && (
-                        <p className="text-xs" style={{ color: '#888' }}>{range.reason}</p>
-                      )}
-                    </div>
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
                     <button
                       type="button"
-                      onClick={() => setBlockedRanges(prev => prev.filter((_, idx) => idx !== i))}
-                      className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white"
+                      onClick={() => setCalendarMonth(prev => {
+                        const d = new Date(prev.year, prev.month - 1)
+                        return { year: d.getFullYear(), month: d.getMonth() }
+                      })}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-sm font-medium"
+                      style={{ color: '#555' }}
                     >
-                      <X className="w-3.5 h-3.5" style={{ color: '#aaa' }} />
+                      ‹
+                    </button>
+                    <span className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>{monthLabel}</span>
+                    <button
+                      type="button"
+                      onClick={() => setCalendarMonth(prev => {
+                        const d = new Date(prev.year, prev.month + 1)
+                        return { year: d.getFullYear(), month: d.getMonth() }
+                      })}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-sm font-medium"
+                      style={{ color: '#555' }}
+                    >
+                      ›
                     </button>
                   </div>
-                ))}
+                  <div className="grid grid-cols-7 gap-1 text-center">
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                      <div key={d} className="text-xs font-medium py-1" style={{ color: '#aaa' }}>{d}</div>
+                    ))}
+                    {Array.from({ length: firstDay }).map((_, i) => (
+                      <div key={`empty-${i}`} />
+                    ))}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const day = i + 1
+                      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                      const isBlocked = blockedDates.includes(dateStr)
+                      const dateObj = new Date(year, month, day)
+                      const isPast = dateObj < today
+
+                      return (
+                        <button
+                          key={dateStr}
+                          type="button"
+                          disabled={isPast}
+                          onClick={() => {
+                            setBlockedDates(prev =>
+                              prev.includes(dateStr)
+                                ? prev.filter(d => d !== dateStr)
+                                : [...prev, dateStr]
+                            )
+                          }}
+                          className="w-full aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-colors"
+                          style={{
+                            backgroundColor: isBlocked ? '#ef4444' : isPast ? '#f5f5f5' : '#f8f8f5',
+                            color: isBlocked ? '#fff' : isPast ? '#ccc' : '#2b2b2b',
+                            cursor: isPast ? 'default' : 'pointer',
+                            border: isBlocked ? '1px solid #dc2626' : '1px solid #e0e0d8',
+                          }}
+                        >
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {blockedDates.length > 0 && (
+              <div>
+                <p className="text-xs font-medium mb-2" style={{ color: '#555' }}>
+                  {blockedDates.length} date{blockedDates.length !== 1 ? 's' : ''} restricted
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setBlockedDates([])}
+                  className="text-xs font-medium hover:underline"
+                  style={{ color: '#dc2626' }}
+                >
+                  Clear all
+                </button>
               </div>
             )}
           </div>
