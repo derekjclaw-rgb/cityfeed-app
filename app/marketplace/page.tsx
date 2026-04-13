@@ -220,9 +220,7 @@ function MapView({ listings }: { listings: Listing[] }) {
         zoom: defaultZoom,
       })
       mapRef.current = map
-      // Add markers after style loads (more reliable than 'load')
       function addMarkers() {
-        console.log('[MapView] addMarkers called, listings:', listings.length)
         listings.forEach((listing) => {
           if (listing.lat == null || listing.lng == null) return
           const el = document.createElement('div')
@@ -232,8 +230,10 @@ function MapView({ listings }: { listings: Listing[] }) {
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       }
-      if (map.isStyleLoaded()) addMarkers()
+      // Try all three timing approaches to guarantee markers render
+      map.on('load', addMarkers)
       map.on('style.load', addMarkers)
+      setTimeout(addMarkers, 2000) // Fallback: brute force after 2 seconds
     })
     return () => { map?.remove() }
   }, [listings])
