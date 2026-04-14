@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const supabase = getSupabase()
   try {
     const body = await req.json()
-    const { listingId, startDate, endDate, days, total, userId, listingTitle, pricePerDay } = body
+    const { listingId, startDate, endDate, days, total, userId, listingTitle, pricePerDay, host_prints, print_fee } = body
 
     if (!listingId || !startDate || !endDate || !userId || !total) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -47,10 +47,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'These dates are no longer available' }, { status: 409 })
       }
 
-      // Look up the listing to get host_id and buy_now_enabled
+      // Look up the listing to get host_id, buy_now_enabled, and print fields
       const { data: listing } = await supabase
         .from('listings')
-        .select('host_id, buy_now_enabled')
+        .select('host_id, buy_now_enabled, requires_print, offers_printing, print_fee')
         .eq('id', listingId)
         .single()
 
@@ -60,6 +60,10 @@ export async function POST(req: NextRequest) {
       // Note: host's Stripe account is not needed at checkout time (escrow model)
       // Payout happens later via /api/stripe/payout after POP upload
     }
+
+    // If host_prints requested, record the print fee from client (already included in total)
+    const hostPrintsRequested = !!host_prints
+    const printFeeCharged = hostPrintsRequested && print_fee ? Number(print_fee) : 0
 
     // Truncate listing title to stay within Stripe metadata 500-char-per-value limit
     const safeTitleForMeta = (listingTitle ?? '').slice(0, 490)
@@ -77,7 +81,7 @@ export async function POST(req: NextRequest) {
               name: listingTitle,
               description: `Ad placement booking: ${startDate} → ${endDate} (${days} days)`,
             },
-            unit_amount: Math.round(total * 100), // cents
+            unit_amount: Math.round(total * 100), // cents — total from client already includes print fee if applicable
           },
           quantity: 1,
         },
@@ -101,6 +105,8 @@ export async function POST(req: NextRequest) {
         buy_now_enabled: String(buyNowEnabled),
         listing_title: safeTitleForMeta,
         is_mock: String(isMockListing),
+        host_prints: String(hostPrintsRequested),
+        print_fee: String(printFeeCharged),
       },
     })
 

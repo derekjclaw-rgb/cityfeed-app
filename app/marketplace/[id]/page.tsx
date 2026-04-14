@@ -77,6 +77,9 @@ interface ListingData {
   buy_now_enabled?: boolean
   lat?: number
   lng?: number
+  requires_print?: boolean
+  offers_printing?: boolean
+  print_fee?: number | null
 }
 
 interface HostData {
@@ -249,9 +252,12 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
   const [internalStart, setInternalStart] = useState('')
   const [internalEnd, setInternalEnd] = useState('')
   const [bookedRanges, setBookedRanges] = useState<DisabledRange[]>([])
+  const [hostPrintsChecked, setHostPrintsChecked] = useState(false)
 
   const startDate = externalStart !== undefined ? externalStart : internalStart
   const endDate = externalEnd !== undefined ? externalEnd : internalEnd
+  const showPrintOption = listing.requires_print && listing.offers_printing && (listing.print_fee ?? 0) > 0
+  const printFee = hostPrintsChecked && showPrintOption ? (listing.print_fee ?? 0) : 0
 
   useEffect(() => {
     const supabase = createClient()
@@ -287,8 +293,8 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
     const fee = Math.round(subtotal * 0.07 * 100) / 100
-    return { days, subtotal, fee, total: subtotal + fee }
-  }, [startDate, endDate, listing.price_per_day])
+    return { days, subtotal, fee, total: subtotal + fee + printFee }
+  }, [startDate, endDate, listing.price_per_day, printFee])
 
   const tooShort = listing.min_days && days > 0 && days < listing.min_days
   const tooLong = listing.max_days && days > 0 && days > listing.max_days
@@ -300,7 +306,9 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
 
   function handleBook() {
     if (!startDate || !endDate || days < 1 || daysError) return
-    router.push(`/marketplace/${listing.id}/book?start=${startDate}&end=${endDate}&days=${days}&total=${total}`)
+    const params = new URLSearchParams({ start: startDate, end: endDate, days: String(days), total: String(total) })
+    if (hostPrintsChecked) params.set('host_prints', 'true')
+    router.push(`/marketplace/${listing.id}/book?${params.toString()}`)
   }
 
   return (
@@ -334,6 +342,20 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
           <p className="text-xs font-medium mt-1.5" style={{ color: '#E63946' }}>{daysError}</p>
         )}
       </div>
+      {/* Print fee option */}
+      {showPrintOption && days > 0 && (
+        <label className="flex items-center gap-3 mb-4 px-1 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={hostPrintsChecked}
+            onChange={e => setHostPrintsChecked(e.target.checked)}
+            className="w-4 h-4 rounded accent-[#7ecfc0]"
+          />
+          <span className="text-sm" style={{ color: '#555' }}>
+            Have the host print (+${Number(listing.print_fee).toFixed(2)})
+          </span>
+        </label>
+      )}
       {days > 0 && (
         <div className="rounded-xl p-4 mb-5 space-y-2" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
           <div className="flex justify-between text-sm" style={{ color: '#555' }}>
@@ -344,6 +366,12 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
             <span>City Feed fee (7%)</span>
             <span>${fee.toFixed(2)}</span>
           </div>
+          {printFee > 0 && (
+            <div className="flex justify-between text-sm" style={{ color: '#888' }}>
+              <span>Host printing fee</span>
+              <span>${printFee.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
@@ -379,6 +407,10 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
   const [internalStart, setInternalStart] = useState('')
   const [internalEnd, setInternalEnd] = useState('')
   const [bookedRanges, setBookedRanges] = useState<DisabledRange[]>([])
+  const [mobileHostPrints, setMobileHostPrints] = useState(false)
+
+  const mobileShowPrint = listing.requires_print && listing.offers_printing && (listing.print_fee ?? 0) > 0
+  const mobilePrintFee = mobileHostPrints && mobileShowPrint ? (listing.print_fee ?? 0) : 0
 
   useEffect(() => {
     const supabase = createClient()
@@ -402,8 +434,8 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
     const fee = Math.round(subtotal * 0.07 * 100) / 100
-    return { days, subtotal, fee, total: subtotal + fee }
-  }, [internalStart, internalEnd, listing.price_per_day])
+    return { days, subtotal, fee, total: subtotal + fee + mobilePrintFee }
+  }, [internalStart, internalEnd, listing.price_per_day, mobilePrintFee])
 
   const mobileTooShort = listing.min_days && days > 0 && days < listing.min_days
   const mobileTooLong = listing.max_days && days > 0 && days > listing.max_days
@@ -415,7 +447,9 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
 
   function handleBook() {
     if (!internalStart || !internalEnd || days < 1 || mobileDaysError) return
-    router.push(`/marketplace/${listing.id}/book?start=${internalStart}&end=${internalEnd}&days=${days}&total=${total}`)
+    const params = new URLSearchParams({ start: internalStart, end: internalEnd, days: String(days), total: String(total) })
+    if (mobileHostPrints) params.set('host_prints', 'true')
+    router.push(`/marketplace/${listing.id}/book?${params.toString()}`)
   }
 
   return (
@@ -472,6 +506,21 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
             )}
           </div>
 
+          {/* Print fee option */}
+          {mobileShowPrint && days > 0 && (
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={mobileHostPrints}
+                onChange={e => setMobileHostPrints(e.target.checked)}
+                className="w-4 h-4 rounded accent-[#7ecfc0]"
+              />
+              <span className="text-sm" style={{ color: '#555' }}>
+                Have the host print (+${Number(listing.print_fee).toFixed(2)})
+              </span>
+            </label>
+          )}
+
           {/* Price breakdown */}
           {days > 0 && (
             <div className="rounded-xl p-4 space-y-2" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
@@ -483,6 +532,12 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
                 <span>City Feed fee (7%)</span>
                 <span>${fee.toFixed(2)}</span>
               </div>
+              {mobilePrintFee > 0 && (
+                <div className="flex justify-between text-sm" style={{ color: '#888' }}>
+                  <span>Host printing fee</span>
+                  <span>${mobilePrintFee.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
@@ -561,6 +616,9 @@ export default function ListingDetailPage() {
           buy_now_enabled: row.buy_now_enabled ?? false,
           lat: row.lat ?? null,
           lng: row.lng ?? null,
+          requires_print: row.requires_print ?? false,
+          offers_printing: row.offers_printing ?? false,
+          print_fee: row.print_fee ?? null,
           creative_specs: (row.creative_formats || row.creative_dimensions || row.creative_max_file_size) ? {
             formats: row.creative_formats,
             dimensions: row.creative_dimensions,

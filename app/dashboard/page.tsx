@@ -43,7 +43,7 @@ interface PayoutLineItem {
   bookingId: string
   listingTitle: string
   amount: number
-  status: 'paid' | 'pending'
+  status: 'paid' | 'processing' | 'pending'
 }
 
 interface Activity {
@@ -307,7 +307,7 @@ function DashboardContent() {
         const [listingsRes, bookingsRes, messagesRes, popRes] = await Promise.all([
           supabase.from('listings').select('id, title, city, state, status, images, price_per_day, category', { count: 'exact' }).eq('host_id', uid).eq('status', 'active'),
           supabase.from('bookings').select(`
-            id, total_price, payout_amount, stripe_transfer_id, status, start_date, end_date, listing_id,
+            id, total_price, payout_amount, payout_at, stripe_transfer_id, status, start_date, end_date, listing_id,
             listings(title, images),
             advertiser:profiles!bookings_advertiser_id_fkey(full_name)
           `).eq('host_id', uid).in('status', ['active', 'confirmed', 'pending', 'completed', 'pop_pending', 'pop_review']).order('created_at', { ascending: false }).limit(10),
@@ -375,12 +375,14 @@ function DashboardContent() {
             const end = b.end_date ? new Date(b.end_date.includes('T') ? b.end_date : b.end_date + 'T00:00:00') : null
             return !!(start && end && nowTs >= start && nowTs <= end)
           })()
-          const isPaid = !!b.payout_amount && !!b.stripe_transfer_id
+          const isPaid = !!b.stripe_transfer_id && !!b.payout_amount
+          // Processing = payout initiated (payout_at set) but within 2 business days settling window
+          const isProcessing = !isPaid && !!b.payout_at
           return {
             bookingId: b.id,
             listingTitle: b.listings?.title ?? 'Listing',
             amount: payoutAmt,
-            status: isPaid ? 'paid' : 'pending',
+            status: isPaid ? 'paid' : isProcessing ? 'processing' : 'pending',
           }
         })
         setPayoutLineItems(lineItems)
@@ -1028,9 +1030,11 @@ function DashboardContent() {
                           style={
                             item.status === 'paid'
                               ? { backgroundColor: '#dcfce7', color: '#16a34a' }
+                              : item.status === 'processing'
+                              ? { backgroundColor: '#fef9ec', color: '#d97706' }
                               : { backgroundColor: '#fef9ec', color: '#b45309' }
                           }>
-                          {item.status === 'paid' ? 'Paid ✓' : 'Pending'}
+                          {item.status === 'paid' ? 'Paid ✓' : item.status === 'processing' ? 'Processing' : 'Pending'}
                         </span>
                       </div>
                     ))}

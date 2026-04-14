@@ -100,6 +100,8 @@ async function handleEvent(event: Stripe.Event) {
       platform_fee: platformFee,
       buy_now_enabled: buyNowEnabledStr,
       is_mock: isMockStr,
+      host_prints: hostPrintsStr,
+      print_fee: printFeeStr,
     } = meta
 
     // Skip booking creation for mock listings
@@ -147,6 +149,9 @@ async function handleEvent(event: Stripe.Event) {
     const buyNowEnabled = buyNowEnabledStr === 'true'
     const initialStatus = buyNowEnabled ? 'confirmed' : 'pending'
 
+    const hostPrintsVal = hostPrintsStr === 'true'
+    const printFeeVal = parseFloat(printFeeStr ?? '0') || 0
+
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .insert({
@@ -159,6 +164,12 @@ async function handleEvent(event: Stripe.Event) {
         platform_fee: parseFloat(platformFee ?? '0'),
         status: initialStatus,
         stripe_payment_intent_id: paymentIntentId || null,
+        // Print / shipping fields
+        // DB columns needed: host_prints boolean DEFAULT false, print_fee_charged numeric,
+        //   delivery_mode text, shipped_at timestamptz, received_at timestamptz, tracking_number text
+        host_prints: hostPrintsVal,
+        print_fee_charged: printFeeVal > 0 ? printFeeVal : null,
+        delivery_mode: hostPrintsVal ? 'host_prints' : null,
       })
       .select('*, listings(title, host_id, images, category)')
       .single()

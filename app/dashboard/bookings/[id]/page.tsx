@@ -21,7 +21,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Upload, FileText, Image, Film, Archive,
-  CheckCircle, Clock, Download, X, AlertCircle, Package, Camera, ExternalLink
+  CheckCircle, Clock, Download, X, AlertCircle, Package, Camera, ExternalLink,
+  Truck, DollarSign
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -38,11 +39,23 @@ interface Booking {
   start_date: string
   end_date: string
   total_price: number
+  platform_fee?: number
   payout_amount?: number
+  payout_at?: string
+  stripe_transfer_id?: string
   created_at: string
   listing_id: string
   advertiser_id: string
   host_id?: string
+  // Print / shipping fields
+  // DB columns needed: delivery_mode text, shipped_at timestamptz, received_at timestamptz,
+  //   tracking_number text, host_prints boolean DEFAULT false, print_fee_charged numeric
+  delivery_mode?: 'self_deliver' | 'host_prints' | null
+  shipped_at?: string | null
+  received_at?: string | null
+  tracking_number?: string | null
+  host_prints?: boolean
+  print_fee_charged?: number | null
 }
 
 interface Listing {
@@ -59,6 +72,10 @@ interface Listing {
   creative_max_file_size?: string
   creative_video_duration?: string
   creative_audio_allowed?: boolean
+  requires_print?: boolean
+  offers_printing?: boolean
+  print_fee?: number | null
+  delivery_address?: string | null
 }
 
 interface CollateralFile {
@@ -133,9 +150,12 @@ interface CollateralSectionProps {
   hostId?: string
   advertiserId?: string
   listingTitle?: string
+  listing?: Listing | null
+  booking?: Booking | null
+  onBookingUpdate?: (b: Partial<Booking>) => void
 }
 
-function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertiserId, listingTitle }: CollateralSectionProps) {
+function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertiserId, listingTitle, listing, booking, onBookingUpdate }: CollateralSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(true)
@@ -277,8 +297,12 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
   const hasFiles = files.length > 0
   const canUpload = !isHost && ['confirmed'].includes(bookingStatus)
+  // For requires_print listings: only show upload when delivery_mode is host_prints (or not yet set for non-print listings)
+  const isSelfDeliver = listing?.requires_print && booking?.delivery_mode === 'self_deliver'
+  const needsChoice = listing?.requires_print && !booking?.delivery_mode
+  const showUploadArea = canUpload && !isSelfDeliver && !needsChoice
   // Show success state if upload was just completed OR if files already exist (returning to page)
-  const showSuccessState = canUpload && (uploadComplete || hasFiles)
+  const showSuccessState = showUploadArea && (uploadComplete || hasFiles)
 
   return (
     <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
@@ -300,8 +324,51 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         )}
       </div>
 
+      {/* ── PRINT CHOICE — for requires_print listings, advertiser picks delivery mode ── */}
+      {!isHost && listing?.requires_print && !booking?.delivery_mode && canUpload && !showSuccessState && (
+        <div className="mb-5 rounded-xl p-5" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+          <p className="text-sm font-semibold mb-3" style={{ color: '#2b2b2b' }}>How would you like to deliver your creative?</p>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.from('bookings').update({ delivery_mode: 'self_deliver' }).eq('id', bookingId)
+                onBookingUpdate?.({ delivery_mode: 'self_deliver' })
+              }}
+              className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
+              style={{ border: '1px solid #e0e0d8' }}
+            >
+              <Truck className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
+              <div>
+                <span className="font-medium" style={{ color: '#2b2b2b' }}>I&apos;ll provide my own printed materials</span>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Ship or deliver prints to the host&apos;s address</p>
+              </div>
+            </button>
+            {listing.offers_printing && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const supabase = createClient()
+                  await supabase.from('bookings').update({ delivery_mode: 'host_prints' }).eq('id', bookingId)
+                  onBookingUpdate?.({ delivery_mode: 'host_prints' })
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
+                style={{ border: '1px solid #e0e0d8' }}
+              >
+                <Upload className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
+                <div>
+                  <span className="font-medium" style={{ color: '#2b2b2b' }}>Have the host print for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
+                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>Upload your digital files and the host will print them</p>
+                </div>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Advertiser intro text — only before upload */}
-      {!isHost && !showSuccessState && (
+      {!isHost && !showSuccessState && (!listing?.requires_print || booking?.delivery_mode === 'host_prints') && (
         <p className="text-sm mb-5 leading-relaxed" style={{ color: '#555' }}>
           Please deliver your creative files within the production window listed on this placement.
           The host will begin setup once received.
@@ -315,8 +382,22 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         </p>
       )}
 
+      {/* ── SELF-DELIVER VIEW — show host address + shipping actions ── */}
+      {canUpload && isSelfDeliver && listing?.delivery_address && (
+        <ShippingSection
+          bookingId={bookingId}
+          isHost={isHost}
+          booking={booking!}
+          deliveryAddress={listing.delivery_address}
+          listingTitle={listingTitle}
+          hostId={hostId}
+          advertiserId={advertiserId}
+          onBookingUpdate={onBookingUpdate}
+        />
+      )}
+
       {/* ── ADVERTISER UPLOAD AREA (pre-upload) ─────────────────── */}
-      {canUpload && !showSuccessState && (
+      {showUploadArea && !showSuccessState && (
         <>
           <div
             className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-4"
@@ -528,6 +609,181 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               </button>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Shipping Section (self_deliver flow) ─────────────────────────────────────
+
+interface ShippingSectionProps {
+  bookingId: string
+  isHost: boolean
+  booking: Booking
+  deliveryAddress: string
+  listingTitle?: string
+  hostId?: string
+  advertiserId?: string
+  onBookingUpdate?: (b: Partial<Booking>) => void
+}
+
+function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingTitle, hostId, advertiserId, onBookingUpdate }: ShippingSectionProps) {
+  const [trackingNumber, setTrackingNumber] = useState(booking.tracking_number ?? '')
+  const [saving, setSaving] = useState(false)
+  const supabase = createClient()
+
+  async function markShipped() {
+    setSaving(true)
+    const now = new Date().toISOString()
+    await supabase.from('bookings').update({
+      shipped_at: now,
+      tracking_number: trackingNumber || null,
+    }).eq('id', bookingId)
+    onBookingUpdate?.({ shipped_at: now, tracking_number: trackingNumber || null })
+
+    // Notify host
+    if (hostId) {
+      await supabase.from('notifications').insert({
+        user_id: hostId,
+        type: 'materials_shipped',
+        title: 'Materials shipped',
+        body: `Printed materials for "${listingTitle ?? 'booking'}" have been shipped${trackingNumber ? ` (tracking: ${trackingNumber})` : ''}.`,
+        href: `/dashboard/bookings/${bookingId}`,
+      })
+      await supabase.from('messages').insert({
+        booking_id: bookingId,
+        sender_id: advertiserId ?? hostId,
+        recipient_id: hostId,
+        content: `📦 Printed materials have been shipped!${trackingNumber ? `\n\nTracking: ${trackingNumber}` : ''}\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
+      })
+    }
+    setSaving(false)
+  }
+
+  async function markReceived() {
+    setSaving(true)
+    const now = new Date().toISOString()
+    await supabase.from('bookings').update({ received_at: now }).eq('id', bookingId)
+    onBookingUpdate?.({ received_at: now })
+
+    // Notify advertiser
+    if (advertiserId) {
+      await supabase.from('notifications').insert({
+        user_id: advertiserId,
+        type: 'materials_received',
+        title: 'Materials received',
+        body: `Your host has confirmed receipt of materials for "${listingTitle ?? 'booking'}".`,
+        href: `/dashboard/bookings/${bookingId}`,
+      })
+      await supabase.from('messages').insert({
+        booking_id: bookingId,
+        sender_id: hostId ?? advertiserId,
+        recipient_id: advertiserId,
+        content: `✅ Your printed materials have been received! The host will proceed with installation and submit proof of posting once your ad is live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
+      })
+    }
+    setSaving(false)
+  }
+
+  // Advertiser view
+  if (!isHost) {
+    return (
+      <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Package className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+          <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Delivery Address</p>
+        </div>
+        <p className="text-sm mb-4 leading-relaxed" style={{ color: '#555' }}>{deliveryAddress}</p>
+
+        {booking.shipped_at ? (
+          <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)' }}>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" style={{ color: '#16a34a' }} />
+              <p className="text-sm font-medium" style={{ color: '#16a34a' }}>
+                Marked as shipped on {new Date(booking.shipped_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+            {booking.tracking_number && (
+              <p className="text-xs mt-1 ml-6" style={{ color: '#888' }}>Tracking: {booking.tracking_number}</p>
+            )}
+            {booking.received_at ? (
+              <div className="flex items-center gap-2 mt-2 ml-6">
+                <CheckCircle className="w-3.5 h-3.5" style={{ color: '#16a34a' }} />
+                <p className="text-xs" style={{ color: '#16a34a' }}>
+                  Host confirmed receipt on {new Date(booking.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs mt-2 ml-6" style={{ color: '#888' }}>Awaiting host confirmation of receipt</p>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="mb-3">
+              <label className="block text-xs font-medium mb-1" style={{ color: '#888' }}>Tracking number (optional)</label>
+              <input
+                type="text"
+                value={trackingNumber}
+                onChange={e => setTrackingNumber(e.target.value)}
+                placeholder="e.g. 1Z999AA10123456784"
+                className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={markShipped}
+              disabled={saving}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
+              Mark as Shipped
+            </button>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  // Host view
+  return (
+    <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <Truck className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+        <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Material Delivery</p>
+      </div>
+      {!booking.shipped_at ? (
+        <p className="text-sm" style={{ color: '#888' }}>The advertiser is preparing their printed materials for delivery.</p>
+      ) : !booking.received_at ? (
+        <>
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+            <p className="text-sm" style={{ color: '#555' }}>
+              Materials shipped on {new Date(booking.shipped_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </p>
+          </div>
+          {booking.tracking_number && (
+            <p className="text-xs mb-3" style={{ color: '#888' }}>Tracking: {booking.tracking_number}</p>
+          )}
+          <button
+            type="button"
+            onClick={markReceived}
+            disabled={saving}
+            className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+            style={{ backgroundColor: '#7ecfc0', color: '#fff' }}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+            Mark as Received
+          </button>
+        </>
+      ) : (
+        <div className="flex items-center gap-2">
+          <CheckCircle className="w-4 h-4" style={{ color: '#16a34a' }} />
+          <p className="text-sm" style={{ color: '#16a34a' }}>
+            Materials received on {new Date(booking.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </p>
         </div>
       )}
     </div>
@@ -962,7 +1218,7 @@ export default function BookingDetailPage() {
       if (bk.listing_id) {
         const { data: lst } = await supabase
           .from('listings')
-          .select('id, title, category, city, state, dimensions, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed')
+          .select('id, title, category, city, state, dimensions, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, requires_print, offers_printing, print_fee, delivery_address')
           .eq('id', bk.listing_id)
           .single()
         if (lst) setListing(lst)
@@ -1141,6 +1397,48 @@ export default function BookingDetailPage() {
             </div>
           )}
 
+          {/* ── Host Earnings Card ─────────────────────────────────── */}
+          {isHost && booking.total_price > 0 && (
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="w-4 h-4" style={{ color: '#16a34a' }} />
+                <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#888' }}>Earnings</h2>
+              </div>
+              {(() => {
+                const pricePerDay = days > 0 ? booking.total_price / 1.07 / days : 0
+                const subtotal = pricePerDay * days
+                const platformFee = Math.round(subtotal * 0.07 * 100) / 100
+                const payout = booking.payout_amount ?? Math.round((subtotal - platformFee) * 100) / 100
+                const isPaid = !!booking.stripe_transfer_id
+                const isProcessing = !isPaid && !!booking.payout_at
+                const payoutStatus = isPaid ? 'Paid' : isProcessing ? 'Processing' : 'Pending'
+                const statusColor = isPaid ? '#16a34a' : isProcessing ? '#d97706' : '#b45309'
+                return (
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between" style={{ color: '#555' }}>
+                      <span>Listing price: ${pricePerDay.toFixed(2)}/day × {days} day{days !== 1 ? 's' : ''}</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between" style={{ color: '#dc2626' }}>
+                      <span>City Feed fee (7%)</span>
+                      <span>-${platformFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
+                      <span>Your payout</span>
+                      <span>${payout.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-1">
+                      <span style={{ color: '#888' }}>Status</span>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: isPaid ? '#dcfce7' : isProcessing ? '#fef9ec' : '#fef9ec', color: statusColor }}>
+                        {payoutStatus}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
           {/* Collateral upload / view */}
           {showCollateralSection && (
             <CollateralSection
@@ -1150,6 +1448,9 @@ export default function BookingDetailPage() {
               hostId={booking.host_id}
               advertiserId={booking.advertiser_id}
               listingTitle={listing?.title}
+              listing={listing}
+              booking={booking}
+              onBookingUpdate={(partial) => setBooking(prev => prev ? { ...prev, ...partial } : prev)}
             />
           )}
 

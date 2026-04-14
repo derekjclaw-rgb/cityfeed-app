@@ -17,7 +17,7 @@ function BookPageInner() {
   const searchParams = useSearchParams()
   const listingId = params.id as string
 
-  const [listing, setListing] = useState<{ title: string; price_per_day: number; city: string; state: string; min_days: number; max_days: number; buy_now_enabled?: boolean } | null>(null)
+  const [listing, setListing] = useState<{ title: string; price_per_day: number; city: string; state: string; min_days: number; max_days: number; buy_now_enabled?: boolean; requires_print?: boolean; offers_printing?: boolean; print_fee?: number | null } | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -34,6 +34,7 @@ function BookPageInner() {
   // Pre-fill from query params if coming from listing detail
   const [startDate, setStartDate] = useState(searchParams.get('start') ?? '')
   const [endDate, setEndDate] = useState(searchParams.get('end') ?? '')
+  const [hostPrints, setHostPrints] = useState(searchParams.get('host_prints') === 'true')
 
   useEffect(() => {
     const supabase = createClient()
@@ -49,7 +50,7 @@ function BookPageInner() {
     Promise.all([
       supabase
         .from('listings')
-        .select('title, price_per_day, city, state, min_days, max_days, availability, buy_now_enabled')
+        .select('title, price_per_day, city, state, min_days, max_days, availability, buy_now_enabled, requires_print, offers_printing, print_fee')
         .eq('id', listingId)
         .single(),
       // Fetch confirmed/pending bookings to block those dates
@@ -96,6 +97,8 @@ function BookPageInner() {
     })
   }, [listingId, router])
 
+  const printFeeAmount = hostPrints && listing?.requires_print && listing?.offers_printing ? (listing.print_fee ?? 0) : 0
+
   const { days, subtotal, buyerFee, total } = useMemo(() => {
     if (!startDate || !endDate || !listing) return { days: 0, subtotal: 0, buyerFee: 0, total: 0 }
     const start = new Date(startDate)
@@ -103,8 +106,8 @@ function BookPageInner() {
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
     const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
-    return { days, subtotal, buyerFee, total: subtotal + buyerFee }
-  }, [startDate, endDate, listing])
+    return { days, subtotal, buyerFee, total: subtotal + buyerFee + printFeeAmount }
+  }, [startDate, endDate, listing, printFeeAmount])
 
   async function handleAuthSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -174,6 +177,8 @@ function BookPageInner() {
           userId,
           listingTitle: listing.title,
           pricePerDay: listing.price_per_day,
+          host_prints: hostPrints,
+          print_fee: printFeeAmount,
         }),
       })
 
@@ -249,6 +254,23 @@ function BookPageInner() {
           )}
         </div>
 
+        {/* Print option */}
+        {listing.requires_print && listing.offers_printing && (listing.print_fee ?? 0) > 0 && days > 0 && (
+          <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={hostPrints}
+                onChange={e => setHostPrints(e.target.checked)}
+                className="w-4 h-4 rounded accent-[#7ecfc0]"
+              />
+              <span className="text-sm" style={{ color: '#555' }}>
+                Have the host print (+${Number(listing.print_fee).toFixed(2)})
+              </span>
+            </label>
+          </div>
+        )}
+
         {days > 0 && (
           <div className="rounded-2xl p-6 mb-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>Price breakdown</h2>
@@ -261,6 +283,12 @@ function BookPageInner() {
                 <span>Buyer fee (7%)</span>
                 <span>${buyerFee.toFixed(2)}</span>
               </div>
+              {printFeeAmount > 0 && (
+                <div className="flex justify-between" style={{ color: '#888' }}>
+                  <span>Host printing fee</span>
+                  <span>${printFeeAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-base pt-3" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
                 <span>Total due today</span>
                 <span>${total.toFixed(2)}</span>
