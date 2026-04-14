@@ -110,17 +110,23 @@ function POPActions({ bookingId, isAdvertiser, bookingStatus }: POPActionsProps)
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Detect if a string contains a URL on its own line and return [text, imageUrl]
- * so we can render the image inline.
+ * Detect if a string contains a URL on its own line and return [text, imageUrl, linkUrls]
+ * so we can render images inline and URLs as styled buttons.
  */
-function parseMessageContent(content: string): { text: string; extraImageUrls: string[] } {
-  const urlRegex = /(https?:\/\/[^\s]+)/g
+function parseMessageContent(content: string): { text: string; extraImageUrls: string[]; linkUrls: string[] } {
   const lines = content.split('\n')
   const extraImageUrls: string[] = []
+  const linkUrls: string[] = []
   const textLines: string[] = []
 
   for (const line of lines) {
     const trimmed = line.trim()
+    // Check for "View booking: URL" pattern
+    const viewBookingMatch = trimmed.match(/^View booking:\s*(https?:\/\/\S+)$/i)
+    if (viewBookingMatch) {
+      linkUrls.push(viewBookingMatch[1])
+      continue
+    }
     const match = trimmed.match(/^(https?:\/\/\S+)$/)
     if (match) {
       const url = match[1]
@@ -128,17 +134,40 @@ function parseMessageContent(content: string): { text: string; extraImageUrls: s
       if (/\.(jpg|jpeg|png|webp|gif)/i.test(url) || url.includes('supabase') || url.includes('storage')) {
         extraImageUrls.push(url)
       } else {
-        textLines.push(line)
+        linkUrls.push(url)
       }
     } else {
       textLines.push(line)
     }
   }
 
-  // Suppress lint warning for unused urlRegex
-  void urlRegex
+  return { text: textLines.join('\n').trim(), extraImageUrls, linkUrls }
+}
 
-  return { text: textLines.join('\n').trim(), extraImageUrls }
+/** Render inline URLs in text as styled clickable buttons */
+function renderTextWithLinks(text: string): React.ReactNode {
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const parts = text.split(urlRegex)
+  if (parts.length <= 1) return text
+  return parts.map((part, i) => {
+    if (urlRegex.test(part)) {
+      urlRegex.lastIndex = 0 // reset regex state
+      const label = part.includes('/bookings/') ? 'View Booking →' : 'Open Link →'
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block mt-1 px-3 py-1.5 rounded-lg text-xs font-semibold no-underline hover:opacity-80 transition-opacity"
+          style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+        >
+          {label}
+        </a>
+      )
+    }
+    return <span key={i}>{part}</span>
+  })
 }
 
 // ─── Message types ─────────────────────────────────────────────────────────────
@@ -166,7 +195,13 @@ const SYSTEM_PREFIXES = [
 
 function isSystemMessage(msg: Message): boolean {
   if (msg.is_system) return true
-  return SYSTEM_PREFIXES.some(prefix => msg.content.startsWith(prefix))
+  if (SYSTEM_PREFIXES.some(prefix => msg.content.startsWith(prefix))) return true
+  // Auto-messages typically start with emojis — catch any we missed
+  const firstChar = msg.content.codePointAt(0) ?? 0
+  const startsWithEmoji = firstChar > 0x1F000
+  const emojiPrefixes = ['\u{1F389}', '\u{1F4CE}', '\u{1F4F8}', '\u{1F4CB}', '\u{1F7E2}', '\u{1F504}']
+  if (startsWithEmoji && emojiPrefixes.some(e => msg.content.startsWith(e))) return true
+  return false
 }
 
 // ─── Main Chat Page ───────────────────────────────────────────────────────────
@@ -413,9 +448,9 @@ function ChatPageInner() {
           messages.map(msg => {
             const isMe = msg.sender_id === userId
             const isSystem = isSystemMessage(msg)
-            const { text, extraImageUrls } = parseMessageContent(msg.content)
+            const { text, extraImageUrls, linkUrls } = parseMessageContent(msg.content)
 
-            // System message — centered, minimal styling
+            // System message — centered, no avatar, no sender name
             if (isSystem) {
               return (
                 <div key={msg.id} className="flex justify-center">
@@ -433,7 +468,19 @@ function ChatPageInner() {
                         <img src={url} alt={`proof ${i + 1}`} className="rounded-xl mb-2 max-w-full mx-auto" style={{ maxHeight: '160px', objectFit: 'cover' }} />
                       </a>
                     ))}
-                    {text && <p className="leading-relaxed whitespace-pre-wrap">{text}</p>}
+                    {text && <p className="leading-relaxed whitespace-pre-wrap">{renderTextWithLinks(text)}</p>}
+                    {linkUrls.map((url, i) => (
+                      <a
+                        key={`link-${i}`}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold no-underline hover:opacity-80 transition-opacity"
+                        style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                      >
+                        {url.includes('/bookings/') ? 'View Booking →' : 'Open Link →'}
+                      </a>
+                    ))}
                     <p className="text-xs mt-1.5" style={{ color: '#aaa' }}>
                       {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -468,7 +515,19 @@ function ChatPageInner() {
                       <img src={url} alt={`proof ${i + 1}`} className="rounded-xl mb-2 max-w-full" style={{ maxHeight: '200px', objectFit: 'cover' }} />
                     </a>
                   ))}
-                  {text && <p className="leading-relaxed whitespace-pre-wrap">{text}</p>}
+                  {text && <p className="leading-relaxed whitespace-pre-wrap">{renderTextWithLinks(text)}</p>}
+                  {linkUrls.map((url, i) => (
+                    <a
+                      key={`link-${i}`}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold no-underline hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                    >
+                      {url.includes('/bookings/') ? 'View Booking →' : 'Open Link →'}
+                    </a>
+                  ))}
                   <p className={`text-xs mt-1.5`} style={{ color: isMe ? 'rgba(43,43,43,0.55)' : '#aaa' }}>
                     {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>

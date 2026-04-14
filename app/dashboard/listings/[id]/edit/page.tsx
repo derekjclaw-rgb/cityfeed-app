@@ -86,6 +86,10 @@ interface FormData {
   creative_loop_count: string
   creative_host_prints: boolean
   creative_print_cost: string
+  requires_print: boolean
+  offers_printing: boolean
+  print_fee: string
+  delivery_address: string
 }
 
 function FormField({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
@@ -169,6 +173,10 @@ export default function EditListingPage() {
     creative_loop_count: '',
     creative_host_prints: false,
     creative_print_cost: '',
+    requires_print: false,
+    offers_printing: false,
+    print_fee: '',
+    delivery_address: '',
   })
 
   useEffect(() => {
@@ -221,6 +229,10 @@ export default function EditListingPage() {
         creative_loop_count: listing.creative_loop_count?.toString() ?? '',
         creative_host_prints: listing.creative_host_prints ?? false,
         creative_print_cost: listing.creative_print_cost?.toString() ?? '',
+        requires_print: listing.requires_print ?? false,
+        offers_printing: listing.offers_printing ?? false,
+        print_fee: listing.print_fee?.toString() ?? '',
+        delivery_address: listing.delivery_address ?? '',
       })
 
       // Load existing blocked dates
@@ -408,6 +420,15 @@ export default function EditListingPage() {
                 : null,
           }
         : {}),
+      // Static ads / print flow
+      requires_print: form.requires_print,
+      offers_printing: form.requires_print ? form.offers_printing : false,
+      print_fee: form.requires_print && form.offers_printing && form.print_fee
+        ? parseFloat(form.print_fee)
+        : null,
+      delivery_address: form.requires_print && form.delivery_address
+        ? form.delivery_address
+        : null,
     }
 
     const res = await fetch('/api/listings/update', {
@@ -843,6 +864,54 @@ export default function EditListingPage() {
                 style={inputStyle}
               />
             </FormField>
+          </div>
+
+          {/* Printed Materials */}
+          <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
+            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Printed materials</h2>
+            <Toggle
+              value={form.requires_print}
+              onChange={v => set('requires_print', v)}
+              label="Requires printed materials?"
+              hint="Advertiser must provide or arrange printed materials for this placement"
+            />
+            {form.requires_print && (
+              <>
+                <Toggle
+                  value={form.offers_printing}
+                  onChange={v => set('offers_printing', v)}
+                  label="Do you offer printing for advertisers?"
+                  hint="You will handle printing on behalf of the advertiser"
+                />
+                {form.offers_printing && (
+                  <FormField label="Print fee ($)" hint="One-time fee charged to the advertiser for printing">
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#888' }}>$</span>
+                      <input
+                        type="number"
+                        value={form.print_fee}
+                        onChange={e => set('print_fee', e.target.value)}
+                        placeholder="150"
+                        min="0"
+                        step="0.01"
+                        className={`${inputClass} pl-8`}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </FormField>
+                )}
+                <FormField label="Delivery / shipping address for materials" hint="Where should the advertiser ship printed materials?">
+                  <textarea
+                    value={form.delivery_address}
+                    onChange={e => set('delivery_address', e.target.value)}
+                    placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing"
+                    rows={3}
+                    className={`${inputClass} resize-none`}
+                    style={inputStyle}
+                  />
+                </FormField>
+              </>
+            )}
           </div>
 
           {/* Restricted Dates Calendar */}

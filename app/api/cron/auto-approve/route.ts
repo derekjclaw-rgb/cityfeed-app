@@ -201,12 +201,138 @@ export async function GET(req: NextRequest) {
 
     console.log(`[AutoApprove] Collateral reminders: ${confirmedBookings?.length ?? 0} checked, ${collateralReminderResults.length} sent`)
 
+    // ── 36-hour pre-campaign reminders ─────────────────────────────────────────
+    const thirtyySixHoursFromNow = new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString()
+    const nowISO = new Date().toISOString()
+    const reminderResults36: Array<{ booking_id: string; type: string }> = []
+
+    // 1) Advertiser reminder: start_date within 36h, confirmed, no creative files
+    const { data: upcomingConfirmed } = await supabase
+      .from('bookings')
+      .select('id, advertiser_id, host_id, start_date, listing_id, listings(title)')
+      .eq('status', 'confirmed')
+      .gt('start_date', nowISO.split('T')[0])
+      .lte('start_date', thirtyySixHoursFromNow.split('T')[0])
+
+    if (upcomingConfirmed && upcomingConfirmed.length > 0) {
+      for (const bk of upcomingConfirmed) {
+        // Check if creative files exist
+        const { data: storageFiles } = await supabase.storage
+          .from('booking-collateral')
+          .list(`bookings/${bk.id}`, { limit: 1 })
+        const hasCreative = storageFiles && storageFiles.length > 0
+
+        if (!hasCreative) {
+          // Check if we already sent this reminder
+          const { data: existingNotif } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('user_id', bk.advertiser_id)
+            .eq('type', 'creative_reminder_36h')
+            .ilike('href', `%${bk.id}%`)
+            .limit(1)
+
+          if (!existingNotif || existingNotif.length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const listingTitle = (bk as any).listings?.title ?? 'your listing'
+            await supabase.from('notifications').insert({
+              user_id: bk.advertiser_id,
+              type: 'creative_reminder_36h',
+              title: 'Upload your creative files',
+              body: `Your campaign for "${listingTitle}" starts soon — upload your creative files to keep things on track.`,
+              href: `/dashboard/bookings/${bk.id}`,
+            })
+
+            // Send email reminder
+            const { data: advProfile } = await supabase
+              .from('profiles').select('email').eq('id', bk.advertiser_id).single()
+            if (advProfile?.email) {
+              await fetch(`${baseUrl}/api/email/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'creative_reminder',
+                  advertiserEmail: advProfile.email,
+                  listingTitle,
+                  bookingId: bk.id,
+                }),
+              }).catch(err => console.warn('[Cron] Creative reminder email failed:', err))
+            }
+
+            reminderResults36.push({ booking_id: bk.id, type: 'creative_reminder_36h' })
+          }
+        }
+      }
+    }
+
+    // 2) Host reminder: completed status (post-creative), start_date within 36h, no POP files
+    const { data: upcomingCompleted } = await supabase
+      .from('bookings')
+      .select('id, host_id, advertiser_id, start_date, listing_id, listings(title)')
+      .eq('status', 'completed')
+      .gt('start_date', nowISO.split('T')[0])
+      .lte('start_date', thirtyySixHoursFromNow.split('T')[0])
+
+    if (upcomingCompleted && upcomingCompleted.length > 0) {
+      for (const bk of upcomingCompleted) {
+        // Check if POP files exist
+        const { data: popFiles } = await supabase.storage
+          .from('booking-collateral')
+          .list(`pop/${bk.id}`, { limit: 1 })
+        const hasPOP = popFiles && popFiles.length > 0
+
+        if (!hasPOP) {
+          // Check if we already sent this reminder
+          const { data: existingNotif } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('user_id', bk.host_id)
+            .eq('type', 'pop_reminder_36h')
+            .ilike('href', `%${bk.id}%`)
+            .limit(1)
+
+          if (!existingNotif || existingNotif.length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const listingTitle = (bk as any).listings?.title ?? 'your listing'
+            await supabase.from('notifications').insert({
+              user_id: bk.host_id,
+              type: 'pop_reminder_36h',
+              title: 'Upload proof of posting',
+              body: `Your campaign for "${listingTitle}" starts soon — upload proof of posting once the ad is live.`,
+              href: `/dashboard/bookings/${bk.id}`,
+            })
+
+            // Send email reminder
+            const { data: hostProfile } = await supabase
+              .from('profiles').select('email').eq('id', bk.host_id).single()
+            if (hostProfile?.email) {
+              await fetch(`${baseUrl}/api/email/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'pop_reminder',
+                  hostEmail: hostProfile.email,
+                  listingTitle,
+                  bookingId: bk.id,
+                }),
+              }).catch(err => console.warn('[Cron] POP reminder email failed:', err))
+            }
+
+            reminderResults36.push({ booking_id: bk.id, type: 'pop_reminder_36h' })
+          }
+        }
+      }
+    }
+
+    console.log(`[AutoApprove] 36h reminders: ${reminderResults36.length} sent`)
+
     return NextResponse.json({
       message: `Auto-approved ${pendingBookings.length} POP booking(s)`,
       count: pendingBookings.length,
       results,
       campaign_complete_messages: campaignCompleteResults.length,
       collateral_reminders: collateralReminderResults.length,
+      reminders_36h: reminderResults36.length,
     })
   } catch (err) {
     console.error('[AutoApprove] Unexpected error:', err)

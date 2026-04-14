@@ -616,7 +616,11 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       }
     }
 
-    // Update booking status → completed immediately (no advertiser approval gate)
+    // Update booking status → completed only if files actually uploaded
+    if (uploadedUrls.length === 0) {
+      setUploading(false)
+      return
+    }
     await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId)
 
     // Trigger payout immediately (escrow model — transfer from platform to host)
@@ -645,11 +649,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Use URLs returned from the upload API, fall back to constructing from filenames
-          const BUCKET_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/booking-collateral`
-          const photoUrls: string[] = uploadedUrls.length > 0
-            ? uploadedUrls
-            : uploadedNames.map(name => `${BUCKET_BASE}/pop/${bookingId}/${name}`)
+          // Use URLs returned from the upload API
+          const photoUrls: string[] = uploadedUrls
 
           const photoText = photoUrls.length > 0
             ? `\n\n${photoUrls.join('\n')}`

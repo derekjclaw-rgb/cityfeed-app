@@ -78,14 +78,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Update booking with payout info and status completed
+    // Update booking with EXACT amounts from Stripe response (not calculated estimates)
     const { error: updateError } = await supabase
       .from('bookings')
       .update({
         status: 'completed',
         stripe_transfer_id: transfer.id,
-        payout_amount: payoutAmount / 100,
-        payout_at: new Date().toISOString(),
+        payout_amount: transfer.amount / 100, // exact cents from Stripe
+        payout_at: new Date(transfer.created * 1000).toISOString(), // Stripe epoch → ISO
       })
       .eq('id', booking_id)
 

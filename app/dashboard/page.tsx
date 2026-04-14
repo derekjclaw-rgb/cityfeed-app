@@ -152,9 +152,10 @@ function confirmationCode(bookingId: string): string {
   return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
 }
 
-/** Returns true if campaign is currently live (between start/end dates with approved POP) */
+/** Returns true if campaign is currently LIVE (POP uploaded → completed, within date range) */
 function isCampaignLive(status: string, startDate: string, endDate: string): boolean {
-  if (!['confirmed', 'active', 'completed'].includes(status)) return false
+  // Only 'completed' means POP was uploaded — confirmed within range is just "Active"
+  if (status !== 'completed') return false
   const now = new Date()
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
   const end = endDate ? new Date(endDate + 'T00:00:00') : null // Campaign is LIVE through end of last day
