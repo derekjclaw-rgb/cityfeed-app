@@ -129,6 +129,7 @@ function HomeMap({ listings }: { listings: Listing[] }) {
           const el = document.createElement('div')
           el.style.cursor = 'pointer'
           el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;">$${l.price_per_day}</div>`
+          el.addEventListener('click', () => window.location.href = `/marketplace/${l.id}`)
           new mapboxgl.Marker({ element: el }).setLngLat([l.lng, l.lat]).addTo(map)
         })
       }
