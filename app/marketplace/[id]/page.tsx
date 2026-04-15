@@ -358,7 +358,7 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
             className="w-4 h-4 rounded accent-[#7ecfc0]"
           />
           <span className="text-sm" style={{ color: '#555' }}>
-            Have host print (+${Number(listing.print_fee).toFixed(2)})
+            Print my ad for me (+${Number(listing.print_fee).toFixed(2)})
           </span>
         </label>
       )}
@@ -522,7 +522,7 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
                 className="w-4 h-4 rounded accent-[#7ecfc0]"
               />
               <span className="text-sm" style={{ color: '#555' }}>
-                Have host print (+${Number(listing.print_fee).toFixed(2)})
+                Print my ad for me (+${Number(listing.print_fee).toFixed(2)})
               </span>
             </label>
           )}
