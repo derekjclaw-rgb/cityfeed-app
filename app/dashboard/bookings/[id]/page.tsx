@@ -1059,7 +1059,10 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={e => { e.preventDefault(); setIsDragging(false); handlePOPUpload(e.dataTransfer.files) }}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => {
+          console.log('[POP] Drop zone clicked, fileInputRef:', fileInputRef.current)
+          if (fileInputRef.current) fileInputRef.current.click()
+        }}
       >
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
@@ -1078,8 +1081,11 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           type="file"
           multiple
           accept="image/*,video/mp4"
-          className="hidden"
-          onChange={e => handlePOPUpload(e.target.files)}
+          style={{ display: 'none' }}
+          onChange={e => {
+            console.log('[POP] File input changed, files:', e.target.files?.length)
+            handlePOPUpload(e.target.files)
+          }}
         />
       </div>
 
