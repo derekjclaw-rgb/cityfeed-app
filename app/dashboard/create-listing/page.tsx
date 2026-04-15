@@ -1108,65 +1108,11 @@ export default function CreateListingPage() {
               </div>
             )}
 
-            {/* Printing service — static/physical categories only */}
-            {showStaticFields && (
-              <div className="space-y-4 pt-3" style={{ borderTop: '1px solid #f0f0ec' }}>
-                <Toggle
-                  value={form.creative_host_prints}
-                  onChange={v => set('creative_host_prints', v)}
-                  label="Do you offer printing?"
-                  hint="You will handle printing for the advertiser"
-                />
-                {form.creative_host_prints && (
-                  <FormField
-                    label="Printing cost per unit ($)"
-                    hint="This cost will be added to the advertiser's total"
-                  >
-                    <div className="relative">
-                      <span
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-sm"
-                        style={{ color: '#888' }}
-                      >
-                        $
-                      </span>
-                      <input
-                        type="number"
-                        value={form.creative_print_cost}
-                        onChange={e => set('creative_print_cost', e.target.value)}
-                        placeholder="150"
-                        min="0"
-                        step="0.01"
-                        className={`${inputClass} pl-8`}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </FormField>
-                )}
-              </div>
-            )}
+            {/* Printing handled by Printed Materials section below */}
           </div>
 
           {/* Delivery Instructions — static/physical categories only */}
-          {showStaticFields && (
-            <div className="rounded-2xl p-6" style={cardStyle}>
-              <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>
-                Delivery instructions
-              </h2>
-              <FormField
-                label="Shipping or drop-off instructions"
-                hint="Provide shipping address or drop-off instructions for physical materials (optional)"
-              >
-                <textarea
-                  value={form.delivery_instructions}
-                  onChange={e => set('delivery_instructions', e.target.value)}
-                  placeholder="e.g. Ship to: 123 Main St, Las Vegas NV 89109. Attn: Marketing Dept. Materials must arrive 5 days before campaign start."
-                  rows={4}
-                  className={`${inputClass} resize-none`}
-                  style={inputStyle}
-                />
-              </FormField>
-            </div>
-          )}
+          {/* Delivery instructions handled by Printed Materials section below */}
 
           {/* Restricted Dates Calendar */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
