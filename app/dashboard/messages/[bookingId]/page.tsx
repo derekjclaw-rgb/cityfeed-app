@@ -463,7 +463,7 @@ function ChatPageInner() {
                         <img src={msg.image_url} alt="attachment" className="rounded-xl mb-2 max-w-full mx-auto" style={{ maxHeight: '160px', objectFit: 'cover' }} />
                       </a>
                     )}
-                    {extraImageUrls.map((url, i) => (
+                    {!msg.image_url && extraImageUrls.map((url, i) => (
                       <a key={i} href={url} target="_blank" rel="noopener noreferrer">
                         <img src={url} alt={`proof ${i + 1}`} className="rounded-xl mb-2 max-w-full mx-auto" style={{ maxHeight: '160px', objectFit: 'cover' }} />
                       </a>
@@ -509,8 +509,8 @@ function ChatPageInner() {
                       <img src={msg.image_url} alt="attachment" className="rounded-xl mb-2 max-w-full" style={{ maxHeight: '200px', objectFit: 'cover' }} />
                     </a>
                   )}
-                  {/* Extra image URLs parsed from content */}
-                  {extraImageUrls.map((url, i) => (
+                  {/* Extra image URLs parsed from content (skip if primary image_url exists to avoid duplicates) */}
+                  {!msg.image_url && extraImageUrls.map((url, i) => (
                     <a key={i} href={url} target="_blank" rel="noopener noreferrer">
                       <img src={url} alt={`proof ${i + 1}`} className="rounded-xl mb-2 max-w-full" style={{ maxHeight: '200px', objectFit: 'cover' }} />
                     </a>
