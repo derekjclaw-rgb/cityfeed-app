@@ -87,9 +87,11 @@ function BookPageInner() {
       }
       // Add host-blocked availability ranges
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const avail = (data as any)?.availability as { blocked?: Array<{ start: string; end: string }> } | null
+      const avail = (data as any)?.availability as { blocked?: string[] | Array<{ start: string; end: string }> } | null
       if (avail?.blocked && avail.blocked.length > 0) {
-        avail.blocked.forEach(b => ranges.push({ start: b.start, end: b.end }))
+        avail.blocked.forEach((b: string | { start: string; end: string }) => {
+          if (typeof b === 'string') { ranges.push({ start: b, end: b }) } else { ranges.push({ start: b.start, end: b.end }) }
+        })
       }
       if (ranges.length > 0) setBookedRanges(ranges)
 
@@ -279,16 +281,16 @@ function BookPageInner() {
                 <span>${listing.price_per_day}/day × {days} day{days !== 1 ? 's' : ''}</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
+              {printFeeAmount > 0 && (
+                <div className="flex justify-between" style={{ color: '#888' }}>
+                  <span>Print fee</span>
+                  <span>${printFeeAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between" style={{ color: '#888' }}>
                 <span>Buyer fee (7%)</span>
                 <span>${buyerFee.toFixed(2)}</span>
               </div>
-              {printFeeAmount > 0 && (
-                <div className="flex justify-between" style={{ color: '#888' }}>
-                  <span>Host printing fee</span>
-                  <span>${printFeeAmount.toFixed(2)}</span>
-                </div>
-              )}
               <div className="flex justify-between font-bold text-base pt-3" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
                 <span>Total due today</span>
                 <span>${total.toFixed(2)}</span>

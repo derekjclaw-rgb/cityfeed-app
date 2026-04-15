@@ -278,9 +278,15 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
         bookingsRes.data.forEach(b => ranges.push({ start: b.start_date, end: b.end_date }))
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const avail = (listingRes.data as any)?.availability as { blocked?: Array<{ start: string; end: string }> } | null
+      const avail = (listingRes.data as any)?.availability as { blocked?: string[] | Array<{ start: string; end: string }> } | null
       if (avail?.blocked) {
-        avail.blocked.forEach(b => ranges.push({ start: b.start, end: b.end }))
+        avail.blocked.forEach((b: string | { start: string; end: string }) => {
+          if (typeof b === 'string') {
+            ranges.push({ start: b, end: b })
+          } else {
+            ranges.push({ start: b.start, end: b.end })
+          }
+        })
       }
       if (ranges.length > 0) setBookedRanges(ranges)
     })
@@ -352,7 +358,7 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
             className="w-4 h-4 rounded accent-[#7ecfc0]"
           />
           <span className="text-sm" style={{ color: '#555' }}>
-            Have the host print (+${Number(listing.print_fee).toFixed(2)})
+            Have host print (+${Number(listing.print_fee).toFixed(2)})
           </span>
         </label>
       )}
@@ -362,16 +368,16 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
             <span>${listing.price_per_day} × {days} day{days !== 1 ? 's' : ''}</span>
             <span>${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm" style={{ color: '#888' }}>
-            <span>City Feed fee (7%)</span>
-            <span>${fee.toFixed(2)}</span>
-          </div>
           {printFee > 0 && (
             <div className="flex justify-between text-sm" style={{ color: '#888' }}>
-              <span>Host printing fee</span>
+              <span>Print fee</span>
               <span>${printFee.toFixed(2)}</span>
             </div>
           )}
+          <div className="flex justify-between text-sm" style={{ color: '#888' }}>
+            <span>Buyer fee (7%)</span>
+            <span>${fee.toFixed(2)}</span>
+          </div>
           <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
@@ -421,8 +427,8 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
       const ranges: DisabledRange[] = []
       if (bookingsRes.data) bookingsRes.data.forEach(b => ranges.push({ start: b.start_date, end: b.end_date }))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const avail = (listingRes.data as any)?.availability as { blocked?: Array<{ start: string; end: string }> } | null
-      if (avail?.blocked) avail.blocked.forEach(b => ranges.push({ start: b.start, end: b.end }))
+      const avail = (listingRes.data as any)?.availability as { blocked?: string[] | Array<{ start: string; end: string }> } | null
+      if (avail?.blocked) avail.blocked.forEach((b: string | { start: string; end: string }) => { if (typeof b === 'string') { ranges.push({ start: b, end: b }) } else { ranges.push({ start: b.start, end: b.end }) } })
       if (ranges.length > 0) setBookedRanges(ranges)
     })
   }, [listing.id])
@@ -516,7 +522,7 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
                 className="w-4 h-4 rounded accent-[#7ecfc0]"
               />
               <span className="text-sm" style={{ color: '#555' }}>
-                Have the host print (+${Number(listing.print_fee).toFixed(2)})
+                Have host print (+${Number(listing.print_fee).toFixed(2)})
               </span>
             </label>
           )}
@@ -528,16 +534,16 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
                 <span>${listing.price_per_day} × {days} day{days !== 1 ? 's' : ''}</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm" style={{ color: '#888' }}>
-                <span>City Feed fee (7%)</span>
-                <span>${fee.toFixed(2)}</span>
-              </div>
               {mobilePrintFee > 0 && (
                 <div className="flex justify-between text-sm" style={{ color: '#888' }}>
-                  <span>Host printing fee</span>
+                  <span>Print fee</span>
                   <span>${mobilePrintFee.toFixed(2)}</span>
                 </div>
               )}
+              <div className="flex justify-between text-sm" style={{ color: '#888' }}>
+                <span>Buyer fee (7%)</span>
+                <span>${fee.toFixed(2)}</span>
+              </div>
               <div className="flex justify-between font-semibold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>

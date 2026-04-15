@@ -12,10 +12,14 @@ import { createClient } from '@/lib/supabase/client'
 const CATEGORIES = [
   { value: 'digital_billboards', label: 'Digital Billboard' },
   { value: 'static_billboards', label: 'Static Billboard' },
+  { value: 'billboard', label: 'Billboard' },
   { value: 'transit', label: 'Transit' },
   { value: 'outdoor_static', label: 'Outdoor Static' },
   { value: 'outdoor_digital', label: 'Outdoor Digital' },
   { value: 'display_on_premise', label: 'Display On-Premise' },
+  { value: 'storefront', label: 'Storefront' },
+  { value: 'window', label: 'Window Display' },
+  { value: 'vehicle_wrap', label: 'Vehicle Wrap' },
   { value: 'event_based', label: 'Event-Based' },
   { value: 'human_based', label: 'Human-Based' },
   { value: 'experiential', label: 'Experiential' },
@@ -25,12 +29,12 @@ const CATEGORIES = [
 ]
 
 const STATIC_CATEGORIES = [
-  'static_billboards',
   'outdoor_static',
-  'event_based',
-  'human_based',
-  'street_furniture',
-  'other',
+  'static_billboards',
+  'billboard',
+  'storefront',
+  'window',
+  'vehicle_wrap',
 ]
 
 const PRODUCTION_TIMES = [
@@ -780,6 +784,8 @@ export default function EditListingPage() {
                 style={inputStyle}
               />
             </FormField>
+            {!isStaticCat(form.category) && (
+            <>
             <Toggle
               value={form.accepts_video}
               onChange={v => set('accepts_video', v)}
@@ -814,6 +820,8 @@ export default function EditListingPage() {
                   />
                 </FormField>
               </div>
+            )}
+            </>
             )}
             {showStaticFields && (
               <>
@@ -866,23 +874,47 @@ export default function EditListingPage() {
             </FormField>
           </div>
 
-          {/* Printed Materials */}
+          {/* Printed Materials — static categories only */}
+          {isStaticCat(form.category) && (
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
             <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>Printed materials</h2>
             <Toggle
               value={form.requires_print}
-              onChange={v => set('requires_print', v)}
-              label="Requires printed materials?"
-              hint="Advertiser must provide or arrange printed materials for this placement"
+              onChange={v => {
+                set('requires_print', v)
+                if (!v) { set('offers_printing', false); set('print_fee', ''); set('delivery_address', '') }
+              }}
+              label="This placement requires printed materials"
             />
             {form.requires_print && (
-              <>
-                <Toggle
-                  value={form.offers_printing}
-                  onChange={v => set('offers_printing', v)}
-                  label="Do you offer printing for advertisers?"
-                  hint="You will handle printing on behalf of the advertiser"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#555' }}>
+                    How are printed materials handled?<span className="ml-1" style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="print_handling"
+                        checked={form.offers_printing === true}
+                        onChange={() => { set('offers_printing', true); set('delivery_address', '') }}
+                        className="w-4 h-4 accent-[#7ecfc0]"
+                      />
+                      <span className="text-sm" style={{ color: '#555' }}>Host prints &amp; installs</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="radio"
+                        name="print_handling"
+                        checked={form.offers_printing === false}
+                        onChange={() => { set('offers_printing', false); set('print_fee', '') }}
+                        className="w-4 h-4 accent-[#7ecfc0]"
+                      />
+                      <span className="text-sm" style={{ color: '#555' }}>Advertiser ships materials</span>
+                    </label>
+                  </div>
+                </div>
                 {form.offers_printing && (
                   <FormField label="Print fee ($)" hint="One-time fee charged to the advertiser for printing">
                     <div className="relative">
@@ -900,19 +932,22 @@ export default function EditListingPage() {
                     </div>
                   </FormField>
                 )}
-                <FormField label="Delivery / shipping address for materials" hint="Where should the advertiser ship printed materials?">
-                  <textarea
-                    value={form.delivery_address}
-                    onChange={e => set('delivery_address', e.target.value)}
-                    placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing"
-                    rows={3}
-                    className={`${inputClass} resize-none`}
-                    style={inputStyle}
-                  />
-                </FormField>
-              </>
+                {!form.offers_printing && (
+                  <FormField label="Delivery instructions" hint="Where and how should the advertiser ship printed materials?">
+                    <textarea
+                      value={form.delivery_address}
+                      onChange={e => set('delivery_address', e.target.value)}
+                      placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing"
+                      rows={3}
+                      className={`${inputClass} resize-none`}
+                      style={inputStyle}
+                    />
+                  </FormField>
+                )}
+              </div>
             )}
           </div>
+          )}
 
           {/* Restricted Dates Calendar */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
