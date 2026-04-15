@@ -267,7 +267,7 @@ function BookPageInner() {
                 className="w-4 h-4 rounded accent-[#7ecfc0]"
               />
               <span className="text-sm" style={{ color: '#555' }}>
-                Have the host print (+${Number(listing.print_fee).toFixed(2)})
+                Print my ad for me (+${Number(listing.print_fee).toFixed(2)})
               </span>
             </label>
           </div>
