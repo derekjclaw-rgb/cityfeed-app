@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -106,6 +106,45 @@ function ListingCard({ listing }: { listing: Listing }) {
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
+function HomeMap({ listings }: { listings: Listing[] }) {
+  const mapContainer = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!mapContainer.current || listings.length === 0) return
+    let map: any
+    import('mapbox-gl').then((mb) => {
+      const mapboxgl = (mb as any).default
+      mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
+      const center: [number, number] = listings[0]?.lat && listings[0]?.lng
+        ? [listings[0].lng, listings[0].lat]
+        : [-115.14, 36.17]
+      map = new mapboxgl.Map({
+        container: mapContainer.current!,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center,
+        zoom: 11,
+      })
+      function addMarkers() {
+        listings.forEach((l) => {
+          if (l.lat == null || l.lng == null) return
+          const el = document.createElement('div')
+          el.style.cursor = 'pointer'
+          el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;">$${l.price_per_day}</div>`
+          new mapboxgl.Marker({ element: el }).setLngLat([l.lng, l.lat]).addTo(map)
+        })
+      }
+      map.on('load', addMarkers)
+      map.on('style.load', addMarkers)
+      setTimeout(addMarkers, 2000)
+    })
+    return () => { map?.remove() }
+  }, [listings])
+  return (
+    <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid #e0e0d8' }}>
+      <div ref={mapContainer} className="w-full h-full" />
+    </div>
+  )
+}
+
 export default function HomePage() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All Types')
@@ -306,7 +345,13 @@ export default function HomePage() {
                     {filtered.map(listing => (
                       <Link key={listing.id} href={`/marketplace/${listing.id}`} className="block group">
                         <div className="flex gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all" style={{ border: '1px solid #e0e0d8' }}>
-                          <div className={`w-20 h-20 rounded-lg bg-gradient-to-br ${listing.image_placeholder} flex-shrink-0`} />
+                          <div className="w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden">
+                            {listing.images?.[0] ? (
+                              <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className={`w-full h-full bg-gradient-to-br ${listing.image_placeholder}`} />
+                            )}
+                          </div>
                           <div className="min-w-0">
                             <div className="text-sm font-semibold truncate group-hover:text-[#7ecfc0]" style={{ color: '#2b2b2b' }}>{listing.title}</div>
                             <div className="text-xs flex items-center gap-1 mt-1" style={{ color: '#888' }}>
@@ -318,16 +363,8 @@ export default function HomePage() {
                       </Link>
                     ))}
                   </div>
-                  {/* Map */}
-                  <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid #e0e0d8' }}>
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      style={{ border: 0 }}
-                      loading="lazy"
-                      src={`https://api.mapbox.com/styles/v1/mapbox/light-v11.html?title=false&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&zoomwheel=true&fresh=true#11/${filtered[0]?.lat ?? 36.17}/${filtered[0]?.lng ?? -115.14}`}
-                    />
-                  </div>
+                  {/* Map with pins */}
+                  <HomeMap listings={filtered} />
                 </div>
               )}
               <div className="text-center">
