@@ -107,8 +107,8 @@ function BookPageInner() {
     const end = new Date(endDate)
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
-    const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
-    return { days, subtotal, buyerFee, total: subtotal + buyerFee + printFeeAmount }
+    const buyerFee = Math.round((subtotal + printFeeAmount) * 0.07 * 100) / 100
+    return { days, subtotal, buyerFee, total: subtotal + printFeeAmount + buyerFee }
   }, [startDate, endDate, listing, printFeeAmount])
 
   async function handleAuthSubmit(e: React.FormEvent) {

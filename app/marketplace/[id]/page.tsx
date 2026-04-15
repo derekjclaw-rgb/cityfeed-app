@@ -298,8 +298,8 @@ function BookingWidget({ listing, startDate: externalStart, endDate: externalEnd
     const end = new Date(endDate)
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
-    const fee = Math.round(subtotal * 0.07 * 100) / 100
-    return { days, subtotal, fee, total: subtotal + fee + printFee }
+    const fee = Math.round((subtotal + printFee) * 0.07 * 100) / 100
+    return { days, subtotal, fee, total: subtotal + printFee + fee }
   }, [startDate, endDate, listing.price_per_day, printFee])
 
   const tooShort = listing.min_days && days > 0 && days < listing.min_days
@@ -439,8 +439,8 @@ function MobileBookingSheet({ listing, onClose }: MobileBookingSheetProps) {
     const end = new Date(internalEnd)
     const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
     const subtotal = days * listing.price_per_day
-    const fee = Math.round(subtotal * 0.07 * 100) / 100
-    return { days, subtotal, fee, total: subtotal + fee + mobilePrintFee }
+    const fee = Math.round((subtotal + mobilePrintFee) * 0.07 * 100) / 100
+    return { days, subtotal, fee, total: subtotal + mobilePrintFee + fee }
   }, [internalStart, internalEnd, listing.price_per_day, mobilePrintFee])
 
   const mobileTooShort = listing.min_days && days > 0 && days < listing.min_days
