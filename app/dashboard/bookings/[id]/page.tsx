@@ -1050,8 +1050,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         </div>
       </div>
 
-      <div
-        className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer mb-4 transition-colors relative"
+      <label
+        className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer mb-4 transition-colors relative block"
         style={{
           borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
           backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
@@ -1059,10 +1059,6 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={e => { e.preventDefault(); setIsDragging(false); handlePOPUpload(e.dataTransfer.files) }}
-        onClick={() => {
-          console.log('[POP] Drop zone clicked, fileInputRef:', fileInputRef.current)
-          if (fileInputRef.current) fileInputRef.current.click()
-        }}
       >
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
@@ -1076,17 +1072,15 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             <p className="text-xs mt-1" style={{ color: '#aaa' }}>JPG, PNG, MP4 · Drag & drop or click to browse</p>
           </>
         )}
-        <label style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, cursor: 'pointer', opacity: 0 }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/*,video/mp4"
-            style={{ position: 'absolute', opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-            onChange={e => handlePOPUpload(e.target.files)}
-          />
-        </label>
-      </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,video/mp4"
+          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' }}
+          onChange={e => handlePOPUpload(e.target.files)}
+        />
+      </label>
 
       {error && (
         <p className="text-xs mb-3" style={{ color: '#dc2626' }}>{error}</p>

@@ -326,6 +326,84 @@ export async function GET(req: NextRequest) {
 
     console.log(`[AutoApprove] 36h reminders: ${reminderResults36.length} sent`)
 
+    // ── Morning-of POP reminder to hosts ──────────────────────────────────────
+    // If creative was uploaded but POP has not been uploaded by the morning of
+    // campaign start_date, remind the host to post the ad.
+    const morningPOPResults: Array<{ booking_id: string; type: string }> = []
+
+    // Find bookings where start_date is today and status indicates creative has been received
+    // Status flow: confirmed → (advertiser uploads creative) → still 'confirmed' or 'active'
+    // We look for bookings starting today that have collateral but no POP
+    const { data: startingTodayBookings } = await supabase
+      .from('bookings')
+      .select('id, host_id, advertiser_id, start_date, listing_id, listings(title)')
+      .in('status', ['confirmed', 'active', 'pop_pending'])
+      .eq('start_date', today)
+
+    if (startingTodayBookings && startingTodayBookings.length > 0) {
+      for (const bk of startingTodayBookings) {
+        // Check if creative/collateral files exist (advertiser sent materials)
+        const { data: collateralFiles } = await supabase.storage
+          .from('booking-collateral')
+          .list(`bookings/${bk.id}`, { limit: 1 })
+        const hasCreative = collateralFiles && collateralFiles.length > 0
+
+        if (!hasCreative) continue // No creative uploaded — nothing for host to act on
+
+        // Check if POP files exist
+        const { data: popFiles } = await supabase.storage
+          .from('booking-collateral')
+          .list(`pop/${bk.id}`, { limit: 1 })
+        const hasPOP = popFiles && popFiles.length > 0
+
+        if (hasPOP) continue // POP already uploaded — no reminder needed
+
+        // Check if we already sent this morning reminder
+        const { data: existingNotif } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', bk.host_id)
+          .eq('type', 'pop_reminder_morning')
+          .ilike('href', `%${bk.id}%`)
+          .limit(1)
+
+        if (existingNotif && existingNotif.length > 0) continue // Already sent
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const listingTitle = (bk as any).listings?.title ?? 'your listing'
+
+        // Send in-app notification
+        await supabase.from('notifications').insert({
+          user_id: bk.host_id,
+          type: 'pop_reminder_morning',
+          title: '📸 Post the ad today!',
+          body: `Your campaign for "${listingTitle}" starts today. Creative files have been uploaded — please post the ad and upload your proof of posting.`,
+          href: `/dashboard/bookings/${bk.id}`,
+        })
+
+        // Send email reminder
+        const { data: hostProfile } = await supabase
+          .from('profiles').select('email, first_name').eq('id', bk.host_id).single()
+        if (hostProfile?.email) {
+          await fetch(`${baseUrl}/api/email/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'pop_reminder_morning',
+              hostEmail: hostProfile.email,
+              listingTitle,
+              bookingId: bk.id,
+            }),
+          }).catch(err => console.warn('[Cron] Morning POP reminder email failed:', err))
+        }
+
+        morningPOPResults.push({ booking_id: bk.id, type: 'pop_reminder_morning' })
+        console.log(`[AutoApprove] Morning POP reminder sent for booking ${bk.id} — campaign starts today, creative uploaded, no POP yet`)
+      }
+    }
+
+    console.log(`[AutoApprove] Morning POP reminders: ${morningPOPResults.length} sent`)
+
     return NextResponse.json({
       message: `Auto-approved ${pendingBookings.length} POP booking(s)`,
       count: pendingBookings.length,
@@ -333,6 +411,7 @@ export async function GET(req: NextRequest) {
       campaign_complete_messages: campaignCompleteResults.length,
       collateral_reminders: collateralReminderResults.length,
       reminders_36h: reminderResults36.length,
+      morning_pop_reminders: morningPOPResults.length,
     })
   } catch (err) {
     console.error('[AutoApprove] Unexpected error:', err)

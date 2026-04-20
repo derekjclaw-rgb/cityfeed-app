@@ -64,6 +64,7 @@ export type EmailEvent =
   | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string }
   | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number }
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
+  | { type: 'pop_reminder_morning'; hostEmail: string; listingTitle: string; bookingId: string }
 
 export async function sendEmail(event: EmailEvent): Promise<void> {
   const mailer = getTransporter()
@@ -217,6 +218,30 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             </div>
             <p style="color:#555;margin:0 0 20px">Your payout is being processed via Stripe.</p>
             <a href="${BASE_URL}/dashboard" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Dashboard →</a>
+          `),
+        })
+        break
+
+      case 'pop_reminder_morning':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `📸 Campaign starts today — post the ad for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">📸 Your Campaign Starts Today</h2>
+            <p style="color:#555;margin:0 0 12px">The advertiser has uploaded their creative files and your campaign for <strong>${event.listingTitle}</strong> starts today.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0;color:#888">Creative files: <strong style="color:#16a34a">Uploaded ✓</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 8px"><strong>What to do:</strong></p>
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Review the creative files on the booking page</li>
+              <li style="margin-bottom:6px">Post the ad at your location</li>
+              <li>Upload your proof of posting (photo/video of the ad live)</li>
+            </ol>
+            <p style="color:#555;margin:0 0 20px">Payout is released once proof of posting is approved.</p>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking & Post Ad →</a>
           `),
         })
         break
