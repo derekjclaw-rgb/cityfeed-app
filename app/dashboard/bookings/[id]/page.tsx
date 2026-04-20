@@ -1077,7 +1077,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           type="file"
           multiple
           accept="image/*,video/mp4"
-          style={{ position: 'absolute', opacity: 0, width: 0, height: 0, overflow: 'hidden' }}
+          className="sr-only"
           onChange={e => handlePOPUpload(e.target.files)}
         />
       </label>
