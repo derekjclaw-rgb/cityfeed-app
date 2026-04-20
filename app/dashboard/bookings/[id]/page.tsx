@@ -803,6 +803,7 @@ interface POPSectionProps {
 
 function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle }: POPSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
@@ -848,16 +849,25 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     loadPOPFiles()
   }, [bookingId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handlePOPUpload(incoming: FileList | null) {
-    if (!incoming || incoming.length === 0 || uploading) return
+  function handleStagePOPFiles(incoming: FileList | null) {
+    if (!incoming || incoming.length === 0) return
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    setPendingFiles(prev => [...prev, ...Array.from(incoming)])
+    setError('')
+  }
+
+  function removePendingFile(index: number) {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleSubmitPOP() {
+    if (pendingFiles.length === 0 || uploading) return
     setUploading(true)
     setError('')
-    // Reset input so same file can be re-selected if needed
-    if (fileInputRef.current) fileInputRef.current.value = ''
 
     const uploadedUrls: string[] = []
     const uploadedNames: string[] = []
-    for (const file of Array.from(incoming)) {
+    for (const file of pendingFiles) {
       const safeName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
       const fd = new FormData()
       fd.append('file', file)
@@ -896,6 +906,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       console.error('[POP] Payout fetch error:', err)
     }
 
+    setPendingFiles([])
     setUploading(false)
     setSubmitted(true)
     await loadPOPFiles()
@@ -1058,36 +1069,82 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         }}
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
-        onDrop={e => { e.preventDefault(); setIsDragging(false); handlePOPUpload(e.dataTransfer.files) }}
+        onDrop={e => { e.preventDefault(); setIsDragging(false); handleStagePOPFiles(e.dataTransfer.files) }}
       >
-        {uploading ? (
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
-            <p className="text-sm" style={{ color: '#888' }}>Uploading proof...</p>
-          </div>
-        ) : (
-          <>
-            <Upload className="w-7 h-7 mx-auto mb-2" style={{ color: '#ccc' }} />
-            <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>Upload proof photos or video</p>
-            <p className="text-xs mt-1" style={{ color: '#aaa' }}>JPG, PNG, MP4 · Drag & drop or click to browse</p>
-          </>
-        )}
+        <Upload className="w-7 h-7 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
+        <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>Upload proof photos or video</p>
+        <p className="text-xs mt-1" style={{ color: '#aaa' }}>JPG, PNG, MP4 · Drag & drop or click to browse</p>
         <input
           ref={fileInputRef}
           type="file"
           multiple
           accept="image/*,video/mp4"
           className="sr-only"
-          onChange={e => handlePOPUpload(e.target.files)}
+          onChange={e => handleStagePOPFiles(e.target.files)}
         />
       </label>
+
+      {/* Staged files preview */}
+      {pendingFiles.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <p className="text-xs font-medium" style={{ color: '#2b2b2b' }}>{pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} ready to submit</p>
+          {pendingFiles.map((file, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 px-3 py-2 rounded-xl"
+              style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+            >
+              {file.type.startsWith('image/') ? (
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={file.name}
+                  className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#e0e0d8' }}>
+                  <Upload className="w-4 h-4" style={{ color: '#888' }} />
+                </div>
+              )}
+              <span className="text-sm flex-1 truncate" style={{ color: '#555' }}>{file.name}</span>
+              <button
+                type="button"
+                onClick={() => removePendingFile(i)}
+                className="p-1.5 rounded hover:bg-white transition-colors"
+                title="Remove"
+              >
+                <span style={{ color: '#dc2626', fontSize: '14px', fontWeight: 600 }}>×</span>
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={handleSubmitPOP}
+            disabled={uploading}
+            className="w-full py-3 rounded-xl text-sm font-semibold transition-colors"
+            style={{
+              backgroundColor: uploading ? '#a0a0a0' : '#7ecfc0',
+              color: '#fff',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {uploading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading & submitting...
+              </span>
+            ) : (
+              `Submit Proof of Posting (${pendingFiles.length} file${pendingFiles.length > 1 ? 's' : ''})`
+            )}
+          </button>
+        </div>
+      )}
 
       {error && (
         <p className="text-xs mb-3" style={{ color: '#dc2626' }}>{error}</p>
       )}
 
       <p className="text-xs" style={{ color: '#aaa' }}>
-        Uploading proof completes the campaign and initiates your payout. Expected within 2 business days.
+        Add all your proof photos, then hit submit. This completes the campaign and initiates your payout.
       </p>
     </div>
   )
