@@ -53,11 +53,8 @@ function StarDisplay({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'l
   )
 }
 
-function formatName(fullName: string): string {
-  const parts = fullName.trim().split(' ')
-  if (parts.length === 1) return parts[0]
-  return `${parts[0]} ${parts[parts.length - 1].charAt(0)}.`
-}
+// Using shared formatNamePublic from lib/utils
+import { formatNamePublic as formatName } from '@/lib/utils'
 
 export default function PublicProfilePage() {
   const params = useParams()

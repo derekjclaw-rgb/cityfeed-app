@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../page'
 import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicker'
 import FavoriteButton from '@/components/FavoriteButton'
+import { formatNamePublic } from '@/lib/utils'
 
 const CATEGORY_MAP: Record<string, string> = {
   digital_billboards: 'Digital Billboard',
@@ -701,7 +702,8 @@ export default function ListingDetailPage() {
   }
 
   const mockHost = MOCK_HOSTS[id]
-  const hostName = host?.full_name ?? mockHost?.name ?? 'Host'
+  const hostNameRaw = host?.full_name ?? mockHost?.name ?? 'Host'
+  const hostName = formatNamePublic(hostNameRaw)
   const hostInitials = hostName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
   const hostJoined = host?.created_at
     ? new Date(host.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })

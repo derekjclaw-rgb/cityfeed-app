@@ -1061,8 +1061,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         </div>
       </div>
 
-      <label
-        className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer mb-4 transition-colors relative block"
+      <div
+        className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer mb-4 transition-colors"
         style={{
           borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
           backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
@@ -1070,19 +1070,23 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={e => { e.preventDefault(); setIsDragging(false); handleStagePOPFiles(e.dataTransfer.files) }}
+        onClick={() => {
+          // Programmatic file picker — works on iOS Safari, Chrome, all browsers
+          const input = document.createElement('input')
+          input.type = 'file'
+          input.multiple = true
+          input.accept = 'image/*,video/mp4'
+          input.onchange = (e) => {
+            const target = e.target as HTMLInputElement
+            handleStagePOPFiles(target.files)
+          }
+          input.click()
+        }}
       >
         <Upload className="w-7 h-7 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
         <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>Upload proof photos or video</p>
         <p className="text-xs mt-1" style={{ color: '#aaa' }}>JPG, PNG, MP4 · Drag & drop or click to browse</p>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="image/*,video/mp4"
-          className="sr-only"
-          onChange={e => handleStagePOPFiles(e.target.files)}
-        />
-      </label>
+      </div>
 
       {/* Staged files preview */}
       {pendingFiles.length > 0 && (

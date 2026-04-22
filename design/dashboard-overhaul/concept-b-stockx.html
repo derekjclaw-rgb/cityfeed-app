@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Feed — Bricks Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #fafafa;
+    --bg-white: #ffffff;
+    --bg-wash: #f3f3f3;
+    --bg-dark: #111111;
+    --border: #e5e5e5;
+    --border-dark: #d0d0d0;
+    --text: #111111;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --green: #08a045;
+    --green-bg: #e8f7ee;
+    --red: #e23636;
+    --red-bg: #fde8e8;
+    --amber: #d97706;
+    --amber-bg: #fef3cd;
+    --blue: #2563eb;
+    --blue-bg: #e8f0fe;
+    --accent: #111111;
+    --radius: 0px;
+    --radius-sm: 0px;
+    --sidebar-w: 220px;
+    --topbar-h: 56px;
+  }
+
+  body {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── App Shell ─── */
+  .app { display: flex; min-height: 100vh; }
+
+  /* ─── Sidebar ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-dark);
+    color: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-brand {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+  }
+
+  .brand-sub {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+  }
+
+  /* Role toggle */
+  .role-toggle {
+    margin: 16px 16px 8px;
+    display: flex;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .role-option {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .role-option.active {
+    background: #fff;
+    color: #111;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 0;
+    overflow-y: auto;
+  }
+
+  .s-nav-group { margin-bottom: 20px; }
+
+  .s-nav-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+    padding: 0 20px;
+    margin-bottom: 8px;
+  }
+
+  .s-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.1s;
+    border-left: 3px solid transparent;
+  }
+
+  .s-nav-item:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.03); }
+
+  .s-nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+    border-left-color: #fff;
+  }
+
+  .s-nav-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.12);
+    padding: 2px 7px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .s-avatar {
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .s-user-name { font-size: 12px; font-weight: 600; }
+  .s-user-role { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ─── Main ─── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    height: var(--topbar-h);
+    border-bottom: 2px solid var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: var(--bg-white);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--border);
+    padding: 6px 12px;
+    gap: 8px;
+    width: 240px;
+    transition: border-color 0.15s;
+  }
+
+  .search-box:focus-within { border-color: var(--bg-dark); }
+
+  .search-box input {
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 12px;
+    width: 100%;
+    background: transparent;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--border);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.1s;
+    position: relative;
+  }
+
+  .icon-btn:hover { border-color: var(--bg-dark); background: var(--bg-wash); }
+
+  .badge-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background: var(--red);
+  }
+
+  /* Content */
+  .content { padding: 32px; }
+
+  /* ─── Stats Ticker ─── */
+  .stats-ticker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 2px solid var(--bg-dark);
+    margin-bottom: 32px;
+    background: var(--bg-white);
+  }
+
+  .stat-cell {
+    padding: 24px;
+    border-right: 2px solid var(--bg-dark);
+    position: relative;
+  }
+
+  .stat-cell:last-child { border-right: none; }
+
+  .stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -1px;
+  }
+
+  .stat-change {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+  }
+
+  .stat-change.up { background: var(--green-bg); color: var(--green); }
+  .stat-change.down { background: var(--red-bg); color: var(--red); }
+
+  .stat-tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+  }
+
+  /* ─── Grid Layout ─── */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .panel {
+    background: var(--bg-white);
+    border: 2px solid var(--bg-dark);
+  }
+
+  .panel + .panel { border-left: 0; }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 2px solid var(--bg-dark);
+  }
+
+  .panel-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .panel-actions { display: flex; gap: 4px; }
+
+  .filter-btn {
+    padding: 5px 12px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 2px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .filter-btn.active { background: var(--bg-dark); color: #fff; border-color: var(--bg-dark); }
+  .filter-btn:hover:not(.active) { border-color: var(--bg-dark); }
+
+  /* ─── Transactions List ─── */
+  .tx-list { max-height: 520px; overflow-y: auto; }
+
+  .tx-item {
+    display: grid;
+    grid-template-columns: 90px 1fr 120px 100px 100px;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .tx-item:hover { background: var(--bg-wash); }
+
+  .tx-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .tx-listing { display: flex; align-items: center; gap: 10px; }
+
+  .tx-type-badge {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .tx-name { font-size: 13px; font-weight: 600; }
+  .tx-meta { font-size: 11px; color: var(--text-muted); }
+
+  .tx-status {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    display: inline-block;
+  }
+
+  .tx-status.posted { background: var(--green-bg); color: var(--green); }
+  .tx-status.pending { background: var(--amber-bg); color: var(--amber); }
+  .tx-status.review { background: var(--blue-bg); color: var(--blue); }
+  .tx-status.complete { background: var(--bg-wash); color: var(--text-muted); }
+  .tx-status.confirmed { background: #111; color: #fff; }
+
+  .tx-date { font-size: 12px; color: var(--text-secondary); }
+
+  .tx-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  /* ─── Earnings Panel ─── */
+  .earnings-panel { display: flex; flex-direction: column; }
+
+  .earnings-hero {
+    padding: 32px 24px;
+    text-align: center;
+    border-bottom: 2px solid var(--bg-dark);
+    background: var(--bg-dark);
+    color: #fff;
+  }
+
+  .earnings-hero-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 8px;
+  }
+
+  .earnings-hero-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -2px;
+  }
+
+  .earnings-hero-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+  }
+
+  .payout-btn {
+    display: block;
+    width: calc(100% - 48px);
+    margin: 16px 24px;
+    padding: 12px;
+    background: var(--bg-dark);
+    color: #fff;
+    border: none;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .payout-btn:hover { background: #333; }
+
+  .earnings-rows { padding: 0; flex: 1; }
+
+  .earn-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .earn-row:last-child { border-bottom: none; }
+
+  .earn-row-left { display: flex; align-items: center; gap: 10px; }
+
+  .earn-color {
+    width: 12px;
+    height: 12px;
+    border: 2px solid;
+  }
+
+  .earn-label { font-size: 12px; color: var(--text-secondary); }
+
+  .earn-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .earn-bar {
+    height: 4px;
+    background: var(--bg-wash);
+    margin: 0 24px;
+  }
+
+  .earn-bar-fill { height: 100%; background: var(--bg-dark); }
+
+  /* ─── Booking Detail ─── */
+  .detail-panel {
+    background: var(--bg-white);
+    border: 2px solid var(--bg-dark);
+    margin-bottom: 32px;
+  }
+
+  .detail-top {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 2px solid var(--bg-dark);
+  }
+
+  .detail-main-info {
+    flex: 1;
+    padding: 28px;
+  }
+
+  .detail-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .detail-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 3px 8px;
+    border: 2px solid;
+  }
+
+  .detail-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .detail-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .detail-price-box {
+    width: 200px;
+    border-left: 2px solid var(--bg-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background: var(--bg-wash);
+  }
+
+  .detail-price-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .detail-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+
+  .detail-price-net {
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .detail-cell {
+    padding: 20px 24px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-cell:nth-child(4n) { border-right: none; }
+
+  .detail-cell-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .detail-cell-value { font-size: 14px; font-weight: 600; }
+
+  /* Progress steps */
+  .progress-steps {
+    display: flex;
+    padding: 0;
+    border-top: 2px solid var(--bg-dark);
+  }
+
+  .step {
+    flex: 1;
+    padding: 16px 20px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+
+  .step:last-child { border-right: none; }
+
+  .step.done { background: var(--bg-dark); color: #fff; }
+  .step.current { background: var(--green-bg); }
+  .step.upcoming { color: var(--text-muted); }
+
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .step-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .step.done .step-label { color: rgba(255,255,255,0.6); }
+
+  /* ─── Bottom Grid ─── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .bottom-grid .panel + .panel { border-left: 0; }
+
+  /* Notifications */
+  .notif-list { max-height: 340px; overflow-y: auto; }
+
+  .notif-row {
+    display: flex;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .notif-row:hover { background: var(--bg-wash); }
+
+  .notif-type {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--bg-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .notif-body { flex: 1; }
+  .notif-text { font-size: 13px; line-height: 1.4; }
+  .notif-text b { font-weight: 700; }
+  .notif-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+  .notif-unread { border-left: 3px solid var(--bg-dark); }
+
+  /* Activity Feed */
+  .activity-feed { max-height: 340px; overflow-y: auto; }
+
+  .activity-item {
+    display: flex;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .activity-marker {
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .activity-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .activity-text strong { color: var(--text); }
+  .activity-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  /* POP Upload */
+  .pop-zone {
+    border: 3px dashed var(--border);
+    margin: 20px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .pop-zone:hover { border-color: var(--bg-dark); background: var(--bg-wash); }
+
+  .pop-icon { font-size: 28px; margin-bottom: 8px; }
+  .pop-text { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .pop-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Action buttons */
+  .action-row {
+    display: flex;
+    gap: 0;
+    padding: 0 20px 16px;
+  }
+
+  .act-btn {
+    flex: 1;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border: 2px solid var(--bg-dark);
+    cursor: pointer;
+    transition: all 0.1s;
+    text-align: center;
+  }
+
+  .act-btn.primary { background: var(--bg-dark); color: #fff; }
+  .act-btn.secondary { background: transparent; color: var(--text); border-left: 0; }
+  .act-btn:hover { opacity: 0.85; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-dark); }
+</style>
+</head>
+<body>
+  <div class="app">
+    <!-- ─── Sidebar ─── -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-name">City Feed</div>
+        <div class="brand-sub">Ad Marketplace</div>
+      </div>
+
+      <div class="role-toggle">
+        <div class="role-option active">HOST</div>
+        <div class="role-option">ADVERTISER</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="s-nav-group">
+          <div class="s-nav-label">Overview</div>
+          <div class="s-nav-item active">
+            <span>◼</span> Dashboard
+          </div>
+          <div class="s-nav-item">
+            <span>◻</span> My Listings
+            <span class="s-nav-count">4</span>
+          </div>
+        </div>
+
+        <div class="s-nav-group">
+          <div class="s-nav-label">Transactions</div>
+          <div class="s-nav-item">
+            <span>↹</span> Bookings
+            <span class="s-nav-count">7</span>
+          </div>
+          <div class="s-nav-item">
+            <span>$</span> Earnings
+          </div>
+          <div class="s-nav-item">
+            <span>→</span> Payouts
+          </div>
+        </div>
+
+        <div class="s-nav-group">
+          <div class="s-nav-label">Communication</div>
+          <div class="s-nav-item">
+            <span>✉</span> Messages
+            <span class="s-nav-count">2</span>
+          </div>
+          <div class="s-nav-item">
+            <span>!</span> Alerts
+            <span class="s-nav-count">5</span>
+          </div>
+        </div>
+
+        <div class="s-nav-group">
+          <div class="s-nav-label">Tools</div>
+          <div class="s-nav-item">
+            <span>◎</span> POP Center
+          </div>
+          <div class="s-nav-item">
+            <span>⚙</span> Settings
+          </div>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="s-avatar">MK</div>
+        <div>
+          <div class="s-user-name">Michael K.</div>
+          <div class="s-user-role">Host · Verified</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─── Main Content ─── -->
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">Host Dashboard</div>
+        <div class="topbar-right">
+          <div class="search-box">
+            <span style="color: var(--text-muted);">⌘</span>
+            <input type="text" placeholder="Search transactions...">
+          </div>
+          <button class="icon-btn">
+            <span style="font-size: 14px;">🔔</span>
+            <span class="badge-dot"></span>
+          </button>
+          <button class="icon-btn">
+            <span style="font-size: 14px;">⚙</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <!-- ─── Stats Ticker ─── -->
+        <div class="stats-ticker">
+          <div class="stat-cell">
+            <span class="stat-tag">MTD</span>
+            <div class="stat-label">Gross Revenue</div>
+            <div class="stat-value">$12,840</div>
+            <span class="stat-change up">▲ 23.5%</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-tag">Active</span>
+            <div class="stat-label">Open Bookings</div>
+            <div class="stat-value">7</div>
+            <span class="stat-change up">▲ 2 new</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-tag">Avg</span>
+            <div class="stat-label">Booking Value</div>
+            <div class="stat-value">$1,834</div>
+            <span class="stat-change up">▲ 12%</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-tag">30D</span>
+            <div class="stat-label">Occupancy Rate</div>
+            <div class="stat-value">78%</div>
+            <span class="stat-change down">▼ 3%</span>
+          </div>
+        </div>
+
+        <!-- ─── Booking Detail ─── -->
+        <div class="detail-panel">
+          <div class="detail-top">
+            <div class="detail-main-info">
+              <div class="detail-badge-row">
+                <span class="detail-tag" style="border-color: var(--green); color: var(--green);">ACTIVE</span>
+                <span class="detail-tag" style="border-color: var(--border); color: var(--text-muted);">BILLBOARD</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);">#CF-2026-0847</span>
+              </div>
+              <div class="detail-title">Downtown Billboard — Fremont St</div>
+              <div class="detail-subtitle">Booked by Neon Brew Coffee Co. · Campaign: Apr 1 – Apr 30, 2026</div>
+            </div>
+            <div class="detail-price-box">
+              <div class="detail-price-label">Booking Total</div>
+              <div class="detail-price">$3,200</div>
+              <div class="detail-price-net">Net $2,720 after fees</div>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-cell">
+              <div class="detail-cell-label">Placement</div>
+              <div class="detail-cell-value">Billboard · 14' × 48'</div>
+            </div>
+            <div class="detail-cell">
+              <div class="detail-cell-label">Duration</div>
+              <div class="detail-cell-value">30 days</div>
+            </div>
+            <div class="detail-cell">
+              <div class="detail-cell-label">Creative Status</div>
+              <div class="detail-cell-value" style="color: var(--green);">✓ Approved</div>
+            </div>
+            <div class="detail-cell">
+              <div class="detail-cell-label">Payout</div>
+              <div class="detail-cell-value">Escrowed → Apr 30</div>
+            </div>
+          </div>
+
+          <div class="progress-steps">
+            <div class="step done">
+              <div class="step-num">01</div>
+              <div class="step-label">Requested</div>
+            </div>
+            <div class="step done">
+              <div class="step-num">02</div>
+              <div class="step-label">Confirmed</div>
+            </div>
+            <div class="step done">
+              <div class="step-num">03</div>
+              <div class="step-label">Creative Up</div>
+            </div>
+            <div class="step current">
+              <div class="step-num">04</div>
+              <div class="step-label">Ad Posted</div>
+            </div>
+            <div class="step upcoming">
+              <div class="step-num">05</div>
+              <div class="step-label">Completed</div>
+            </div>
+            <div class="step upcoming">
+              <div class="step-num">06</div>
+              <div class="step-label">Payout</div>
+            </div>
+          </div>
+
+          <div class="action-row" style="padding: 16px 20px;">
+            <div class="act-btn primary">UPLOAD POP PHOTO</div>
+            <div class="act-btn secondary">MESSAGE ADVERTISER</div>
+            <div class="act-btn secondary">VIEW CREATIVE</div>
+          </div>
+        </div>
+
+        <!-- ─── Bookings + Earnings ─── -->
+        <div class="layout-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">All Bookings</span>
+              <div class="panel-actions">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Active</button>
+                <button class="filter-btn">Pending</button>
+                <button class="filter-btn">Done</button>
+              </div>
+            </div>
+            <div class="tx-list">
+              <div class="tx-item">
+                <span class="tx-id">#CF-0847</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">🏙️</div>
+                  <div>
+                    <div class="tx-name">Fremont St Billboard</div>
+                    <div class="tx-meta">Neon Brew Coffee · Billboard 14'×48'</div>
+                  </div>
+                </div>
+                <span class="tx-status posted">POSTED</span>
+                <span class="tx-date">Apr 1–30</span>
+                <span class="tx-amount">$3,200</span>
+              </div>
+
+              <div class="tx-item">
+                <span class="tx-id">#CF-0851</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">🪟</div>
+                  <div>
+                    <div class="tx-name">Fashion Show Mall Window</div>
+                    <div class="tx-meta">Vega Streetwear · Window 6'×8'</div>
+                  </div>
+                </div>
+                <span class="tx-status review">REVIEW</span>
+                <span class="tx-date">Apr 15 – May 15</span>
+                <span class="tx-amount">$1,450</span>
+              </div>
+
+              <div class="tx-item">
+                <span class="tx-id">#CF-0839</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">📺</div>
+                  <div>
+                    <div class="tx-name">Arts District Digital Screen</div>
+                    <div class="tx-meta">Desert Yoga Studio · Digital 55"</div>
+                  </div>
+                </div>
+                <span class="tx-status pending">PENDING</span>
+                <span class="tx-date">Apr 20 – May 20</span>
+                <span class="tx-amount">$680</span>
+              </div>
+
+              <div class="tx-item">
+                <span class="tx-id">#CF-0815</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">🏙️</div>
+                  <div>
+                    <div class="tx-name">I-15 Southbound Billboard</div>
+                    <div class="tx-meta">SunPower Solar NV · Billboard 10'×30'</div>
+                  </div>
+                </div>
+                <span class="tx-status confirmed">CONFIRMED</span>
+                <span class="tx-date">May 1 – Jun 30</span>
+                <span class="tx-amount">$5,800</span>
+              </div>
+
+              <div class="tx-item">
+                <span class="tx-id">#CF-0822</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">📋</div>
+                  <div>
+                    <div class="tx-name">Container Park Poster</div>
+                    <div class="tx-meta">Cactus Jack Tacos · Poster 4'×6'</div>
+                  </div>
+                </div>
+                <span class="tx-status complete">COMPLETE</span>
+                <span class="tx-date">Mar 1–31</span>
+                <span class="tx-amount">$420</span>
+              </div>
+
+              <div class="tx-item">
+                <span class="tx-id">#CF-0798</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">📺</div>
+                  <div>
+                    <div class="tx-name">Henderson Digital Board</div>
+                    <div class="tx-meta">FitLife Gym · Digital 42"</div>
+                  </div>
+                </div>
+                <span class="tx-status complete">COMPLETE</span>
+                <span class="tx-date">Feb 1–28</span>
+                <span class="tx-amount">$540</span>
+              </div>
+
+              <div class="tx-item">
+                <span class="tx-id">#CF-0784</span>
+                <div class="tx-listing">
+                  <div class="tx-type-badge">🪟</div>
+                  <div>
+                    <div class="tx-name">Summerlin Town Square Window</div>
+                    <div class="tx-meta">Luna Boutique · Window 8'×10'</div>
+                  </div>
+                </div>
+                <span class="tx-status complete">COMPLETE</span>
+                <span class="tx-date">Feb 15 – Mar 15</span>
+                <span class="tx-amount">$750</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Earnings Panel -->
+          <div class="panel earnings-panel">
+            <div class="panel-header">
+              <span class="panel-title">Earnings</span>
+              <div class="panel-actions">
+                <button class="filter-btn active">30D</button>
+                <button class="filter-btn">90D</button>
+                <button class="filter-btn">YTD</button>
+              </div>
+            </div>
+            <div class="earnings-hero">
+              <div class="earnings-hero-label">Available Balance</div>
+              <div class="earnings-hero-amount">$8,245</div>
+              <div class="earnings-hero-sub">$4,595 pending in escrow</div>
+            </div>
+            <button class="payout-btn">REQUEST PAYOUT →</button>
+
+            <div class="earnings-rows">
+              <div class="earn-row">
+                <div class="earn-row-left">
+                  <div class="earn-color" style="border-color: #111; background: #111;"></div>
+                  <span class="earn-label">Billboards</span>
+                </div>
+                <span class="earn-value">$5,640</span>
+              </div>
+              <div class="earn-bar"><div class="earn-bar-fill" style="width: 64%;"></div></div>
+
+              <div class="earn-row">
+                <div class="earn-row-left">
+                  <div class="earn-color" style="border-color: #666; background: #666;"></div>
+                  <span class="earn-label">Window Displays</span>
+                </div>
+                <span class="earn-value">$2,180</span>
+              </div>
+              <div class="earn-bar"><div class="earn-bar-fill" style="width: 25%; background: #666;"></div></div>
+
+              <div class="earn-row">
+                <div class="earn-row-left">
+                  <div class="earn-color" style="border-color: #ccc; background: #ccc;"></div>
+                  <span class="earn-label">Digital Screens</span>
+                </div>
+                <span class="earn-value">$1,020</span>
+              </div>
+              <div class="earn-bar"><div class="earn-bar-fill" style="width: 12%; background: #ccc;"></div></div>
+
+              <div class="earn-row" style="border-top: 2px solid var(--bg-dark); margin-top: 8px; padding-top: 16px;">
+                <div class="earn-row-left">
+                  <span class="earn-label" style="font-weight: 600; color: var(--text);">Gross Total</span>
+                </div>
+                <span class="earn-value">$12,840</span>
+              </div>
+              <div class="earn-row">
+                <div class="earn-row-left">
+                  <span class="earn-label">Platform Fee (15%)</span>
+                </div>
+                <span class="earn-value" style="color: var(--red);">−$1,926</span>
+              </div>
+              <div class="earn-row">
+                <div class="earn-row-left">
+                  <span class="earn-label" style="font-weight: 700; color: var(--text); font-size: 13px;">Net Earnings</span>
+                </div>
+                <span class="earn-value" style="font-size: 16px;">$10,914</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Notifications + Activity ─── -->
+        <div class="bottom-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Notifications</span>
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); cursor: pointer;">Mark Read</span>
+            </div>
+            <div class="notif-list">
+              <div class="notif-row notif-unread">
+                <div class="notif-type" style="background: var(--green-bg); color: var(--green);">$</div>
+                <div class="notif-body">
+                  <div class="notif-text"><b>Payout initiated:</b> $2,720 for Fremont St Billboard. ETA 2–3 business days.</div>
+                  <div class="notif-time">12m ago</div>
+                </div>
+              </div>
+              <div class="notif-row notif-unread">
+                <div class="notif-type" style="background: var(--amber-bg); color: var(--amber);">!</div>
+                <div class="notif-body">
+                  <div class="notif-text"><b>Action required:</b> Upload POP for Fashion Show Mall window display. Vega Streetwear waiting.</div>
+                  <div class="notif-time">2h ago</div>
+                </div>
+              </div>
+              <div class="notif-row">
+                <div class="notif-type" style="background: var(--blue-bg); color: var(--blue);">✉</div>
+                <div class="notif-body">
+                  <div class="notif-text"><b>New message</b> from Desert Yoga Studio about their digital screen placement timing.</div>
+                  <div class="notif-time">5h ago</div>
+                </div>
+              </div>
+              <div class="notif-row">
+                <div class="notif-type">📥</div>
+                <div class="notif-body">
+                  <div class="notif-text"><b>New booking request:</b> SunPower Solar NV wants I-15 billboard for $5,800 (May–Jun).</div>
+                  <div class="notif-time">Yesterday 4:30 PM</div>
+                </div>
+              </div>
+              <div class="notif-row">
+                <div class="notif-type">✓</div>
+                <div class="notif-body">
+                  <div class="notif-text">Booking <b>#CF-0822</b> completed. $357 payout released for Container Park poster.</div>
+                  <div class="notif-time">2d ago</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Activity Log</span>
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); cursor: pointer;">View All</span>
+            </div>
+            <div class="activity-feed">
+              <div class="activity-item">
+                <div class="activity-marker" style="background: var(--green);"></div>
+                <div>
+                  <div class="activity-text"><strong>POP verified</strong> for Fremont St Billboard — reviewer approved photo quality.</div>
+                  <div class="activity-time">Today 09:15 AM</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-marker" style="background: var(--blue);"></div>
+                <div>
+                  <div class="activity-text"><strong>Creative file received</strong> from Vega Streetwear — pending your review.</div>
+                  <div class="activity-time">Today 08:30 AM</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-marker" style="background: var(--amber);"></div>
+                <div>
+                  <div class="activity-text"><strong>Listing updated</strong> — Arts District Digital Screen pricing changed to $680/mo.</div>
+                  <div class="activity-time">Yesterday 3:45 PM</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-marker" style="background: #111;"></div>
+                <div>
+                  <div class="activity-text"><strong>New booking confirmed</strong> — SunPower Solar NV, I-15 Billboard, $5,800 escrowed.</div>
+                  <div class="activity-time">Yesterday 4:32 PM</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-marker" style="background: var(--green);"></div>
+                <div>
+                  <div class="activity-text"><strong>Payout completed</strong> — $357 transferred for Container Park poster (#CF-0822).</div>
+                  <div class="activity-time">Apr 17, 11:00 AM</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-marker" style="background: #ccc;"></div>
+                <div>
+                  <div class="activity-text"><strong>Stripe account verified</strong> — payouts enabled via ACH direct deposit.</div>
+                  <div class="activity-time">Apr 15, 2:00 PM</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
