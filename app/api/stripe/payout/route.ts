@@ -56,10 +56,12 @@ export async function POST(req: NextRequest) {
     // Calculate payout: subtotal (pre-buyer-fee) - 7% seller fee
     // total_price = subtotal + buyer_fee (both are 7% of subtotal)
     // So subtotal = total_price - platform_fee
+    // total_price = subtotal + buyerFee (buyer fee is 7% of subtotal)
+    // platform_fee in DB = buyerFee + sellerFee (COMBINED) — do NOT use it to derive subtotal
+    // Correct derivation: subtotal = total_price / 1.07 (since total = subtotal * 1.07)
     const totalAmount = booking.total_price ?? 0
-    const buyerFee = (booking as Record<string, unknown> & { platform_fee?: number }).platform_fee ?? Math.round(totalAmount / 1.07 * 0.07 * 100) / 100
-    const subtotal = totalAmount - buyerFee
-    const sellerFee = Math.round(subtotal * 0.07 * 100) // cents (7% of subtotal only)
+    const subtotal = Math.round(totalAmount / 1.07 * 100) / 100
+    const sellerFee = Math.round(subtotal * 0.07 * 100) // cents (7% of subtotal)
     const payoutAmount = Math.round(subtotal * 100) - sellerFee // cents
 
     if (payoutAmount <= 0) {

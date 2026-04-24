@@ -73,7 +73,8 @@ export default function ReceiptPage() {
       const end = new Date(d.end_date)
       const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
       const subtotal = pricePerDay * totalDays
-      const buyerFee = d.platform_fee ?? Math.round(subtotal * 0.07 * 100) / 100
+      // platform_fee in DB is buyer + seller combined — receipt should only show buyer's 7%
+      const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
       setReceipt({
         id: d.id,
         listing_title: d.listings?.title ?? 'Listing',
