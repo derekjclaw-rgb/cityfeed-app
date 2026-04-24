@@ -72,9 +72,11 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
   try {
     switch (event.type) {
       case 'new_booking_request': {
-        const subtotal = event.total - event.platformFee
-        const sellerFee = subtotal * 0.07
-        const payout = subtotal - sellerFee
+        // total = subtotal + buyerFee (both 7% of subtotal)
+        // platformFee passed here is buyer+seller combined — derive subtotal correctly
+        const subtotal = Math.round(event.total / 1.07 * 100) / 100
+        const sellerFee = Math.round(subtotal * 0.07 * 100) / 100
+        const payout = Math.round((subtotal - sellerFee) * 100) / 100
         const prettyDates = formatDateRange(event.dates)
         const privacyName = formatNamePrivacy(event.advertiserName)
         await mailer.sendMail({
