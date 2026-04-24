@@ -220,17 +220,24 @@ function MapView({ listings }: { listings: Listing[] }) {
         zoom: defaultZoom,
       })
       mapRef.current = map
+      let markersAdded = false
       function addMarkers() {
+        if (markersAdded) return
+        markersAdded = true
         listings.forEach((listing) => {
           if (listing.lat == null || listing.lng == null) return
           const el = document.createElement('div')
           el.style.cursor = 'pointer'
           el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;z-index:10;">$${listing.price_per_day}</div>`
-          el.addEventListener('click', () => setSelectedListing(listing))
+          const captured = listing
+          el.addEventListener('click', (e) => {
+            e.stopPropagation()
+            setSelectedListing(captured)
+          })
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       }
-      // Try all three timing approaches to guarantee markers render
+      // Try all three timing approaches to guarantee markers render (guarded against duplicates)
       map.on('load', addMarkers)
       map.on('style.load', addMarkers)
       setTimeout(addMarkers, 2000) // Fallback: brute force after 2 seconds
