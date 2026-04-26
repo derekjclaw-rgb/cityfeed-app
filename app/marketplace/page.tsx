@@ -249,7 +249,7 @@ function MapView({ listings }: { listings: Listing[] }) {
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
       {selectedListing && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden z-10" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', zIndex: 9999 }}>
           {selectedListing.images && selectedListing.images.length > 0 && selectedListing.images[0] ? (
             <img
               src={selectedListing.images[0]}
