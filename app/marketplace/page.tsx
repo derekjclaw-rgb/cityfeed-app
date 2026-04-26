@@ -231,13 +231,17 @@ function MapView({ listings }: { listings: Listing[] }) {
           el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;z-index:10;">$${listing.price_per_day}</div>`
           const captured = listing
           el.addEventListener('click', (e) => {
+            e.preventDefault()
             e.stopPropagation()
-            setSelectedListing(captured)
+            e.stopImmediatePropagation()
+            setSelectedListing((prev) => prev?.id === captured.id ? null : captured)
           })
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       }
       // Try all three timing approaches to guarantee markers render (guarded against duplicates)
+      // Dismiss popup when clicking empty map area
+      map.on('click', () => setSelectedListing(null))
       map.on('load', addMarkers)
       map.on('style.load', addMarkers)
       setTimeout(addMarkers, 2000) // Fallback: brute force after 2 seconds
