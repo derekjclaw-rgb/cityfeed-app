@@ -195,6 +195,8 @@ function MapView({ listings }: { listings: Listing[] }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  // Track whether a marker was just clicked so map.on('click') doesn't immediately dismiss
+  const markerClickedRef = useRef(false)
 
   useEffect(() => {
     if (!mapContainer.current) return
@@ -207,11 +209,10 @@ function MapView({ listings }: { listings: Listing[] }) {
       const mapboxgl = mb as any
       mapboxgl.default.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
       MapGL = mapboxgl.default
-      // Center map on listings if available, otherwise default to US center
       const hasListings = listings.length > 0 && listings[0].lat && listings[0].lng
       const defaultCenter: [number, number] = hasListings
         ? [listings[0].lng, listings[0].lat]
-        : [-115.1398, 36.1699] // Las Vegas default
+        : [-115.1398, 36.1699]
       const defaultZoom = hasListings ? 11 : 3.5
       map = new MapGL.Map({
         container: mapContainer.current!,
@@ -233,18 +234,22 @@ function MapView({ listings }: { listings: Listing[] }) {
           el.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
-            e.stopImmediatePropagation()
+            // Flag so the mapbox click handler knows to skip
+            markerClickedRef.current = true
+            setTimeout(() => { markerClickedRef.current = false }, 100)
             setSelectedListing((prev) => prev?.id === captured.id ? null : captured)
           })
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       }
-      // Try all three timing approaches to guarantee markers render (guarded against duplicates)
-      // Dismiss popup when clicking empty map area
-      map.on('click', () => setSelectedListing(null))
+      // Dismiss popup when clicking empty map area (but NOT when clicking a marker)
+      map.on('click', () => {
+        if (markerClickedRef.current) return
+        setSelectedListing(null)
+      })
       map.on('load', addMarkers)
       map.on('style.load', addMarkers)
-      setTimeout(addMarkers, 2000) // Fallback: brute force after 2 seconds
+      setTimeout(addMarkers, 2000)
     })
     return () => { map?.remove() }
   }, [listings])
