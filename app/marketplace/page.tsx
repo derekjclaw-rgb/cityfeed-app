@@ -196,6 +196,7 @@ function MapView({ listings }: { listings: Listing[] }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null)
   // Track whether a marker was just clicked so map.on('click') doesn't immediately dismiss
   const markerClickedRef = useRef(false)
 
@@ -235,10 +236,26 @@ function MapView({ listings }: { listings: Listing[] }) {
           el.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
-            // Flag so the mapbox click handler knows to skip
             markerClickedRef.current = true
             setTimeout(() => { markerClickedRef.current = false }, 100)
-            setSelectedListing((prev) => prev?.id === captured.id ? null : captured)
+            setSelectedListing((prev) => {
+              if (prev?.id === captured.id) {
+                setPopupPos(null)
+                return null
+              }
+              // Project lng/lat to screen pixel position
+              if (map && captured.lat != null && captured.lng != null) {
+                const point = map.project([captured.lng, captured.lat])
+                const mapRect = mapContainer.current?.getBoundingClientRect()
+                if (mapRect) {
+                  setPopupPos({
+                    x: mapRect.left + point.x,
+                    y: mapRect.top + point.y,
+                  })
+                }
+              }
+              return captured
+            })
           })
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
@@ -247,7 +264,26 @@ function MapView({ listings }: { listings: Listing[] }) {
       map.on('click', () => {
         if (markerClickedRef.current) return
         setSelectedListing(null)
+        setPopupPos(null)
       })
+      // Keep popup anchored to pin on map move/zoom
+      const updatePopupPosition = () => {
+        setSelectedListing((current) => {
+          if (current && current.lat != null && current.lng != null) {
+            const point = map.project([current.lng, current.lat])
+            const mapRect = mapContainer.current?.getBoundingClientRect()
+            if (mapRect) {
+              setPopupPos({
+                x: mapRect.left + point.x,
+                y: mapRect.top + point.y,
+              })
+            }
+          }
+          return current
+        })
+      }
+      map.on('move', updatePopupPosition)
+      map.on('zoom', updatePopupPosition)
       map.on('load', addMarkers)
       map.on('style.load', addMarkers)
       setTimeout(addMarkers, 2000)
@@ -258,8 +294,16 @@ function MapView({ listings }: { listings: Listing[] }) {
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
-      {selectedListing && typeof document !== 'undefined' && createPortal(
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', zIndex: 9999 }}>
+      {selectedListing && popupPos && typeof document !== 'undefined' && createPortal(
+        <div className="w-72 rounded-2xl shadow-xl overflow-hidden" style={{
+          position: 'fixed',
+          left: popupPos.x,
+          top: popupPos.y,
+          transform: 'translate(-50%, -110%)',
+          backgroundColor: '#fff',
+          border: '1px solid #e0e0d8',
+          zIndex: 9999,
+        }}>
           {selectedListing.images && selectedListing.images.length > 0 && selectedListing.images[0] ? (
             <img
               src={selectedListing.images[0]}
