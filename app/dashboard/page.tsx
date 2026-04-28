@@ -745,7 +745,7 @@ function DashboardContent() {
                     {isComplete && campaign.listing_id && (
                       <div className="px-4 pb-3 pt-0">
                         <Link
-                          href={`/marketplace/${campaign.listing_id}/book`}
+                          href={`/marketplace/${campaign.listing_id}`}
                           className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg hover:opacity-80 transition-opacity"
                           style={{ backgroundColor: 'rgba(222,187,115,0.15)', color: '#b8941a', border: '1px solid rgba(222,187,115,0.4)' }}
                           onClick={e => e.stopPropagation()}
