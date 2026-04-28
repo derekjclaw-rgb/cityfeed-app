@@ -5,6 +5,7 @@
  * Phase 3: Real Supabase data with mock fallback
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { MapPin, Search, Star, SlidersHorizontal, X, LayoutGrid, Map } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -257,7 +258,7 @@ function MapView({ listings }: { listings: Listing[] }) {
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full rounded-xl" />
-      {selectedListing && (
+      {selectedListing && typeof document !== 'undefined' && createPortal(
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-80 rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', zIndex: 9999 }}>
           {selectedListing.images && selectedListing.images.length > 0 && selectedListing.images[0] ? (
             <img
@@ -287,7 +288,7 @@ function MapView({ listings }: { listings: Listing[] }) {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   )
 }
