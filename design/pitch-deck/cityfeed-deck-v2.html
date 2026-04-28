@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Feed — Product Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --gold: #debb73;
+  --dark: #2b2b2b;
+  --muted: #888;
+  --cream: #f0f0ec;
+  --teal: #7ecfc0;
+  --border: #e0e0d8;
+  --white: #fff;
+}
+html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+body { font-family: 'Inter', -apple-system, sans-serif; color: var(--dark); background: var(--cream); overflow-x: hidden; }
+
+/* Slides */
+.slide {
+  height: 100vh; width: 100vw;
+  scroll-snap-align: start;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.slide-inner {
+  max-width: 1100px; width: 90%; padding: 40px 0;
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.slide-inner.visible { opacity: 1; transform: translateY(0); }
+
+/* Nav dots */
+.dots {
+  position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 12px; z-index: 100;
+}
+.dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--border); cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+  border: none; outline: none;
+}
+.dot.active { background: var(--gold); transform: scale(1.3); }
+
+/* Typography */
+h1 { font-size: 3.2rem; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; }
+h2 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 24px; }
+h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+p, li { font-size: 0.95rem; line-height: 1.5; color: var(--muted); }
+.tag { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--gold); margin-bottom: 12px; }
+
+/* Browser frame */
+.browser-frame {
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  background: var(--white);
+}
+.browser-bar {
+  background: #2d2d2d; padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+.browser-dot.r { background: #ff5f57; }
+.browser-dot.y { background: #febc2e; }
+.browser-dot.g { background: #28c840; }
+.browser-url {
+  margin-left: 12px; background: #1a1a1a; border-radius: 6px;
+  padding: 5px 14px; font-size: 0.72rem; color: #999; flex: 1;
+  font-family: 'Inter', monospace;
+}
+.browser-content { padding: 24px; background: var(--white); }
+
+/* Listing cards */
+.listing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.listing-card {
+  border-radius: 10px; overflow: hidden; background: var(--white);
+  border: 1px solid var(--border); transition: box-shadow 0.2s;
+}
+.listing-img {
+  height: 110px; position: relative;
+}
+.listing-img .price-badge {
+  position: absolute; bottom: 8px; left: 8px;
+  background: var(--dark); color: var(--white);
+  font-size: 0.72rem; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px;
+}
+.listing-body { padding: 12px; }
+.listing-body h4 { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--dark); }
+.listing-body .loc { font-size: 0.68rem; color: var(--muted); }
+.listing-body .cat-tag {
+  display: inline-block; margin-top: 6px;
+  font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1px; padding: 2px 8px; border-radius: 4px;
+  background: #f5f5f0; color: var(--muted);
+}
+
+/* Dashboard mockup */
+.dash-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 10px; padding: 20px; display: flex; gap: 20px; align-items: center;
+}
+.dash-thumb {
+  width: 80px; height: 80px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--teal), #5ab8a6);
+}
+.dash-info { flex: 1; }
+.dash-info h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+.dash-info .meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+.status-badge {
+  display: inline-block; font-size: 0.65rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 3px 10px; border-radius: 20px;
+}
+.status-confirmed { background: #e6f9f0; color: #1a9960; }
+.status-pending { background: #fef3dc; color: #b8860b; }
+.dash-payout {
+  text-align: right;
+}
+.dash-payout .amount { font-size: 1.4rem; font-weight: 700; color: var(--dark); }
+.dash-payout .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Booking timeline */
+.timeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 32px 0; }
+.tl-step {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  position: relative; flex: 1;
+}
+.tl-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; margin-bottom: 10px;
+  background: var(--white); border: 2px solid var(--gold);
+  box-shadow: 0 2px 12px rgba(222,187,115,0.2);
+  position: relative; z-index: 2;
+}
+.tl-label { font-size: 0.75rem; font-weight: 600; color: var(--dark); }
+.tl-connector {
+  flex: 1; height: 2px; background: var(--gold); margin-top: -36px;
+  position: relative; z-index: 1; min-width: 40px;
+}
+
+/* Pricing cards */
+.pricing-row { display: flex; gap: 24px; justify-content: center; margin-bottom: 20px; }
+.pricing-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 36px; text-align: center;
+  flex: 1; max-width: 300px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+}
+.pricing-card .icon { font-size: 2rem; margin-bottom: 12px; }
+.pricing-card .pct { font-size: 2.8rem; font-weight: 800; color: var(--dark); line-height: 1; }
+.pricing-card .pct-label { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+.pricing-card .role { font-size: 0.8rem; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+
+/* Trust grid */
+.trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px; margin: 0 auto; }
+.trust-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 20px;
+}
+.trust-icon { font-size: 1.5rem; flex-shrink: 0; }
+.trust-text { font-size: 0.85rem; font-weight: 500; color: var(--dark); }
+
+/* CTA */
+.cta-row { display: flex; gap: 24px; justify-content: center; margin-top: 32px; flex-wrap: wrap; }
+.cta-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 36px 40px; text-align: center;
+  flex: 1; max-width: 340px; transition: box-shadow 0.2s;
+}
+.cta-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+.cta-card .emoji { font-size: 2rem; margin-bottom: 10px; }
+.cta-card h3 { font-size: 1rem; margin-bottom: 6px; }
+.cta-btn {
+  display: inline-block; margin-top: 14px;
+  padding: 10px 28px; border-radius: 8px; font-size: 0.82rem;
+  font-weight: 600; text-decoration: none; transition: all 0.2s;
+}
+.btn-gold { background: var(--gold); color: var(--dark); }
+.btn-gold:hover { background: #d1ae5e; }
+.btn-dark { background: var(--dark); color: var(--white); }
+.btn-dark:hover { background: #1a1a1a; }
+
+/* Cover specific */
+.cover-wordmark {
+  font-size: 4.5rem; font-weight: 800; letter-spacing: -3px;
+  line-height: 1;
+}
+.cover-wordmark .cf-gold { color: var(--gold); }
+.cover-sub { font-size: 1.15rem; color: var(--muted); margin-top: 12px; font-weight: 400; }
+.cover-url { font-size: 0.85rem; color: var(--gold); margin-top: 20px; font-weight: 500; letter-spacing: 1px; }
+
+/* Flow icons row */
+.flow-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 16px; margin: 32px 0;
+}
+.flow-step {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.flow-icon {
+  width: 72px; height: 72px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; margin-bottom: 10px;
+  background: var(--white); border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+.flow-label { font-size: 0.78rem; font-weight: 600; color: var(--dark); }
+.flow-arrow { font-size: 1.4rem; color: var(--gold); margin-top: -20px; font-weight: 300; }
+
+/* Bullets */
+.bullet-list { list-style: none; margin: 16px 0; }
+.bullet-list li {
+  padding: 6px 0 6px 20px; position: relative;
+  font-size: 0.88rem; color: var(--dark);
+}
+.bullet-list li::before {
+  content: ''; position: absolute; left: 0; top: 13px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold);
+}
+
+/* Escrow note */
+.escrow-note {
+  text-align: center; font-size: 0.82rem; color: var(--muted);
+  margin-top: 20px; font-style: italic;
+}
+
+/* Contact */
+.contact-line { text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--muted); }
+.contact-line a { color: var(--gold); text-decoration: none; font-weight: 500; }
+
+/* Slide backgrounds */
+.slide-cover { background: var(--dark); }
+.slide-cover .slide-inner * { color: var(--white); }
+.slide-cover .cover-sub { color: #999; }
+.slide-cover .cover-url { color: var(--gold); }
+
+.slide-alt { background: var(--white); }
+
+/* Two-col layout */
+.two-col { display: flex; gap: 40px; align-items: flex-start; }
+.two-col .col-text { flex: 1; min-width: 260px; }
+.two-col .col-mock { flex: 1.4; min-width: 360px; }
+
+/* Center */
+.text-center { text-align: center; }
+
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  .cover-wordmark { font-size: 3rem; }
+  .listing-grid { grid-template-columns: 1fr; }
+  .two-col { flex-direction: column; }
+  .pricing-row { flex-direction: column; align-items: center; }
+  .trust-grid { grid-template-columns: 1fr; }
+  .cta-row { flex-direction: column; align-items: center; }
+  .timeline { flex-wrap: wrap; gap: 8px; }
+  .tl-connector { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Dots -->
+<nav class="dots" id="dots"></nav>
+
+<!-- Slide 1: Cover -->
+<section class="slide slide-cover" data-slide="0">
+  <div class="slide-inner text-center">
+    <div class="cover-wordmark">City <span class="cf-gold">Feed</span></div>
+    <div class="cover-sub">The marketplace for real-world advertising</div>
+    <div class="cover-url">cityfeed.io</div>
+  </div>
+</section>
+
+<!-- Slide 2: What is City Feed -->
+<section class="slide" data-slide="1">
+  <div class="slide-inner text-center">
+    <div class="tag">How it works</div>
+    <h2>Hosts list ad spaces. Advertisers book them. We handle the rest.</h2>
+    <div class="flow-row">
+      <div class="flow-step">
+        <div class="flow-icon">📋</div>
+        <div class="flow-label">List</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-icon">🛒</div>
+        <div class="flow-label">Book</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-icon">🚀</div>
+        <div class="flow-label">Go Live</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 3: For Advertisers -->
+<section class="slide slide-alt" data-slide="2">
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="col-text">
+        <div class="tag">For Advertisers</div>
+        <h2>Find and book real ad spaces</h2>
+        <ul class="bullet-list">
+          <li>Browse spaces by location and type</li>
+          <li>Book instantly, pay securely via Stripe</li>
+          <li>Get photo proof your ad is live</li>
+        </ul>
+      </div>
+      <div class="col-mock">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dot r"></div>
+            <div class="browser-dot y"></div>
+            <div class="browser-dot g"></div>
+            <div class="browser-url">cityfeed.io/marketplace</div>
+          </div>
+          <div class="browser-content">
+            <div class="listing-grid">
+              <div class="listing-card">
+                <div class="listing-img" style="background: linear-gradient(135deg, #e8d5a3, #c4a86b);">
+                  <div class="price-badge">$1/day</div>
+                </div>
+                <div class="listing-body">
+                  <h4>Bar Top Flyers</h4>
+                  <div class="loc">📍 Downtown Las Vegas</div>
+                  <span class="cat-tag">Print</span>
+                </div>
+              </div>
+              <div class="listing-card">
+                <div class="listing-img" style="background: linear-gradient(135deg, #7ecfc0, #5ab8a6);">
+                  <div class="price-badge">$75/day</div>
+                </div>
+                <div class="listing-body">
+                  <h4>Billboard Truck</h4>
+                  <div class="loc">📍 Las Vegas Strip</div>
+                  <span class="cat-tag">Mobile</span>
+                </div>
+              </div>
+              <div class="listing-card">
+                <div class="listing-img" style="background: linear-gradient(135deg, #d4a5c4, #b87da8);">
+                  <div class="price-badge">$5/day</div>
+                </div>
+                <div class="listing-body">
+                  <h4>Storefront Window</h4>
+                  <div class="loc">📍 Arts District</div>
+                  <span class="cat-tag">Display</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 4: For Hosts -->
+<section class="slide" data-slide="3">
+  <div class="slide-inner">
+    <div class="two-col">
+      <div class="col-text">
+        <div class="tag">For Hosts</div>
+        <h2>Monetize your space</h2>
+        <ul class="bullet-list">
+          <li>List your space in minutes, free</li>
+          <li>Accept bookings, receive creative files</li>
+          <li>Upload proof of posting, get paid</li>
+        </ul>
+      </div>
+      <div class="col-mock">
+        <div class="browser-frame">
+          <div class="browser-bar">
+            <div class="browser-dot r"></div>
+            <div class="browser-dot y"></div>
+            <div class="browser-dot g"></div>
+            <div class="browser-url">cityfeed.io/dashboard</div>
+          </div>
+          <div class="browser-content">
+            <div style="margin-bottom: 14px;">
+              <span style="font-size: 0.75rem; font-weight: 600; color: var(--dark);">Your Bookings</span>
+              <span style="font-size: 0.65rem; color: var(--muted); margin-left: 8px;">3 active</span>
+            </div>
+            <div class="dash-card" style="margin-bottom: 12px;">
+              <div class="dash-thumb"></div>
+              <div class="dash-info">
+                <h4>Bar Top Flyers — Downtown LV</h4>
+                <div class="meta">Apr 28 – May 12, 2026 · Advertiser: Neon Brewing Co.</div>
+                <span class="status-badge status-confirmed">✓ Confirmed</span>
+              </div>
+              <div class="dash-payout">
+                <div class="amount">$14</div>
+                <div class="label">Payout</div>
+              </div>
+            </div>
+            <div class="dash-card">
+              <div class="dash-thumb" style="background: linear-gradient(135deg, #e8d5a3, #c4a86b);"></div>
+              <div class="dash-info">
+                <h4>Storefront Window — Arts District</h4>
+                <div class="meta">May 1 – May 7, 2026 · Advertiser: Yoga Collective</div>
+                <span class="status-badge status-pending">⏳ Awaiting Creative</span>
+              </div>
+              <div class="dash-payout">
+                <div class="amount">$35</div>
+                <div class="label">Payout</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 5: Booking Flow -->
+<section class="slide slide-alt" data-slide="4">
+  <div class="slide-inner text-center">
+    <div class="tag">The Process</div>
+    <h2>From booking to payout</h2>
+    <div class="timeline">
+      <div class="tl-step">
+        <div class="tl-icon">📩</div>
+        <div class="tl-label">Request</div>
+      </div>
+      <div class="tl-connector"></div>
+      <div class="tl-step">
+        <div class="tl-icon">✅</div>
+        <div class="tl-label">Confirmed</div>
+      </div>
+      <div class="tl-connector"></div>
+      <div class="tl-step">
+        <div class="tl-icon">🎨</div>
+        <div class="tl-label">Creative Uploaded</div>
+      </div>
+      <div class="tl-connector"></div>
+      <div class="tl-step">
+        <div class="tl-icon">📸</div>
+        <div class="tl-label">Ad Posted (POP)</div>
+      </div>
+      <div class="tl-connector"></div>
+      <div class="tl-step">
+        <div class="tl-icon">💰</div>
+        <div class="tl-label">Payout</div>
+      </div>
+    </div>
+    <div class="escrow-note">Money is held in escrow until proof of posting is confirmed. No proof = no payout.</div>
+  </div>
+</section>
+
+<!-- Slide 6: Pricing -->
+<section class="slide" data-slide="5">
+  <div class="slide-inner text-center">
+    <div class="tag">Pricing</div>
+    <h2>Simple and transparent</h2>
+    <div class="pricing-row">
+      <div class="pricing-card">
+        <div class="icon">📢</div>
+        <div class="role">Advertisers</div>
+        <div class="pct">7%</div>
+        <div class="pct-label">service fee per booking</div>
+      </div>
+      <div class="pricing-card">
+        <div class="icon">🏠</div>
+        <div class="role">Hosts</div>
+        <div class="pct">7%</div>
+        <div class="pct-label">service fee per booking</div>
+      </div>
+    </div>
+    <p style="font-size: 0.9rem; color: var(--muted);">Free to list. No subscriptions. No hidden fees.</p>
+  </div>
+</section>
+
+<!-- Slide 7: Built on Trust -->
+<section class="slide slide-alt" data-slide="6">
+  <div class="slide-inner text-center">
+    <div class="tag">Platform</div>
+    <h2>Built on trust</h2>
+    <div class="trust-grid">
+      <div class="trust-item">
+        <div class="trust-icon">🔒</div>
+        <div class="trust-text">Escrow payments</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">💬</div>
+        <div class="trust-text">In-app messaging</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">📧</div>
+        <div class="trust-text">Email notifications at every step</div>
+      </div>
+      <div class="trust-item">
+        <div class="trust-icon">✅</div>
+        <div class="trust-text">72-hour auto-approval</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8: Get Started -->
+<section class="slide slide-cover" data-slide="7">
+  <div class="slide-inner text-center">
+    <h2 style="color: var(--white); margin-bottom: 8px;">Get started</h2>
+    <div class="cta-row">
+      <div class="cta-card" style="background: var(--dark); border-color: #444;">
+        <div class="emoji">📢</div>
+        <h3 style="color: var(--white);">I want to advertise</h3>
+        <a href="https://cityfeed.io/marketplace" class="cta-btn btn-gold">Browse Marketplace</a>
+      </div>
+      <div class="cta-card">
+        <div class="emoji">🏠</div>
+        <h3>I have space to list</h3>
+        <a href="https://cityfeed.io/dashboard/create-listing" class="cta-btn btn-dark">Create Listing</a>
+      </div>
+    </div>
+    <div class="contact-line">Questions? <a href="mailto:mk@cityfeed.io">mk@cityfeed.io</a></div>
+  </div>
+</section>
+
+<script>
+// Build dots
+const slides = document.querySelectorAll('.slide');
+const dotsNav = document.getElementById('dots');
+slides.forEach((_, i) => {
+  const d = document.createElement('button');
+  d.className = 'dot';
+  d.setAttribute('aria-label', 'Slide ' + (i + 1));
+  d.addEventListener('click', () => slides[i].scrollIntoView({ behavior: 'smooth' }));
+  dotsNav.appendChild(d);
+});
+const dots = dotsNav.querySelectorAll('.dot');
+
+// Intersection observer for visibility + active dot
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const inner = e.target.querySelector('.slide-inner');
+    if (e.isIntersecting) {
+      inner.classList.add('visible');
+      const idx = +e.target.dataset.slide;
+      dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    }
+  });
+}, { threshold: 0.5 });
+slides.forEach(s => observer.observe(s));
+
+// Arrow key navigation
+let current = 0;
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    current = Math.min(current + 1, slides.length - 1);
+    slides[current].scrollIntoView({ behavior: 'smooth' });
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    current = Math.max(current - 1, 0);
+    slides[current].scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+// Update current on scroll
+document.addEventListener('scroll', () => {
+  const vh = window.innerHeight;
+  slides.forEach((s, i) => {
+    const r = s.getBoundingClientRect();
+    if (r.top >= -vh / 2 && r.top < vh / 2) current = i;
+  });
+});
+</script>
+</body>
+</html>

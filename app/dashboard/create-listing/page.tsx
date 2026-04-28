@@ -39,6 +39,8 @@ const CATEGORIES = [
   { value: 'event_based', label: 'Event-Based' },
   { value: 'human_based', label: 'Human-Based' },
   { value: 'experiential', label: 'Experiential' },
+  { value: 'indoor_digital', label: 'Indoor Digital' },
+  { value: 'indoor_static', label: 'Indoor Static' },
   { value: 'street_furniture', label: 'Street Furniture' },
   { value: 'unique', label: 'Unique' },
   { value: 'other', label: 'Other' },
@@ -51,6 +53,7 @@ const STATIC_CATEGORIES = [
   'storefront',
   'window',
   'vehicle_wrap',
+  'indoor_static',
 ]
 
 const PRODUCTION_TIMES = [
