@@ -42,9 +42,22 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Protect /admin/* routes (except /admin/login and /api/admin/login)
+  const pathname = request.nextUrl.pathname
+  if (
+    pathname.startsWith('/admin') &&
+    pathname !== '/admin/login' &&
+    !pathname.startsWith('/api/admin/login')
+  ) {
+    const session = request.cookies.get('admin_session')
+    if (session?.value !== 'authenticated') {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+  }
+
   return response
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/admin/:path*'],
 }
