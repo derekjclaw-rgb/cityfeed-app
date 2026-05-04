@@ -58,7 +58,8 @@ export default function AdminFinancialsPage() {
 
     const totalGross = nonCancelled.reduce((s, b) => s + (b.total_price ?? 0), 0)
     const totalPayouts = completed.reduce((s, b) => s + (b.payout_amount ?? 0), 0)
-    const platformRevenue = totalGross - totalPayouts
+    const completedOnly = nonCancelled.filter(b => b.payout_amount != null)
+    const platformRevenue = completedOnly.reduce((s, b) => s + calcFinancials(b.total_price, b.payout_amount).platformTake, 0)
     const totalStripeFees = nonCancelled.reduce((s, b) => s + calcFinancials(b.total_price).stripeFeeEstimate, 0)
     const netProfit = platformRevenue - totalStripeFees
 
@@ -131,7 +132,7 @@ export default function AdminFinancialsPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <KpiCard label="Gross Revenue" value={formatCurrency(stats.totalGross)} accent />
           <KpiCard label="Host Payouts" value={formatCurrency(stats.totalPayouts)} />
-          <KpiCard label="Platform Revenue" value={formatCurrency(stats.platformRevenue)} sub="Gross − Payouts" />
+          <KpiCard label="Platform Revenue" value={formatCurrency(stats.platformRevenue)} sub="Completed bookings only" />
           <KpiCard label="Est. Stripe Fees" value={formatCurrency(stats.totalStripeFees)} />
           <KpiCard label="Net Platform Profit" value={formatCurrency(stats.netProfit)} accent />
         </div>
