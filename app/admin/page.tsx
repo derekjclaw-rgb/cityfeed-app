@@ -66,7 +66,8 @@ export default function AdminDashboard() {
     )
   }
 
-  const totalRevenue = bookings.reduce((s, b) => s + (b.total_price || 0), 0)
+  const nonCancelled = bookings.filter(b => b.status !== 'cancelled')
+  const totalRevenue = nonCancelled.reduce((s, b) => s + (b.total_price || 0), 0)
   const completedBookings = bookings.filter(b => b.status === 'completed')
   const platformTake = completedBookings.reduce((s, b) => {
     const fin = calcFinancials(b.total_price, b.payout_amount)
@@ -87,7 +88,7 @@ export default function AdminDashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KpiCard label="Total Revenue" value={formatCurrency(totalRevenue)} accent />
+        <KpiCard label="Gross Revenue" value={formatCurrency(totalRevenue)} accent />
         <KpiCard label="Platform Take" value={formatCurrency(platformTake)} sub="Completed only" />
         <KpiCard label="Active Listings" value={String(listingCount)} />
         <KpiCard label="Total Users" value={String(dateRange.startDate ? users.length : allUsers.length)} />
