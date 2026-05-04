@@ -100,7 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto" style={{ background: '#1e1e1e' }}>
+      <main className="flex-1 overflow-auto pt-4" style={{ background: '#1e1e1e' }}>
         <div className="p-8 max-w-[1400px]">
           {children}
         </div>

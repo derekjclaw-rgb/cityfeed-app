@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CITY FEED — Host One-Pager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#debb73;--dark:#2b2b2b;--muted:#888;--cream:#f0f0ec;
+  --teal:#7ecfc0;--white:#fff;
+}
+body{font-family:'Inter',sans-serif;color:var(--dark);background:var(--white);-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.header{
+  background:var(--dark);color:var(--white);text-align:center;
+  padding:64px 24px 56px;
+}
+.header h1{font-size:clamp(40px,8vw,64px);font-weight:900;letter-spacing:-2px;line-height:.95}
+.header p{font-size:clamp(16px,2.5vw,22px);color:var(--muted);margin-top:16px;font-weight:500}
+.header .bar{width:48px;height:3px;background:var(--gold);margin:24px auto 0;border-radius:2px}
+
+/* SECTIONS */
+section{padding:56px 24px;max-width:800px;margin:0 auto}
+.section-title{
+  font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;
+  letter-spacing:2px;margin-bottom:12px;text-align:center;
+}
+h2{font-size:clamp(24px,4vw,32px);font-weight:800;text-align:center;letter-spacing:-.5px;margin-bottom:32px}
+
+/* 3 STEPS */
+.steps-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative}
+.step-card{text-align:center}
+.step-card .num{
+  width:40px;height:40px;border-radius:50%;background:var(--gold);color:var(--dark);
+  font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+}
+.step-card h3{font-size:15px;font-weight:800;margin-bottom:6px}
+.step-card p{font-size:12px;color:var(--muted);line-height:1.4}
+
+/* Mini browser */
+.mini-browser{background:var(--cream);border-radius:8px;overflow:hidden;margin-top:12px;border:1px solid #ddd}
+.mini-bar{background:#eee;padding:6px 10px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #ddd}
+.mini-dot{width:6px;height:6px;border-radius:50%}
+.mini-dot.r{background:#ff5f57}.mini-dot.y{background:#febc2e}.mini-dot.g{background:#28c840}
+.mini-body{padding:12px;font-size:11px}
+.mini-field{background:var(--white);border:1px solid #ddd;border-radius:4px;padding:6px 8px;margin-bottom:6px;font-size:10px;color:var(--dark)}
+.mini-btn{
+  display:block;width:100%;padding:7px;border:none;border-radius:5px;
+  font-family:inherit;font-weight:700;font-size:10px;cursor:pointer;
+}
+
+/* Arrow connectors */
+.arrow-row{display:none}
+@media(min-width:600px){
+  .steps-row{gap:32px}
+  .step-card{position:relative}
+  .step-card:not(:last-child)::after{
+    content:'→';position:absolute;right:-22px;top:18px;
+    font-size:20px;color:var(--muted);font-weight:400;
+  }
+}
+
+/* WHAT YOU CAN LIST */
+.list-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.list-item{
+  text-align:center;padding:20px 8px;background:var(--cream);border-radius:10px;
+}
+.list-item .icon{font-size:28px;margin-bottom:8px}
+.list-item span{font-size:12px;font-weight:700;color:var(--dark)}
+
+/* FOUNDING HOST OFFER */
+.offer-box{
+  background:var(--dark);color:var(--white);border-radius:14px;
+  padding:36px 32px;text-align:center;
+}
+.offer-box h2{color:var(--white);margin-bottom:8px}
+.offer-pills{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.offer-pills span{
+  background:rgba(222,187,115,.15);color:var(--gold);padding:8px 18px;
+  border-radius:8px;font-size:13px;font-weight:700;
+}
+
+/* EARN */
+.earn-box{
+  text-align:center;padding:32px;background:var(--cream);border-radius:14px;
+}
+.earn-math{font-size:clamp(20px,4vw,28px);font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+.earn-math em{font-style:normal;color:var(--teal)}
+.earn-result{font-size:clamp(32px,6vw,48px);font-weight:900;color:var(--gold);line-height:1}
+.earn-sub{font-size:13px;color:var(--muted);margin-top:8px}
+
+/* CTA */
+.cta{
+  text-align:center;padding:56px 24px;background:var(--dark);color:var(--white);
+}
+.cta h2{color:var(--white);font-size:clamp(28px,5vw,40px)}
+.cta .btn{
+  display:inline-block;padding:16px 40px;border-radius:10px;font-size:16px;
+  font-weight:800;text-decoration:none;margin-top:24px;
+  background:var(--gold);color:var(--dark);
+}
+.cta .contact{margin-top:20px;font-size:13px;color:var(--muted)}
+.cta .contact a{color:var(--gold);text-decoration:none}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .steps-row{grid-template-columns:1fr;gap:24px}
+  .step-card:not(:last-child)::after{display:none}
+  .list-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  section{padding:40px 20px}
+  .offer-box{padding:28px 20px}
+  .offer-pills{flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>CITY FEED</h1>
+  <p>Turn your space into income</p>
+  <div class="bar"></div>
+</div>
+
+<!-- 3 STEPS -->
+<section>
+  <div class="section-title">How It Works</div>
+  <h2>Three steps. That's it.</h2>
+  <div class="steps-row">
+    <!-- Step 1 -->
+    <div class="step-card">
+      <div class="num">1</div>
+      <h3>List</h3>
+      <p>2 minutes to create</p>
+      <div class="mini-browser">
+        <div class="mini-bar"><span class="mini-dot r"></span><span class="mini-dot y"></span><span class="mini-dot g"></span></div>
+        <div class="mini-body">
+          <div class="mini-field">Bar Top Flyers</div>
+          <div class="mini-field">$1/day</div>
+          <button class="mini-btn" style="background:var(--gold);color:var(--dark)">Publish</button>
+        </div>
+      </div>
+    </div>
+    <!-- Step 2 -->
+    <div class="step-card">
+      <div class="num">2</div>
+      <h3>Accept Bookings</h3>
+      <p>Approve with one tap</p>
+      <div class="mini-browser">
+        <div class="mini-bar"><span class="mini-dot r"></span><span class="mini-dot y"></span><span class="mini-dot g"></span></div>
+        <div class="mini-body">
+          <div style="font-size:10px;font-weight:700;margin-bottom:4px">New Booking</div>
+          <div class="mini-field" style="font-size:9px">Headrest Ad · 30 days · $60</div>
+          <button class="mini-btn" style="background:var(--teal);color:var(--dark)">Confirm</button>
+        </div>
+      </div>
+    </div>
+    <!-- Step 3 -->
+    <div class="step-card">
+      <div class="num">3</div>
+      <h3>Get Paid</h3>
+      <p>Direct to your Stripe</p>
+      <div class="mini-browser">
+        <div class="mini-bar"><span class="mini-dot r"></span><span class="mini-dot y"></span><span class="mini-dot g"></span></div>
+        <div class="mini-body" style="text-align:center">
+          <div style="font-size:22px;margin-bottom:4px">💰</div>
+          <div style="font-size:16px;font-weight:900">$60.00</div>
+          <div style="font-size:9px;color:var(--teal);font-weight:700;margin-top:2px">✓ Deposited</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT YOU CAN LIST -->
+<section style="background:var(--cream);max-width:100%;padding-left:calc((100% - 800px)/2 + 24px);padding-right:calc((100% - 800px)/2 + 24px)">
+  <div style="max-width:800px;margin:0 auto">
+    <div class="section-title">Spaces</div>
+    <h2>What you can list</h2>
+    <div class="list-grid">
+      <div class="list-item"><div class="icon">🍺</div><span>Bar tops</span></div>
+      <div class="list-item"><div class="icon">🖼️</div><span>Bathroom frames</span></div>
+      <div class="list-item"><div class="icon">🔺</div><span>Table tents</span></div>
+      <div class="list-item"><div class="icon">🪟</div><span>Window displays</span></div>
+      <div class="list-item"><div class="icon">🎨</div><span>Chalkboards</span></div>
+      <div class="list-item"><div class="icon">🏪</div><span>Counter space</span></div>
+      <div class="list-item"><div class="icon">📺</div><span>Digital screens</span></div>
+      <div class="list-item"><div class="icon">🧱</div><span>Wall space</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOUNDING HOST OFFER -->
+<section>
+  <div class="offer-box">
+    <div class="section-title" style="color:var(--gold)">Limited Offer</div>
+    <h2>Founding Host Perks</h2>
+    <div class="offer-pills">
+      <span>0% fee for 30 days</span>
+      <span>Free photography</span>
+      <span>Featured placement</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW YOU EARN -->
+<section>
+  <div class="section-title">Earnings</div>
+  <h2>How you earn</h2>
+  <div class="earn-box">
+    <div class="earn-math">$5/day × 30 days =</div>
+    <div class="earn-result">$150/mo</div>
+    <div class="earn-sub">Passive income from one space</div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta">
+  <h2>Ready to list?</h2>
+  <a href="https://cityfeed.io/signup" class="btn">Sign Up Free</a>
+  <p class="contact">Questions? <a href="mailto:mk@cityfeed.io">mk@cityfeed.io</a></p>
+</div>
+
+</body>
+</html>
