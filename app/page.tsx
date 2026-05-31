@@ -240,10 +240,10 @@ export default function HomePage() {
       <section className="py-3 px-4 sm:px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
         <div className="max-w-5xl mx-auto grid grid-cols-4 gap-2 sm:gap-16 text-center">
           {[
-            { value: '2,400+', label: 'Active placements' },
-            { value: '180+', label: 'Cities covered' },
+            { value: 'Las Vegas', label: 'Launch market' },
+            { value: 'Peer-to-Peer', label: 'Direct booking' },
             { value: '$0', label: 'Listing fee' },
-            { value: '48hr', label: 'Avg. booking time' },
+            { value: '14%', label: 'Simple commission' },
           ].map((stat) => (
             <div key={stat.label}>
               <div className="text-base sm:text-xl font-bold" style={{ color: '#7ecfc0' }}>{stat.value}</div>

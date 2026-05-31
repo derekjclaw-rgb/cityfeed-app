@@ -36,8 +36,8 @@ export default function HowItWorksPage() {
                 step: '01',
                 icon: MapPin,
                 title: 'Find your spot',
-                desc: 'Browse thousands of verified ad placements filtered by city, format, budget, and audience. Every listing includes real traffic data, dimensions, photos, and host reviews.',
-                detail: 'Search Digital Billboards, Transit, Storefront, Event-Based, and more across 180+ cities.',
+                desc: 'Browse verified ad placements filtered by location, format, budget, and audience. Every listing includes real traffic data, dimensions, photos, and host reviews.',
+                detail: 'Search Digital Billboards, Transit, Storefront, Event-Based, and more across Las Vegas.',
               },
               {
                 step: '02',
