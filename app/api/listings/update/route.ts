@@ -29,6 +29,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
     }
 
+    // SECURITY: Ownership check — only the host can update their own listing
+    if (listing.host_id !== userId) {
+      return NextResponse.json({ error: 'Unauthorized — you can only edit your own listings' }, { status: 403 })
+    }
+
     // Update using service role (bypasses RLS)
     const { error } = await supabase
       .from('listings')

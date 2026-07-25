@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
 
     let hostId: string | null = null
     let buyNowEnabled = false
+    let verifiedTotal = total // default to client total; overridden for real listings
+    let verifiedPlatformFee = platformFee
 
     if (!isMockListing) {
       // Check date availability BEFORE creating the Stripe session (prevents phantom blocked dates)
@@ -50,12 +52,24 @@ export async function POST(req: NextRequest) {
       // Look up the listing to get host_id, buy_now_enabled, and print fields
       const { data: listing } = await supabase
         .from('listings')
-        .select('host_id, buy_now_enabled, requires_print, offers_printing, print_fee')
+        .select('host_id, buy_now_enabled, requires_print, offers_printing, print_fee, price_per_day')
         .eq('id', listingId)
         .single()
 
       hostId = listing?.host_id ?? null
       buyNowEnabled = listing?.buy_now_enabled ?? false
+
+      // SERVER-SIDE PRICE VALIDATION — never trust client-provided total
+      // Recalculate from the listing's actual price_per_day in the database
+      if (listing?.price_per_day != null) {
+        const serverSubtotal = days * listing.price_per_day
+        const wantsHostPrint = !!host_prints
+        const serverPrintFee = (wantsHostPrint && listing.offers_printing && listing.print_fee) ? Number(listing.print_fee) : 0
+        const serverBuyerFee = Math.round(serverSubtotal * 0.07 * 100) / 100
+        const serverSellerFee = Math.round(serverSubtotal * 0.07 * 100) / 100
+        verifiedTotal = Math.round((serverSubtotal + serverPrintFee + serverBuyerFee) * 100) / 100
+        verifiedPlatformFee = Math.round((serverBuyerFee + serverSellerFee) * 100) / 100
+      }
 
       // Note: host's Stripe account is not needed at checkout time (escrow model)
       // Payout happens later via /api/stripe/payout after POP upload
@@ -81,7 +95,7 @@ export async function POST(req: NextRequest) {
               name: listingTitle,
               description: `Ad placement booking: ${startDate} → ${endDate} (${days} days)`,
             },
-            unit_amount: Math.round(total * 100), // cents — total from client already includes print fee if applicable
+            unit_amount: Math.round(verifiedTotal * 100), // cents — server-validated total
           },
           quantity: 1,
         },
@@ -100,8 +114,8 @@ export async function POST(req: NextRequest) {
         end_date: endDate,
         days: String(days),
         price_per_day: String(pricePerDay),
-        total: String(total),
-        platform_fee: String(platformFee),
+        total: String(verifiedTotal),
+        platform_fee: String(verifiedPlatformFee),
         buy_now_enabled: String(buyNowEnabled),
         listing_title: safeTitleForMeta,
         is_mock: String(isMockListing),

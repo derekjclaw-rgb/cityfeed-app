@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
-        id, total_price, platform_fee, status, stripe_payment_intent_id,
+        id, total_price, platform_fee, status, stripe_payment_intent_id, stripe_transfer_id,
         host_id, advertiser_id,
         host:profiles!bookings_host_id_fkey(stripe_account_id, full_name),
         listings(title)
@@ -43,6 +43,28 @@ export async function POST(req: NextRequest) {
 
     if (bookingError || !booking) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
+    }
+
+    // SECURITY: Status guard — only pay out eligible bookings
+    const PAYOUT_ELIGIBLE = ['confirmed', 'active', 'pop_pending', 'pop_review']
+    if (!PAYOUT_ELIGIBLE.includes(booking.status)) {
+      return NextResponse.json({ error: `Booking status "${booking.status}" is not eligible for payout` }, { status: 400 })
+    }
+
+    // SECURITY: Idempotency guard — prevent double payouts
+    if (booking.stripe_transfer_id) {
+      return NextResponse.json({ error: 'Payout already processed', transfer_id: booking.stripe_transfer_id }, { status: 409 })
+    }
+
+    // SECURITY: POP guard — must have proof of posting before releasing funds
+    const { data: popCheck } = await supabase
+      .from('pop_submissions')
+      .select('id')
+      .eq('booking_id', booking_id)
+      .limit(1)
+
+    if (!popCheck || popCheck.length === 0) {
+      return NextResponse.json({ error: 'No proof of posting submitted — cannot release funds' }, { status: 400 })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
