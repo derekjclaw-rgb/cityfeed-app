@@ -175,46 +175,127 @@ export default function BookingsPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId)
+    // Fetch booking details for notifications
+    const { data: booking } = await supabase
+      .from('bookings')
+      .select('advertiser_id, host_id, listing_id, start_date, end_date, total_price, stripe_payment_intent_id, listings(title)')
+      .eq('id', bookingId)
+      .single()
 
-    if (newStatus === 'confirmed' && user) {
-      // Fetch booking details for auto-message
-      const { data: booking } = await supabase
-        .from('bookings')
-        .select('advertiser_id, listing_id, start_date, end_date, listings(title)')
-        .eq('id', bookingId)
-        .single()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const b = booking as any
+    const listingTitle = b?.listings?.title ?? 'your listing'
 
-      if (booking) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const b = booking as any
-        const listingTitle = b.listings?.title ?? 'your listing'
+    if (newStatus === 'cancelled') {
+      // ── HOST DECLINE — process refund via cancel API ──
+      try {
+        const res = await fetch('/api/bookings/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking_id: bookingId,
+            user_id: user?.id,
+            reason: 'Host declined booking request',
+          }),
+        })
+        const result = await res.json()
+        console.log('[Host Decline] Cancel API result:', result)
+      } catch (err) {
+        console.error('[Host Decline] Cancel API error:', err)
+        // Fallback: at minimum update the status
+        await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId)
+      }
 
+      if (b) {
+        // Notify advertiser of decline
+        await supabase.from('notifications').insert({
+          user_id: b.advertiser_id,
+          type: 'booking_declined',
+          title: 'Booking request declined',
+          body: `"${listingTitle}" — your request was not accepted. A refund has been initiated.`,
+          href: `/dashboard/bookings/${bookingId}`,
+        })
+
+        // Chat message to advertiser
+        await supabase.from('messages').insert({
+          booking_id: bookingId,
+          sender_id: b.advertiser_id,
+          recipient_id: b.advertiser_id,
+          content: `❌ Your booking request for "${listingTitle}" was not accepted by the host.\n\nA refund has been initiated and will appear in 5-10 business days.\n\nYou can browse other placements in the marketplace.`,
+        })
+
+        // Chat message to host confirming decline
+        if (user) {
+          await supabase.from('messages').insert({
+            booking_id: bookingId,
+            sender_id: user.id,
+            recipient_id: user.id,
+            content: `You declined the booking request for "${listingTitle}". The advertiser has been notified and a refund has been initiated.`,
+          })
+        }
+
+        // Email advertiser about decline
+        try {
+          const { data: advertiserProfile } = await supabase
+            .from('profiles').select('email').eq('id', b.advertiser_id).single()
+          if (advertiserProfile?.email) {
+            await fetch('/api/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'booking_cancelled',
+                recipientEmail: advertiserProfile.email,
+                listingTitle,
+                dates: `${b.start_date} → ${b.end_date}`,
+                role: 'advertiser',
+              }),
+            })
+          }
+        } catch { /* non-fatal */ }
+      }
+    } else {
+      // ── HOST ACCEPT ──
+      await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId)
+
+      if (b && user) {
         // Auto-message to advertiser with next steps
         await supabase.from('messages').insert({
           booking_id: bookingId,
           sender_id: user.id,
           recipient_id: b.advertiser_id,
-          content: `✅ Great news — your booking has been approved!\n\nNext steps:\n1. Upload your creative files\n2. Review the creative specs on the listing page\n3. I'll begin setup once I receive your materials\n\nFeel free to message me with any questions!`,
+          content: `✅ Great news — your booking has been accepted!\n\nNext steps:\n1. Upload your creative files\n2. Review the creative specs on the booking page\n3. The host will begin setup once materials are received\n\nFeel free to message with any questions!`,
         })
 
-        // Insert notification for advertiser
+        // Auto-message to host confirming their action
+        await supabase.from('messages').insert({
+          booking_id: bookingId,
+          sender_id: user.id,
+          recipient_id: user.id,
+          content: `✅ You accepted the booking for "${listingTitle}"\n\n📅 ${b.start_date} → ${b.end_date}\n\nThe advertiser has been notified and will upload their creative files. You'll be notified when materials arrive.`,
+        })
+
+        // Notification for advertiser
         await supabase.from('notifications').insert({
           user_id: b.advertiser_id,
           type: 'booking_approved',
-          title: `Your booking was approved!`,
+          title: `Your booking was accepted!`,
           body: `"${listingTitle}" — ${b.start_date} → ${b.end_date}`,
           href: `/dashboard/bookings/${bookingId}`,
         })
 
-        // Send email to advertiser
+        // Notification for host confirming their action
+        await supabase.from('notifications').insert({
+          user_id: user.id,
+          type: 'booking_accepted_host',
+          title: `Booking accepted`,
+          body: `"${listingTitle}" — awaiting creative files from advertiser`,
+          href: `/dashboard/bookings/${bookingId}`,
+        })
+
+        // Email to advertiser
         try {
           const { data: advertiserProfile } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('id', b.advertiser_id)
-            .single()
-
+            .from('profiles').select('email').eq('id', b.advertiser_id).single()
           if (advertiserProfile?.email) {
             await fetch('/api/email/send', {
               method: 'POST',
@@ -228,9 +309,7 @@ export default function BookingsPage() {
               }),
             })
           }
-        } catch {
-          // Email failure non-fatal
-        }
+        } catch { /* non-fatal */ }
       }
     }
 
@@ -528,6 +607,26 @@ function BookingCard({
           </span>
         )}
       </div>
+
+      {/* Next-step hint for advertisers */}
+      {!isHost && booking.status === 'pending' && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#fef9ec', color: '#b45309' }}>
+          <Clock className="w-3 h-3 flex-shrink-0" />
+          Awaiting host approval
+        </div>
+      )}
+      {!isHost && booking.status === 'confirmed' && !hasCreative && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+          <Upload className="w-3 h-3 flex-shrink-0" />
+          Action needed: Upload your creative files
+        </div>
+      )}
+      {!isHost && booking.status === 'confirmed' && hasCreative && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
+          <CheckCircle className="w-3 h-3 flex-shrink-0" />
+          Creative submitted — awaiting host setup
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center flex-wrap gap-2 mt-4">

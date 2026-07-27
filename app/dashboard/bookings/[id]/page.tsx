@@ -234,17 +234,26 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
     setUploadComplete(true)
     await loadFiles()
 
-    // Notify host
+    // Notify host + advertiser
     if (!isHost && hostId && advertiserId) {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          // Message to host
           await supabase.from('messages').insert({
             booking_id: bookingId,
             sender_id: user.id,
             recipient_id: hostId,
             content: `📎 Creative files have been uploaded for "${listingTitle ?? 'your listing'}"\n\nPlease review and begin setup when ready.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
           })
+          // Confirmation message to advertiser
+          await supabase.from('messages').insert({
+            booking_id: bookingId,
+            sender_id: user.id,
+            recipient_id: user.id,
+            content: `✅ Creative files submitted for "${listingTitle ?? 'your listing'}"\n\nThe host will review your files and begin setup. You'll receive proof of posting when your ad goes live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
+          })
+          // Notification to host
           await supabase.from('notifications').insert({
             user_id: hostId,
             type: 'collateral_uploaded',
@@ -252,10 +261,19 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             body: `For "${listingTitle ?? 'booking'}"`,
             href: `/dashboard/bookings/${bookingId}`,
           })
+          // Notification to advertiser confirming submission
+          await supabase.from('notifications').insert({
+            user_id: advertiserId,
+            type: 'creative_submitted',
+            title: `Creative submitted`,
+            body: `Your files for "${listingTitle ?? 'booking'}" have been submitted`,
+            href: `/dashboard/bookings/${bookingId}`,
+          })
           const { data: hostProfile } = await supabase
             .from('profiles').select('email, full_name').eq('id', hostId).single()
           const { data: advProfile } = await supabase
-            .from('profiles').select('full_name').eq('id', advertiserId).single()
+            .from('profiles').select('full_name, email').eq('id', advertiserId).single()
+          // Email to host
           if (hostProfile?.email) {
             await fetch('/api/email/send', {
               method: 'POST',
@@ -265,6 +283,19 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 hostEmail: hostProfile.email,
                 listingTitle: listingTitle ?? 'your listing',
                 advertiserName: advProfile?.full_name ?? 'The advertiser',
+                bookingId,
+              }),
+            })
+          }
+          // Email to advertiser confirming creative submission
+          if (advProfile?.email) {
+            await fetch('/api/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'creative_submitted_advertiser',
+                advertiserEmail: advProfile.email,
+                listingTitle: listingTitle ?? 'your listing',
                 bookingId,
               }),
             })
@@ -465,7 +496,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               {uploading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
               ) : (
-                <><Upload className="w-4 h-4" /> Upload {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''}</>
+                <><Upload className="w-4 h-4" /> Submit Creative Files</>
               )}
             </button>
           )}
@@ -480,8 +511,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
             </div>
             <div>
-              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Creative Files Uploaded ✅</p>
-              <p className="text-xs mt-0.5" style={{ color: '#555' }}>Host will get this live and send you proof of posting</p>
+              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Creative Submitted ✅</p>
+              <p className="text-xs mt-0.5" style={{ color: '#555' }}>The host will review your files, begin setup, and send you proof of posting</p>
             </div>
           </div>
         </div>
@@ -1170,7 +1201,7 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
 
   const dots = [
     { label: 'Booked', color: '#7ecfc0' },
-    { label: 'Approved', color: approved ? '#7ecfc0' : '#ddd' },
+    { label: 'Accepted', color: approved ? '#7ecfc0' : '#ddd' },
     { label: 'Creative', color: creative ? '#7ecfc0' : '#ddd' },
     { label: isLive ? 'LIVE' : 'Proof', color: isLive ? '#16a34a' : proof ? '#7ecfc0' : '#ddd' },
     { label: 'Complete', color: isFullyComplete ? '#7ecfc0' : '#ddd' },
@@ -1496,6 +1527,51 @@ export default function BookingDetailPage() {
                   </div>
                 )
               })()}
+            </div>
+          )}
+
+          {/* Creative Specs from Listing */}
+          {listing && (listing.creative_formats || listing.creative_dimensions || listing.creative_max_file_size) && (
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+              <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Specs</h2>
+              <div className="space-y-3 text-sm">
+                {listing.creative_formats && listing.creative_formats.length > 0 && (
+                  <div className="flex flex-col gap-0.5">
+                    <span style={{ color: '#aaa' }}>Accepted formats</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_formats.join(', ')}</span>
+                  </div>
+                )}
+                {listing.creative_dimensions && (
+                  <div className="flex flex-col gap-0.5">
+                    <span style={{ color: '#aaa' }}>Dimensions</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_dimensions}</span>
+                  </div>
+                )}
+                {listing.creative_max_file_size && (
+                  <div className="flex flex-col gap-0.5">
+                    <span style={{ color: '#aaa' }}>Max file size</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_max_file_size}</span>
+                  </div>
+                )}
+                {listing.creative_video_duration && (
+                  <div className="flex flex-col gap-0.5">
+                    <span style={{ color: '#aaa' }}>Video duration</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_video_duration}</span>
+                  </div>
+                )}
+                {listing.creative_audio_allowed !== undefined && (
+                  <div className="flex flex-col gap-0.5">
+                    <span style={{ color: '#aaa' }}>Audio</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</span>
+                  </div>
+                )}
+                {listing.dimensions && (
+                  <div className="flex flex-col gap-0.5">
+                    <span style={{ color: '#aaa' }}>Physical dimensions</span>
+                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.dimensions}</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

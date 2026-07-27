@@ -17,7 +17,17 @@ interface BookingDetails {
   end_date: string
   total_price: number
   status: string
+  listing_id: string
   listings?: { title: string; city: string; state: string }
+}
+
+interface ListingSpecs {
+  creative_formats?: string[]
+  creative_dimensions?: string
+  creative_max_file_size?: string
+  creative_video_duration?: string
+  creative_audio_allowed?: boolean
+  dimensions?: string
 }
 
 function SuccessPageInner() {
@@ -26,6 +36,7 @@ function SuccessPageInner() {
   const sessionId = searchParams.get('session_id')
 
   const [booking, setBooking] = useState<BookingDetails | null>(null)
+  const [listingSpecs, setListingSpecs] = useState<ListingSpecs | null>(null)
   const [resolvedBookingId, setResolvedBookingId] = useState<string | null>(
     bookingIdParam && bookingIdParam !== 'pending' ? bookingIdParam : null
   )
@@ -88,11 +99,23 @@ function SuccessPageInner() {
     const supabase = createClient()
     supabase
       .from('bookings')
-      .select('id, start_date, end_date, total_price, status, listings(title, city, state)')
+      .select('id, start_date, end_date, total_price, status, listing_id, listings(title, city, state)')
       .eq('id', resolvedBookingId)
       .single()
-      .then(({ data }) => {
-        if (data) setBooking(data as unknown as BookingDetails)
+      .then(async ({ data }) => {
+        if (data) {
+          const bk = data as unknown as BookingDetails
+          setBooking(bk)
+          // Fetch listing creative specs
+          if (bk.listing_id) {
+            const { data: listing } = await supabase
+              .from('listings')
+              .select('creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, dimensions')
+              .eq('id', bk.listing_id)
+              .single()
+            if (listing) setListingSpecs(listing as unknown as ListingSpecs)
+          }
+        }
         setLoading(false)
       })
   }, [resolvedBookingId, polling])
@@ -162,6 +185,45 @@ function SuccessPageInner() {
                       disputed: 'Disputed',
                     }[booking.status] ?? booking.status}</span>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Creative Specs */}
+            {listingSpecs && (listingSpecs.creative_formats || listingSpecs.creative_dimensions || listingSpecs.creative_max_file_size) && (
+              <div className="rounded-2xl p-5 mb-6 text-left" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <h3 className="font-semibold text-sm mb-3" style={{ color: '#2b2b2b' }}>Creative Specs</h3>
+                <div className="space-y-2 text-sm">
+                  {listingSpecs.creative_formats && listingSpecs.creative_formats.length > 0 && (
+                    <div className="flex justify-between">
+                      <span style={{ color: '#888' }}>Accepted formats</span>
+                      <span style={{ color: '#2b2b2b' }}>{listingSpecs.creative_formats.join(', ')}</span>
+                    </div>
+                  )}
+                  {listingSpecs.creative_dimensions && (
+                    <div className="flex justify-between">
+                      <span style={{ color: '#888' }}>Dimensions</span>
+                      <span style={{ color: '#2b2b2b' }}>{listingSpecs.creative_dimensions}</span>
+                    </div>
+                  )}
+                  {listingSpecs.creative_max_file_size && (
+                    <div className="flex justify-between">
+                      <span style={{ color: '#888' }}>Max file size</span>
+                      <span style={{ color: '#2b2b2b' }}>{listingSpecs.creative_max_file_size}</span>
+                    </div>
+                  )}
+                  {listingSpecs.creative_video_duration && (
+                    <div className="flex justify-between">
+                      <span style={{ color: '#888' }}>Video duration</span>
+                      <span style={{ color: '#2b2b2b' }}>{listingSpecs.creative_video_duration}</span>
+                    </div>
+                  )}
+                  {listingSpecs.dimensions && (
+                    <div className="flex justify-between">
+                      <span style={{ color: '#888' }}>Physical dimensions</span>
+                      <span style={{ color: '#2b2b2b' }}>{listingSpecs.dimensions}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

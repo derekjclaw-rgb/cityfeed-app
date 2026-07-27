@@ -216,23 +216,33 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   const STATIC_CATEGORIES = ['outdoor_static', 'static_billboards', 'billboard', 'storefront', 'window', 'vehicle_wrap']
   const isStaticListing = STATIC_CATEGORIES.includes(listingCategory.toLowerCase())
 
-  // Send email to advertiser — always use booking_confirmed template for now
-  // (the in-app notification and auto-message carry the correct pending/confirmed messaging)
+  // Send email to advertiser — use correct template based on status
   if (advertiserProfile?.email) {
-    sendEmail({
-      type: 'booking_confirmed',
-      advertiserEmail: advertiserProfile.email,
-      listingTitle,
-      dates,
-      total: booking.total_price,
-      bookingId,
-      isStatic: isStaticListing,
-    })
+    if (isPending) {
+      await sendEmail({
+        type: 'booking_request_submitted',
+        advertiserEmail: advertiserProfile.email,
+        listingTitle,
+        dates,
+        total: booking.total_price,
+        bookingId,
+      })
+    } else {
+      await sendEmail({
+        type: 'booking_confirmed',
+        advertiserEmail: advertiserProfile.email,
+        listingTitle,
+        dates,
+        total: booking.total_price,
+        bookingId,
+        isStatic: isStaticListing,
+      })
+    }
   }
 
-  // Send email to host — content depends on status
+  // Send email to host
   if (hostProfile?.email) {
-    sendEmail({
+    await sendEmail({
       type: 'new_booking_request',
       hostEmail: hostProfile.email,
       listingTitle,
@@ -260,6 +270,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nView your booking: ${bookingUrl}\n\nQuestions? Send a message here!`
     : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\n${isStaticListing ? staticNextSteps : digitalNextSteps}`
 
+  // System message to ADVERTISER
   const msgInsert = await supabase.from('messages').insert({
     booking_id: bookingId,
     sender_id: booking.advertiser_id,
@@ -267,7 +278,21 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     content: systemMessage,
     ...(listingPhoto ? { image_url: listingPhoto } : {}),
   })
-  console.log(`[Stripe Webhook] Auto-message insert:`, msgInsert.error ?? 'OK', { bookingId })
+  console.log(`[Stripe Webhook] Auto-message (advertiser) insert:`, msgInsert.error ?? 'OK', { bookingId })
+
+  // System message to HOST
+  const hostSystemMessage = isPending
+    ? `📥 New booking request received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nFrom: ${advertiserProfile?.full_name ?? 'An advertiser'}\n\nPlease review and accept or decline this request.\n\nView booking: ${bookingUrl}`
+    : `🎉 New instant booking!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nFrom: ${advertiserProfile?.full_name ?? 'An advertiser'}\n\n${isStaticListing ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload creative files shortly.'}\n\nView booking: ${bookingUrl}`
+
+  const hostMsgInsert = await supabase.from('messages').insert({
+    booking_id: bookingId,
+    sender_id: booking.host_id,
+    recipient_id: booking.host_id,
+    content: hostSystemMessage,
+    ...(listingPhoto ? { image_url: listingPhoto } : {}),
+  })
+  console.log(`[Stripe Webhook] Auto-message (host) insert:`, hostMsgInsert.error ?? 'OK', { bookingId })
 
   // Insert notifications — content depends on status
   const advertiserNotifTitle = isPending
