@@ -468,12 +468,25 @@ function BookingCard({
 
   const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date, hasCreative)
   const isLiveNow = simpleBadge.label === 'LIVE'
+  const isPastComplete = simpleBadge.label === 'Complete'
   const canReview = booking.status === 'completed'
   const showAcceptDecline = isHost && booking.status === 'pending'
   const showPOPPrompt = isHost && booking.status === 'active'
   const showCancelBtn = ['confirmed', 'pending'].includes(booking.status)
   const showReceipt = booking.status === 'completed'
   const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
+
+  // Advertiser next-step hint
+  let nextStep: string | null = null
+  if (!isHost && !isLiveNow && !isPastComplete) {
+    if (booking.status === 'pending') {
+      nextStep = 'Awaiting host review'
+    } else if (booking.status === 'confirmed' && !hasCreative) {
+      nextStep = 'Upload your creative files'
+    } else if (booking.status === 'confirmed' && hasCreative) {
+      nextStep = 'Host is preparing your placement'
+    }
+  }
 
   const earnings = isHost && booking.status === 'completed'
     ? (booking.payout_amount ?? booking.total_price * 0.93)
@@ -528,6 +541,17 @@ function BookingCard({
           </span>
         )}
       </div>
+
+      {/* Advertiser next-step hint */}
+      {nextStep && (
+        <div className="flex items-center gap-1.5 text-xs mt-2.5 px-2.5 py-1.5 rounded-lg w-fit" style={{ backgroundColor: booking.status === 'confirmed' && !hasCreative ? '#fef9ec' : '#f8f8f5', color: booking.status === 'confirmed' && !hasCreative ? '#b45309' : '#888' }}>
+          {booking.status === 'confirmed' && !hasCreative ? (
+            <><Upload className="w-3 h-3" /> <span className="font-medium">Next: {nextStep}</span></>
+          ) : (
+            <><Clock className="w-3 h-3" /> Next: {nextStep}</>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center flex-wrap gap-2 mt-4">

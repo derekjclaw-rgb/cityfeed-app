@@ -22,8 +22,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Filter out Supabase placeholder files
+  const realFiles = (data ?? []).filter(item => item.name !== '.emptyFolderPlaceholder')
+
   const files = await Promise.all(
-    (data ?? []).map(async (item) => {
+    realFiles.map(async (item) => {
       const { data: urlData } = supabase.storage
         .from('booking-collateral')
         .getPublicUrl(`${folderPath}/${item.name}`)
