@@ -153,10 +153,9 @@ interface CollateralSectionProps {
   listing?: Listing | null
   booking?: Booking | null
   onBookingUpdate?: (b: Partial<Booking>) => void
-  onCreativeUploaded?: () => void
 }
 
-function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertiserId, listingTitle, listing, booking, onBookingUpdate, onCreativeUploaded }: CollateralSectionProps) {
+function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertiserId, listingTitle, listing, booking, onBookingUpdate }: CollateralSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(true)
@@ -234,7 +233,6 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
     setUploading(false)
     setUploadComplete(true)
     await loadFiles()
-    onCreativeUploaded?.()
 
     // Notify host
     if (!isHost && hostId && advertiserId) {
@@ -316,7 +314,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         {hasFiles ? (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
             <CheckCircle className="w-3 h-3" />
-            Creative Submitted ✅
+            Creative Files Uploaded ✅
           </span>
         ) : (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
@@ -467,7 +465,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               {uploading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
               ) : (
-                <><Upload className="w-4 h-4" /> Submit Creative Files</>
+                <><Upload className="w-4 h-4" /> Upload {pendingFiles.length} file{pendingFiles.length !== 1 ? 's' : ''}</>
               )}
             </button>
           )}
@@ -482,8 +480,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
             </div>
             <div>
-              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Creative Submitted ✅</p>
-              <p className="text-xs mt-0.5" style={{ color: '#555' }}>The host will review and install your creative, then send proof of posting</p>
+              <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Creative Files Uploaded ✅</p>
+              <p className="text-xs mt-0.5" style={{ color: '#555' }}>Host will get this live and send you proof of posting</p>
             </div>
           </div>
         </div>
@@ -801,10 +799,9 @@ interface POPSectionProps {
   advertiserId?: string
   hostId?: string
   listingTitle?: string
-  hasCreativeFiles?: boolean
 }
 
-function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle, hasCreativeFiles }: POPSectionProps) {
+function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle }: POPSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -828,10 +825,9 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     } catch {
       // Fallback to direct storage list for host
       const { data } = await supabase.storage.from('booking-collateral').list(folderPath)
-      const realData = (data ?? []).filter(item => item.name !== '.emptyFolderPlaceholder')
-      if (realData.length === 0) return
+      if (!data || data.length === 0) return
       const withUrls: CollateralFile[] = await Promise.all(
-        realData.map(async (item) => {
+        data.map(async (item) => {
           const { data: urlData } = await supabase.storage
             .from('booking-collateral')
             .createSignedUrl(`${folderPath}/${item.name}`, 3600)
@@ -972,9 +968,6 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   // Only show for relevant statuses (simplified flow: confirmed → completed)
   const showStatuses = ['confirmed', 'completed']
   if (!showStatuses.includes(bookingStatus)) return null
-
-  // Host POP upload only available after advertiser uploads creative
-  if (isHost && !hasCreativeFiles) return null
 
   // Advertiser view: show POP photos if they exist
   if (!isHost) {
@@ -1177,7 +1170,7 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
 
   const dots = [
     { label: 'Booked', color: '#7ecfc0' },
-    { label: 'Accepted', color: approved ? '#7ecfc0' : '#ddd' },
+    { label: 'Approved', color: approved ? '#7ecfc0' : '#ddd' },
     { label: 'Creative', color: creative ? '#7ecfc0' : '#ddd' },
     { label: isLive ? 'LIVE' : 'Proof', color: isLive ? '#16a34a' : proof ? '#7ecfc0' : '#ddd' },
     { label: 'Complete', color: isFullyComplete ? '#7ecfc0' : '#ddd' },
@@ -1315,10 +1308,7 @@ export default function BookingDetailPage() {
     )
   }
 
-  // Respect dashboard mode toggle for self-bookings (same user is both advertiser & host)
-  const isBothParties = currentUserId === booking.advertiser_id && currentUserId === booking.host_id
-  const savedMode = typeof window !== 'undefined' ? localStorage.getItem('cf_dash_mode') : null
-  const isHost = isBothParties ? (savedMode === 'host') : (currentUserId === booking.host_id)
+  const isHost = currentUserId === booking.host_id
   const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
   const now = new Date()
   const startD = booking.start_date ? new Date(booking.start_date + 'T00:00:00') : null
@@ -1521,7 +1511,6 @@ export default function BookingDetailPage() {
               listing={listing}
               booking={booking}
               onBookingUpdate={(partial) => setBooking(prev => prev ? { ...prev, ...partial } : prev)}
-              onCreativeUploaded={() => setHasCreativeFiles(true)}
             />
           )}
 
@@ -1534,7 +1523,6 @@ export default function BookingDetailPage() {
               advertiserId={booking.advertiser_id}
               hostId={booking.host_id}
               listingTitle={listing?.title}
-              hasCreativeFiles={hasCreativeFiles}
             />
           )}
 

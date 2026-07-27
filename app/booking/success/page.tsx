@@ -17,16 +17,7 @@ interface BookingDetails {
   end_date: string
   total_price: number
   status: string
-  listings?: {
-    title: string
-    city: string
-    state: string
-    creative_formats?: string[]
-    creative_dimensions?: string
-    creative_max_file_size?: string
-    creative_video_duration?: string
-    creative_audio_allowed?: boolean
-  }
+  listings?: { title: string; city: string; state: string }
 }
 
 function SuccessPageInner() {
@@ -97,7 +88,7 @@ function SuccessPageInner() {
     const supabase = createClient()
     supabase
       .from('bookings')
-      .select('id, start_date, end_date, total_price, status, listings(title, city, state, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed)')
+      .select('id, start_date, end_date, total_price, status, listings(title, city, state)')
       .eq('id', resolvedBookingId)
       .single()
       .then(({ data }) => {
@@ -171,45 +162,6 @@ function SuccessPageInner() {
                       disputed: 'Disputed',
                     }[booking.status] ?? booking.status}</span>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Creative Specs */}
-            {booking?.listings && (booking.listings.creative_formats?.length || booking.listings.creative_dimensions || booking.listings.creative_max_file_size) && (
-              <div className="rounded-2xl p-5 mb-6 text-left" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                <h2 className="font-semibold mb-3 text-sm" style={{ color: '#2b2b2b' }}>Creative Specs</h2>
-                <div className="space-y-2 text-sm" style={{ color: '#888' }}>
-                  {booking.listings.creative_formats && booking.listings.creative_formats.length > 0 && (
-                    <div className="flex justify-between">
-                      <span>Accepted formats</span>
-                      <span style={{ color: '#2b2b2b' }}>{booking.listings.creative_formats.join(', ')}</span>
-                    </div>
-                  )}
-                  {booking.listings.creative_dimensions && (
-                    <div className="flex justify-between">
-                      <span>Dimensions</span>
-                      <span style={{ color: '#2b2b2b' }}>{booking.listings.creative_dimensions}</span>
-                    </div>
-                  )}
-                  {booking.listings.creative_max_file_size && (
-                    <div className="flex justify-between">
-                      <span>Max file size</span>
-                      <span style={{ color: '#2b2b2b' }}>{booking.listings.creative_max_file_size}</span>
-                    </div>
-                  )}
-                  {booking.listings.creative_video_duration && (
-                    <div className="flex justify-between">
-                      <span>Video duration</span>
-                      <span style={{ color: '#2b2b2b' }}>{booking.listings.creative_video_duration}</span>
-                    </div>
-                  )}
-                  {booking.listings.creative_audio_allowed !== undefined && (
-                    <div className="flex justify-between">
-                      <span>Audio</span>
-                      <span style={{ color: '#2b2b2b' }}>{booking.listings.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
