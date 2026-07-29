@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, MapPin, Edit2, Trash2, Loader2, Eye, AlertCircle, MoreVertical, CalendarOff } from 'lucide-react'
+import { Plus, MapPin, Edit2, Trash2, Loader2, Eye, AlertCircle, MoreVertical, CalendarOff, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AvailabilityManager from '@/components/AvailabilityManager'
 
@@ -22,6 +22,15 @@ interface Listing {
   daily_impressions: number
   created_at: string
   images?: string[]
+}
+
+interface ListingBooking {
+  id: string
+  start_date: string
+  end_date: string
+  status: string
+  advertiser_name: string
+  total_price: number
 }
 
 const STATUS_STYLES: Record<string, React.CSSProperties> = {
@@ -68,6 +77,9 @@ export default function MyListingsPage() {
   const [error, setError] = useState('')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [availabilityListing, setAvailabilityListing] = useState<{ id: string; title: string } | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [listingBookings, setListingBookings] = useState<Record<string, ListingBooking[]>>({})
+  const [loadingBookings, setLoadingBookings] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -95,10 +107,26 @@ export default function MyListingsPage() {
   }, [router])
 
   async function handleDelete(id: string) {
+    const supabase = createClient()
+    // Block deletion if listing has active or upcoming campaigns
+    const today = new Date().toISOString().split('T')[0]
+    const { data: activeBookings } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('listing_id', id)
+      .not('status', 'in', '(cancelled,disputed)')
+      .gte('end_date', today)
+      .limit(1)
+
+    if (activeBookings && activeBookings.length > 0) {
+      alert('This listing has active or upcoming campaigns. You can delete it after all campaigns have ended.')
+      setOpenMenuId(null)
+      return
+    }
+
     if (!confirm('Are you sure you want to delete this listing? This cannot be undone.')) return
 
     setDeletingId(id)
-    const supabase = createClient()
     const { error } = await supabase.from('listings').delete().eq('id', id)
 
     if (error) {
@@ -108,6 +136,47 @@ export default function MyListingsPage() {
     }
     setDeletingId(null)
     setOpenMenuId(null)
+  }
+
+  async function toggleExpand(listingId: string) {
+    if (expandedId === listingId) {
+      setExpandedId(null)
+      return
+    }
+    setExpandedId(listingId)
+    if (!listingBookings[listingId]) {
+      setLoadingBookings(listingId)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('bookings')
+        .select('id, start_date, end_date, status, total_price, advertiser:profiles!bookings_advertiser_id_fkey(full_name)')
+        .eq('listing_id', listingId)
+        .not('status', 'in', '(cancelled,disputed)')
+        .order('start_date', { ascending: true })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapped: ListingBooking[] = (data ?? []).map((b: any) => ({
+        id: b.id,
+        start_date: b.start_date,
+        end_date: b.end_date,
+        status: b.status,
+        advertiser_name: b.advertiser?.full_name ?? 'Advertiser',
+        total_price: b.total_price,
+      }))
+      setListingBookings(prev => ({ ...prev, [listingId]: mapped }))
+      setLoadingBookings(null)
+    }
+  }
+
+  function bookingStatusColor(status: string, startDate: string, endDate: string): string {
+    const now = new Date()
+    const start = new Date(startDate + 'T00:00:00')
+    const end = new Date(endDate + 'T00:00:00')
+    if (['confirmed', 'completed'].includes(status) && now >= start && now < end) return '#16a34a'
+    if (now < start) return '#1d4ed8'
+    if (status === 'completed') return '#888'
+    if (status === 'pending') return '#b45309'
+    return '#7ecfc0'
   }
 
   if (loading) {
@@ -185,9 +254,11 @@ export default function MyListingsPage() {
             {listings.map(listing => (
               <div
                 key={listing.id}
-                className="rounded-2xl overflow-visible transition-shadow hover:shadow-md flex items-center gap-4 p-4"
+                className="rounded-2xl overflow-visible transition-shadow hover:shadow-md p-4 cursor-pointer"
                 style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+                onClick={() => toggleExpand(listing.id)}
               >
+                <div className="flex items-center gap-4">
                 {/* Thumbnail */}
                 {listing.images && listing.images.length > 0 ? (
                   <img
@@ -230,7 +301,7 @@ export default function MyListingsPage() {
                 </div>
 
                 {/* Actions menu */}
-                <div className="relative flex-shrink-0">
+                <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
                   <button
                     onClick={() => setOpenMenuId(openMenuId === listing.id ? null : listing.id)}
                     className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:opacity-80"
@@ -283,6 +354,52 @@ export default function MyListingsPage() {
                     </div>
                   )}
                 </div>
+                </div>
+
+                {/* Expanded booking schedule */}
+                {expandedId === listing.id && (
+                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid #e0e0d8' }}>
+                    {loadingBookings === listing.id ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#7ecfc0' }} />
+                      </div>
+                    ) : (listingBookings[listing.id] ?? []).length > 0 ? (
+                      <div>
+                        <p className="text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: '#888' }}>
+                          Booking Schedule ({(listingBookings[listing.id] ?? []).length})
+                        </p>
+                        <div className="space-y-1.5">
+                          {(listingBookings[listing.id] ?? []).map(b => (
+                            <Link
+                              key={b.id}
+                              href={`/dashboard/bookings/${b.id}`}
+                              onClick={e => e.stopPropagation()}
+                              className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                              style={{ border: '1px solid #f0f0ea' }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: bookingStatusColor(b.status, b.start_date, b.end_date) }} />
+                                <div>
+                                  <p className="text-xs font-medium" style={{ color: '#2b2b2b' }}>
+                                    {new Date(b.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    {' — '}
+                                    {new Date(b.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  </p>
+                                  <p className="text-xs" style={{ color: '#888' }}>{b.advertiser_name}</p>
+                                </div>
+                              </div>
+                              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>
+                                ${b.total_price?.toLocaleString()}
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs py-3 text-center" style={{ color: '#888' }}>No bookings yet</p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

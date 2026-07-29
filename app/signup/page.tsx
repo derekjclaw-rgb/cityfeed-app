@@ -21,6 +21,7 @@ function SignupForm() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [companyName, setCompanyName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -39,6 +40,7 @@ function SignupForm() {
         data: {
           full_name: fullName,
           role,
+          ...(companyName ? { company_name: companyName } : {}),
         },
         emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
       },
@@ -146,6 +148,24 @@ function SignupForm() {
             style={inputStyle}
           />
         </div>
+
+        {/* Company name — advertisers only */}
+        {role === 'advertiser' && (
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="companyName">
+              Company name <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>
+            </label>
+            <input
+              id="companyName"
+              type="text"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="e.g. Acme Media Group"
+              className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+              style={inputStyle}
+            />
+          </div>
+        )}
 
         {/* Email */}
         <div>

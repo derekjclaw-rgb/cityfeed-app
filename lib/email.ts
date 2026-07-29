@@ -57,6 +57,7 @@ function formatDateRange(dates: string): string {
 
 export type EmailEvent =
   | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
+  | { type: 'new_booking_instant'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
   | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean }
   | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser' }
   | { type: 'booking_request_submitted'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
@@ -97,6 +98,33 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             </div>
             <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'Once confirmed, creative files will be uploaded by the advertiser.'} Log in to review and accept or decline this booking.</p>
             <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review Booking →</a>
+          `),
+        })
+        break
+      }
+
+      case 'new_booking_instant': {
+        const subtotal = Math.round(event.total / 1.07 * 100) / 100
+        const sellerFee = Math.round(subtotal * 0.07 * 100) / 100
+        const payout = Math.round((subtotal - sellerFee) * 100) / 100
+        const prettyDates = formatDateRange(event.dates)
+        const privacyName = formatNamePrivacy(event.advertiserName)
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `New booking — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">New Booking 🎉</h2>
+            <p style="color:#555;margin:0 0 12px"><strong>${privacyName}</strong> has booked your listing.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0 0 4px;color:#888">Dates: ${prettyDates}</p>
+              <p style="margin:0 0 4px;color:#888">Subtotal: <strong style="color:#2b2b2b">$${subtotal.toFixed(2)}</strong></p>
+              <p style="margin:0 0 4px;color:#888">City Feed fee (7%): <strong style="color:#dc2626">-$${sellerFee.toFixed(2)}</strong></p>
+              <p style="margin:0;color:#888">Your expected payout: <strong style="color:#16a34a">$${payout.toFixed(2)}</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload their creative files shortly.'}</p>
+            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break

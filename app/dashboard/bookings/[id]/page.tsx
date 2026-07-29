@@ -342,7 +342,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         <h2 className="text-lg font-semibold" style={{ color: '#2b2b2b' }}>
           {isHost ? 'Advertiser Creative Files' : 'Upload Your Creative Files'}
         </h2>
-        {hasFiles ? (
+        {showSuccessState ? null : hasFiles ? (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
             <CheckCircle className="w-3 h-3" />
             Creative Files Uploaded ✅

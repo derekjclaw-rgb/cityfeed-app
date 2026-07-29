@@ -240,16 +240,17 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
     }
   }
 
-  // Send email to host
+  // Send email to host — different template for instant bookings
   if (hostProfile?.email) {
     await sendEmail({
-      type: 'new_booking_request',
+      type: isPending ? 'new_booking_request' : 'new_booking_instant',
       hostEmail: hostProfile.email,
       listingTitle,
       advertiserName: advertiserProfile?.full_name ?? 'An advertiser',
       dates,
       total: booking.total_price,
       platformFee: booking.platform_fee ?? 0,
+      bookingId,
       isStatic: isStaticListing,
     })
   }

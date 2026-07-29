@@ -628,6 +628,20 @@ function BookingCard({
         </div>
       )}
 
+      {/* Host status hints */}
+      {isHost && booking.status === 'confirmed' && !hasCreative && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+          <Clock className="w-3 h-3 flex-shrink-0" />
+          Awaiting Creative Files
+        </div>
+      )}
+      {isHost && booking.status === 'confirmed' && hasCreative && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
+          <CheckCircle className="w-3 h-3 flex-shrink-0" />
+          Creative received — begin setup
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center flex-wrap gap-2 mt-4">
         {/* Host: Accept/Decline pending bookings */}
