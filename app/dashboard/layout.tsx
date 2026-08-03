@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -46,6 +46,7 @@ const ACCOUNT_ITEMS: Omit<NavItem, 'badge' | 'section'>[] = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [mode, setMode] = useState<DashMode>('advertiser')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -115,7 +116,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setMode(newMode)
     localStorage.setItem('cf_dash_mode', newMode)
     window.dispatchEvent(new CustomEvent('cf_mode_change', { detail: newMode }))
-  }, [])
+
+    // Redirect when current page doesn't apply to the new mode
+    if (newMode === 'advertiser' && pathname.startsWith('/dashboard/listings')) {
+      router.push('/dashboard/bookings')
+    } else if (newMode === 'host' && pathname.startsWith('/dashboard/bookings')) {
+      router.push('/dashboard/listings')
+    }
+  }, [pathname, router])
 
   // ── Close mobile sidebar on route change ─────────────────────────────────────
   useEffect(() => {
