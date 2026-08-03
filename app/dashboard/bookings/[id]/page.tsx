@@ -1267,7 +1267,7 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
 
   if (isHost) {
     if (status === 'completed' && campaignLive) {
-      message = 'Your ad placement is live \u2014 payout will process after the campaign ends'
+      message = 'Your ad placement is live \u2014 payout processed'
     } else if (status === 'completed') {
       message = 'Campaign complete \u2014 payout processed'
     } else if (status === 'pop_pending') {
