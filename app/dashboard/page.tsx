@@ -182,6 +182,9 @@ function DashboardContent() {
   const [totalSpent, setTotalSpent] = useState(0)
   const [avgPerPlacement, setAvgPerPlacement] = useState(0)
   const [completedCount, setCompletedCount] = useState(0)
+  const [totalEarned, setTotalEarned] = useState(0)
+  const [avgPerListing, setAvgPerListing] = useState(0)
+  const [hostBookingCount, setHostBookingCount] = useState(0)
 
   // ── Stripe success ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -359,10 +362,21 @@ function DashboardContent() {
 
       // ── Financial summary ─────────────────────────────────────────────────
       const paidBookings = bookings.filter(b => ['confirmed', 'active', 'completed'].includes(b.status))
-      const spent = paidBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
-      setTotalSpent(Math.round(spent))
-      setCompletedCount(paidBookings.length)
-      setAvgPerPlacement(paidBookings.length > 0 ? Math.round(spent / paidBookings.length) : 0)
+      if (isHost) {
+        // Host earnings: total_price minus 7% seller fee
+        const earned = paidBookings.reduce((sum, b) => {
+          const payout = Math.round((b.total_price || 0) * 0.93)
+          return sum + payout
+        }, 0)
+        setTotalEarned(Math.round(earned))
+        setHostBookingCount(paidBookings.length)
+        setAvgPerListing(paidBookings.length > 0 ? Math.round(earned / paidBookings.length) : 0)
+      } else {
+        const spent = paidBookings.reduce((sum, b) => sum + (b.total_price || 0), 0)
+        setTotalSpent(Math.round(spent))
+        setCompletedCount(paidBookings.length)
+        setAvgPerPlacement(paidBookings.length > 0 ? Math.round(spent / paidBookings.length) : 0)
+      }
 
 
       // ── Activity timeline (from notifications) ────────────────────────────
@@ -750,8 +764,8 @@ function DashboardContent() {
                FINANCIAL SUMMARY CARD
                ═══════════════════════════════════════ */}
           <div className="flex items-baseline justify-between mb-[18px] flex-wrap gap-2">
-            <h2 className="text-xl font-bold tracking-[-0.3px]">Spending Summary</h2>
-            <Link href="/dashboard/bookings" className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>Details →</Link>
+            <h2 className="text-xl font-bold tracking-[-0.3px]">{mode === 'host' ? 'Earnings Summary' : 'Spending Summary'}</h2>
+            <Link href={mode === 'host' ? '/dashboard/listings' : '/dashboard/bookings'} className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>Details →</Link>
           </div>
           <div className="rounded-2xl p-6 mb-9"
             style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
@@ -762,23 +776,48 @@ function DashboardContent() {
               </div>
               <div className="text-xs font-medium" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Last 30 days</div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
-                <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Total Spent</div>
-                <div className="text-[22px] font-extrabold tracking-[-0.5px]">${totalSpent.toLocaleString()}</div>
-                <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
-                  across {completedCount} booking{completedCount !== 1 ? 's' : ''}
+            {mode === 'host' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Total Earned</div>
+                  <div className="text-[22px] font-extrabold tracking-[-0.5px]" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>${totalEarned.toLocaleString()}</div>
+                  <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                    from {hostBookingCount} booking{hostBookingCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Avg. Per Booking</div>
+                  <div className="text-[22px] font-extrabold tracking-[-0.5px]">${avgPerListing.toLocaleString()}</div>
+                  <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                    {hostBookingCount > 0 ? 'after 7% platform fee' : 'no bookings yet'}
+                  </div>
+                </div>
+                <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Active Listings</div>
+                  <div className="text-[22px] font-extrabold tracking-[-0.5px]">{activeCampaigns}</div>
+                  <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                    currently live
+                  </div>
                 </div>
               </div>
-              <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
-                <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Avg. Per Placement</div>
-                <div className="text-[22px] font-extrabold tracking-[-0.5px]">${avgPerPlacement.toLocaleString()}</div>
-                <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
-                  {completedCount > 0 ? `across ${completedCount} bookings` : 'no bookings yet'}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Total Spent</div>
+                  <div className="text-[22px] font-extrabold tracking-[-0.5px]">${totalSpent.toLocaleString()}</div>
+                  <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                    across {completedCount} booking{completedCount !== 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
+                  <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Avg. Per Placement</div>
+                  <div className="text-[22px] font-extrabold tracking-[-0.5px]">${avgPerPlacement.toLocaleString()}</div>
+                  <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                    {completedCount > 0 ? `across ${completedCount} bookings` : 'no bookings yet'}
+                  </div>
                 </div>
               </div>
-
-            </div>
+            )}
           </div>
         </>
       )}
