@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell, ArrowLeftRight, MessageSquare } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell, ArrowLeftRight, MessageSquare, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
@@ -184,7 +184,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/how-it-works', label: 'How It Works' },
-    { href: '/dashboard/create-listing', label: 'For Hosts' },
+    { href: user ? '/dashboard/create-listing' : '/signup?role=host', label: 'For Hosts' },
     { href: '/about', label: 'About' },
   ]
 
@@ -213,10 +213,12 @@ export default function Navbar() {
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5">
-          <span
-            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: 'var(--gold)' }}
-          />
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, var(--mint), var(--mint-dark))' }}
+          >
+            <MapPin className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+          </div>
           <span
             className="text-xl font-extrabold tracking-tight"
             style={{ color: 'var(--charcoal)', letterSpacing: '-0.5px' }}
@@ -266,53 +268,73 @@ export default function Navbar() {
 
                 {notifOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-80 rounded-2xl overflow-hidden"
-                    style={{ backgroundColor: '#fff', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
+                    className="absolute right-0 mt-2 w-[340px] rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: '#fff', border: '1px solid var(--border)', boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}
                   >
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--light-gray)' }}>
-                      <p className="font-semibold text-sm" style={{ color: 'var(--charcoal)' }}>Notifications</p>
+                    <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--light-gray)' }}>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-[15px]" style={{ color: 'var(--charcoal)' }}>Notifications</p>
+                        {unreadCount > 0 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--mint)', color: '#fff' }}>
+                            {unreadCount}
+                          </span>
+                        )}
+                      </div>
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} className="text-xs hover:opacity-70" style={{ color: 'var(--mint-dark)' }}>Mark all read</button>
+                        <button onClick={markAllRead} className="text-xs font-medium hover:opacity-70" style={{ color: 'var(--mint-dark)' }}>Mark all read</button>
                       )}
                     </div>
-                    <div className="max-h-80 overflow-y-auto">
+                    <div className="max-h-[380px] overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="px-4 py-8 text-center">
-                          <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--border)' }} />
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>No notifications yet</p>
+                        <div className="px-5 py-12 text-center">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'var(--light-gray)' }}>
+                            <Bell className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
+                          </div>
+                          <p className="text-sm font-medium mb-1" style={{ color: 'var(--charcoal)' }}>All caught up</p>
+                          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>No new notifications</p>
                         </div>
                       ) : (
-                        notifications.slice(0, 5).map(notif => (
-                          <button
-                            key={notif.id}
-                            onClick={() => markNotifRead(notif.id, notif.href)}
-                            className="w-full text-left px-4 py-3 hover:bg-[var(--light-gray)] transition-colors"
-                            style={{
-                              borderBottom: '1px solid var(--light-gray)',
-                              backgroundColor: notif.read ? 'transparent' : 'rgba(126,207,192,0.05)',
-                            }}
-                          >
-                            <div className="flex items-start gap-2">
-                              {!notif.read && (
-                                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: 'var(--mint)' }} />
-                              )}
-                              <div style={{ flex: 1 }}>
-                                <p className="text-sm font-medium" style={{ color: 'var(--charcoal)' }}>{notif.title}</p>
+                        notifications.slice(0, 6).map(notif => {
+                          const icons: Record<string, string> = {
+                            new_booking: '📋', booking_confirmed: '✅', booking_approved: '✅',
+                            booking_cancelled: '❌', new_message: '💬', collateral_uploaded: '📎',
+                            pop_submitted: '📸', pop_approved: '🎉', materials_received: '📦',
+                          }
+                          return (
+                            <button
+                              key={notif.id}
+                              onClick={() => markNotifRead(notif.id, notif.href)}
+                              className="w-full text-left px-5 py-3.5 hover:bg-[var(--light-gray)] transition-colors flex items-start gap-3"
+                              style={{
+                                borderBottom: '1px solid var(--light-gray)',
+                                backgroundColor: notif.read ? 'transparent' : 'rgba(126,207,192,0.04)',
+                              }}
+                            >
+                              <span className="text-base flex-shrink-0 mt-0.5 w-6 text-center">
+                                {icons[notif.type] ?? '🔔'}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-[13px] font-semibold truncate" style={{ color: 'var(--charcoal)' }}>{notif.title}</p>
+                                  {!notif.read && (
+                                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--mint)' }} />
+                                  )}
+                                </div>
                                 {notif.body && (
-                                  <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{notif.body}</p>
+                                  <p className="text-xs mt-0.5 line-clamp-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{notif.body}</p>
                                 )}
-                                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{timeAgo(notif.created_at)}</p>
+                                <p className="text-[11px] mt-1 font-medium" style={{ color: 'var(--text-tertiary)' }}>{timeAgo(notif.created_at)}</p>
                               </div>
-                            </div>
-                          </button>
-                        ))
+                            </button>
+                          )
+                        })
                       )}
                     </div>
-                    <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--light-gray)' }}>
+                    <div className="px-5 py-3" style={{ borderTop: '1px solid var(--light-gray)', backgroundColor: 'var(--light-gray)' }}>
                       <Link
                         href="/dashboard/notifications"
                         onClick={() => setNotifOpen(false)}
-                        className="block text-center text-sm hover:opacity-70"
+                        className="block text-center text-[13px] font-semibold hover:opacity-70"
                         style={{ color: 'var(--mint-dark)' }}
                       >
                         View all notifications
@@ -322,14 +344,32 @@ export default function Navbar() {
                 )}
               </div>
 
-              {/* Mode indicator pill */}
-              <Link
-                href="/dashboard"
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: 'var(--gold-light)', color: 'var(--gold-dark)', border: '1px solid rgba(222,187,115,0.3)' }}
+              {/* Role Toggle */}
+              <div
+                className="hidden lg:flex items-center rounded-full p-[2px] text-xs font-semibold"
+                style={{ backgroundColor: 'var(--light-gray)', border: '1px solid var(--border)' }}
               >
-                {dashMode === 'host' ? '🏠 Host' : '📢 Advertiser'}
-              </Link>
+                <button
+                  onClick={() => { if (dashMode !== 'advertiser') handleSwitchMode() }}
+                  className="px-3 py-1 rounded-full transition-all"
+                  style={dashMode === 'advertiser'
+                    ? { backgroundColor: 'var(--gold)', color: 'var(--charcoal)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                    : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
+                  }
+                >
+                  Advertiser
+                </button>
+                <button
+                  onClick={() => { if (dashMode !== 'host') handleSwitchMode() }}
+                  className="px-3 py-1 rounded-full transition-all"
+                  style={dashMode === 'host'
+                    ? { backgroundColor: 'var(--gold)', color: 'var(--charcoal)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                    : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
+                  }
+                >
+                  Host
+                </button>
+              </div>
 
               {/* User dropdown */}
               <div className="relative" ref={dropdownRef}>

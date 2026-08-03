@@ -166,8 +166,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }`}
         style={{ backgroundColor: 'var(--charcoal, #2b2b2b)' }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 pt-7 pb-5">
+        {/* Logo — links back to homepage */}
+        <Link href="/" className="flex items-center gap-3 px-6 pt-7 pb-5 hover:opacity-80 transition-opacity">
           <div
             className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, var(--mint, #7ecfc0), var(--mint-dark, #5bb8a8))' }}
@@ -175,7 +175,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <MapPin className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
           </div>
           <span className="text-[17px] font-bold text-white tracking-[-0.3px]">City Feed</span>
-        </div>
+        </Link>
 
         {/* Role Toggle */}
         <div className="mx-4 mb-5 flex rounded-[10px] p-[3px]" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}>
@@ -209,7 +209,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <span className="text-[10px] font-semibold uppercase tracking-[1.2px] px-3 pt-[18px] pb-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
             Menu
           </span>
-          {MENU_ITEMS.map((item) => {
+          {MENU_ITEMS.filter((item) => {
+            // Bookings visible only for advertisers, Listings only for hosts
+            if (item.label === 'Bookings' && mode === 'host') return false
+            if (item.label === 'Listings' && mode === 'advertiser') return false
+            return true
+          }).map((item) => {
             const active = isActive(item.href)
             const badge = getBadge(item.label)
             const Icon = item.icon

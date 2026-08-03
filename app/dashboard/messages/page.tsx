@@ -110,35 +110,50 @@ export default function MessagesPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
-            {threads.map(thread => (
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+          >
+            {threads.map((thread, i) => (
               <Link key={thread.booking_id} href={`/dashboard/messages/${thread.booking_id}`}>
                 <div
-                  className="rounded-2xl p-4 flex items-center gap-4 cursor-pointer transition-all hover:shadow-md"
-                  style={{ backgroundColor: '#fff', border: thread.unread > 0 ? '1px solid #debb73' : '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+                  className="px-5 py-4 flex items-center gap-3.5 cursor-pointer transition-colors hover:bg-[#f8f8f5]"
+                  style={i < threads.length - 1 ? { borderBottom: '1px solid #f0f0ec' } : {}}
                 >
-                  <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm" style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}>
-                    <MessageCircle className="w-5 h-5" />
+                  {/* Avatar initial */}
+                  <div
+                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
+                    style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}
+                  >
+                    {thread.other_party.charAt(0).toUpperCase()}
                   </div>
+                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
-                      <h3 className="font-semibold text-sm truncate" style={{ color: '#2b2b2b' }}>{thread.listing_title}</h3>
-                      <span className="text-xs flex-shrink-0 ml-2" style={{ color: '#aaa' }}>
-                        {new Date(thread.last_message_at).toLocaleDateString()}
+                      <h3
+                        className="text-[14px] truncate"
+                        style={{ color: '#2b2b2b', fontWeight: thread.unread > 0 ? 700 : 600 }}
+                      >
+                        {thread.other_party}
+                      </h3>
+                      <span className="text-[11px] flex-shrink-0 ml-2 font-medium" style={{ color: thread.unread > 0 ? '#7ecfc0' : '#aaa' }}>
+                        {new Date(thread.last_message_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
-                    <p className="text-xs truncate" style={{ color: '#888' }}>
-                      <span style={{ color: '#555' }}>{thread.other_party}</span>
-                      {' · '}
+                    <p className="text-xs truncate mb-0.5" style={{ color: '#555' }}>
+                      {thread.listing_title}
+                    </p>
+                    <p
+                      className="text-[13px] truncate leading-snug"
+                      style={{ color: thread.unread > 0 ? '#2b2b2b' : '#888', fontWeight: thread.unread > 0 ? 500 : 400 }}
+                    >
                       {thread.last_message}
                     </p>
                   </div>
+                  {/* Unread dot */}
                   {thread.unread > 0 && (
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ backgroundColor: '#debb73' }}>
-                      {thread.unread}
-                    </div>
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#7ecfc0' }} />
                   )}
-                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: '#ccc' }} />
                 </div>
               </Link>
             ))}

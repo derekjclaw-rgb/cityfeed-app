@@ -250,38 +250,96 @@ export default function MyListingsPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {listings.map(listing => (
               <div
                 key={listing.id}
-                className="rounded-2xl overflow-visible transition-shadow hover:shadow-md p-4 cursor-pointer"
+                className="rounded-2xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-0.5 group"
                 style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-                onClick={() => toggleExpand(listing.id)}
               >
-                <div className="flex items-center gap-4">
-                {/* Thumbnail */}
-                {listing.images && listing.images.length > 0 ? (
-                  <img
-                    src={listing.images[0]}
-                    alt={listing.title}
-                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                    style={{ border: '1px solid #e0e0d8' }}
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f0f0ec', border: '1px solid #e0e0d8' }}>
-                    <MapPin className="w-6 h-6" style={{ color: '#ccc' }} />
-                  </div>
-                )}
+                {/* Large thumbnail */}
+                <div className="relative h-[180px] overflow-hidden cursor-pointer" onClick={() => toggleExpand(listing.id)}>
+                  {listing.images && listing.images.length > 0 ? (
+                    <img
+                      src={listing.images[0]}
+                      alt={listing.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#f0f0ec' }}>
+                      <MapPin className="w-10 h-10" style={{ color: '#ddd' }} />
+                    </div>
+                  )}
+                  {/* Status badge */}
+                  <span className="absolute top-3 left-3 text-[11px] font-semibold px-2.5 py-1 rounded-full" style={STATUS_STYLES[listing.status] ?? STATUS_STYLES.pending}>
+                    {STATUS_LABELS[listing.status] ?? listing.status}
+                  </span>
+                  {/* Price badge */}
+                  <span className="absolute bottom-3 right-3 text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.4)' }}>
+                    ${listing.price_per_day}/day
+                  </span>
+                </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-semibold text-sm leading-snug line-clamp-1" style={{ color: '#2b2b2b' }}>
+                {/* Card body */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>
                       {listing.title}
                     </h3>
-                    <span className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-full" style={STATUS_STYLES[listing.status] ?? STATUS_STYLES.pending}>
-                      {STATUS_LABELS[listing.status] ?? listing.status}
-                    </span>
+                    {/* Actions menu */}
+                    <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => setOpenMenuId(openMenuId === listing.id ? null : listing.id)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:opacity-80"
+                        style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" style={{ color: '#555' }} />
+                      </button>
+                      {openMenuId === listing.id && (
+                        <div className="absolute right-0 top-9 w-40 rounded-xl shadow-lg z-10 overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
+                          <Link
+                            href={`/marketplace/${listing.id}`}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
+                            style={{ color: '#555' }}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            View listing
+                          </Link>
+                          <Link
+                            href={`/dashboard/listings/${listing.id}/edit`}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
+                            style={{ color: '#555' }}
+                            onClick={() => setOpenMenuId(null)}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            Edit
+                          </Link>
+                          <button
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
+                            style={{ color: '#555' }}
+                            onClick={() => {
+                              setOpenMenuId(null)
+                              setAvailabilityListing({ id: listing.id, title: listing.title })
+                            }}
+                          >
+                            <CalendarOff className="w-3.5 h-3.5" />
+                            Availability
+                          </button>
+                          <button
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-red-50"
+                            style={{ color: '#dc2626' }}
+                            onClick={() => handleDelete(listing.id)}
+                            disabled={deletingId === listing.id}
+                          >
+                            {deletingId === listing.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Trash2 className="w-3.5 h-3.5" />
+                            }
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1 text-xs mb-2" style={{ color: '#888' }}>
@@ -291,74 +349,25 @@ export default function MyListingsPage() {
                     {CATEGORY_LABELS[listing.category] ?? listing.category}
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm" style={{ color: '#7ecfc0' }}>${listing.price_per_day}/day</span>
+                  <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid #f0f0ec' }}>
                     <div className="flex items-center gap-1 text-xs" style={{ color: '#888' }}>
                       <Eye className="w-3 h-3" />
                       {listing.daily_impressions?.toLocaleString() ?? 0} impr/day
                     </div>
+                    <button
+                      onClick={() => toggleExpand(listing.id)}
+                      className="text-xs font-semibold flex items-center gap-1 hover:opacity-70"
+                      style={{ color: '#7ecfc0' }}
+                    >
+                      {expandedId === listing.id ? 'Hide' : 'Schedule'}
+                      {expandedId === listing.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
                   </div>
-                </div>
-
-                {/* Actions menu */}
-                <div className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
-                  <button
-                    onClick={() => setOpenMenuId(openMenuId === listing.id ? null : listing.id)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:opacity-80"
-                    style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
-                  >
-                    <MoreVertical className="w-4 h-4" style={{ color: '#555' }} />
-                  </button>
-                  {openMenuId === listing.id && (
-                    <div className="absolute right-0 top-10 w-40 rounded-xl shadow-lg z-10 overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-                      <Link
-                        href={`/marketplace/${listing.id}`}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50"
-                        style={{ color: '#555' }}
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        View listing
-                      </Link>
-                      <Link
-                        href={`/dashboard/listings/${listing.id}/edit`}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
-                        style={{ color: '#555' }}
-                        onClick={() => setOpenMenuId(null)}
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        Edit
-                      </Link>
-                      <button
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 w-full text-left"
-                        style={{ color: '#555' }}
-                        onClick={() => {
-                          setOpenMenuId(null)
-                          setAvailabilityListing({ id: listing.id, title: listing.title })
-                        }}
-                      >
-                        <CalendarOff className="w-3.5 h-3.5" />
-                        Availability
-                      </button>
-                      <button
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm w-full text-left hover:bg-red-50"
-                        style={{ color: '#dc2626' }}
-                        onClick={() => handleDelete(listing.id)}
-                        disabled={deletingId === listing.id}
-                      >
-                        {deletingId === listing.id
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Trash2 className="w-3.5 h-3.5" />
-                        }
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
                 </div>
 
                 {/* Expanded booking schedule */}
                 {expandedId === listing.id && (
-                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid #e0e0d8' }}>
+                  <div className="px-4 pb-4 pt-1" style={{ borderTop: '1px solid #e0e0d8' }}>
                     {loadingBookings === listing.id ? (
                       <div className="flex items-center justify-center py-4">
                         <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#7ecfc0' }} />
@@ -366,7 +375,7 @@ export default function MyListingsPage() {
                     ) : (listingBookings[listing.id] ?? []).length > 0 ? (
                       <div>
                         <p className="text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: '#888' }}>
-                          Booking Schedule ({(listingBookings[listing.id] ?? []).length})
+                          Bookings ({(listingBookings[listing.id] ?? []).length})
                         </p>
                         <div className="space-y-1.5">
                           {(listingBookings[listing.id] ?? []).map(b => (
@@ -374,18 +383,18 @@ export default function MyListingsPage() {
                               key={b.id}
                               href={`/dashboard/bookings/${b.id}`}
                               onClick={e => e.stopPropagation()}
-                              className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors"
+                              className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                               style={{ border: '1px solid #f0f0ea' }}
                             >
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2.5">
                                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: bookingStatusColor(b.status, b.start_date, b.end_date) }} />
                                 <div>
                                   <p className="text-xs font-medium" style={{ color: '#2b2b2b' }}>
                                     {new Date(b.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                     {' — '}
-                                    {new Date(b.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    {new Date(b.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                   </p>
-                                  <p className="text-xs" style={{ color: '#888' }}>{b.advertiser_name}</p>
+                                  <p className="text-[11px]" style={{ color: '#888' }}>{b.advertiser_name}</p>
                                 </div>
                               </div>
                               <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>

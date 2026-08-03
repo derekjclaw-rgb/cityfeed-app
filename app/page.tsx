@@ -281,7 +281,7 @@ export default function HomePage() {
           HERO — Dark charcoal with radial accents
           ═══════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden pt-[140px] pb-20 px-6"
+        className="relative overflow-hidden pt-[120px] pb-14 px-6"
         style={{ backgroundColor: 'var(--charcoal)' }}
       >
         {/* Radial gradient accents */}

@@ -1259,11 +1259,16 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
 
 // ─── Next Step Callout ─────────────────────────────────────────────────────────
 
-function NextStepCallout({ isHost, status, hasCreative, hasProof }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean }) {
+function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string }) {
   let message = ''
+  const now = new Date()
+  const end = endDate ? new Date(endDate + 'T00:00:00') : null
+  const campaignLive = status === 'completed' && end != null && now < end
 
   if (isHost) {
-    if (status === 'completed') {
+    if (status === 'completed' && campaignLive) {
+      message = 'Your ad placement is live \u2014 payout will process after the campaign ends'
+    } else if (status === 'completed') {
       message = 'Campaign complete \u2014 payout processed'
     } else if (status === 'pop_pending') {
       message = 'Proof submitted \u2014 awaiting review'
@@ -1273,7 +1278,9 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof }: { isHost: bo
       message = 'Awaiting creative files from the advertiser'
     }
   } else {
-    if (status === 'completed') {
+    if (status === 'completed' && campaignLive) {
+      message = 'Your campaign is live \u2014 proof of posting confirmed'
+    } else if (status === 'completed') {
       message = 'Campaign complete \u2014 leave a review'
     } else if (status === 'pop_pending') {
       message = 'Proof of posting submitted \u2014 under review'
@@ -1479,6 +1486,7 @@ export default function BookingDetailPage() {
             status={booking.status}
             hasCreative={hasCreativeFiles}
             hasProof={hasProofFiles}
+            endDate={booking.end_date}
           />
 
           {/* Booking details card */}

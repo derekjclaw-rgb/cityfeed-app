@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { MapPin } from 'lucide-react'
 
 /**
  * Footer v2 — Dark charcoal with 4-column grid
@@ -12,13 +13,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2.5 mb-3.5">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: 'var(--gold)' }}
-              />
+            <Link href="/" className="flex items-center gap-2.5 mb-3.5 hover:opacity-80 transition-opacity">
+              <div
+                className="w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #7ecfc0, #5bb8a8)' }}
+              >
+                <MapPin className="w-3 h-3 text-white" strokeWidth={2.5} />
+              </div>
               <span className="text-lg font-extrabold text-white">City Feed</span>
-            </div>
+            </Link>
             <p className="text-sm leading-relaxed max-w-[280px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
               The marketplace for local, real-world advertising. Book unique placements — billboards, storefronts, transit, and more.
             </p>
