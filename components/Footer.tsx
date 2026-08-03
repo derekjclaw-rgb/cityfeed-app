@@ -12,9 +12,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-2.5 mb-3.5 hover:opacity-80 transition-opacity">
-              <img src="/C.png" alt="City Feed" className="w-7 h-7 rounded-full flex-shrink-0" />
-              <span className="text-lg font-extrabold text-white">City Feed</span>
+            <Link href="/" className="flex items-center mb-3.5 hover:opacity-80 transition-opacity">
+              <img src="/logo-nav.png" alt="City Feed" className="h-7 w-auto flex-shrink-0" />
             </Link>
             <p className="text-sm leading-relaxed max-w-[280px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
               The marketplace for local, real-world advertising. Book unique placements — billboards, storefronts, transit, and more.

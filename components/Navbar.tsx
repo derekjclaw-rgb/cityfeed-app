@@ -212,14 +212,8 @@ export default function Navbar() {
     >
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <img src="/C.png" alt="City Feed" className="w-8 h-8 rounded-full flex-shrink-0" />
-          <span
-            className="text-xl font-extrabold tracking-tight"
-            style={{ color: 'var(--charcoal)', letterSpacing: '-0.5px' }}
-          >
-            City Feed
-          </span>
+        <Link href="/" className="flex items-center">
+          <img src="/logo-new.png" alt="City Feed" className="h-8 w-auto flex-shrink-0" />
         </Link>
 
         {/* Desktop links */}
