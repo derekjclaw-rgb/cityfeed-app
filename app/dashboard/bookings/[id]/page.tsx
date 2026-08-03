@@ -993,6 +993,31 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           })
         }
       } catch { /* email failure non-fatal */ }
+
+      // Notify host — POP submitted + payout incoming
+      try {
+        await supabase.from('notifications').insert({
+          user_id: hostId,
+          type: 'pop_submitted',
+          title: 'Proof of posting submitted',
+          body: `Your POP for "${listingTitle ?? 'your booking'}" is confirmed — payout incoming.`,
+          href: `/dashboard/bookings/${bookingId}`,
+        })
+        const { data: hostProfile } = await supabase
+          .from('profiles').select('email').eq('id', hostId).single()
+        if (hostProfile?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'pop_submitted_host',
+              hostEmail: hostProfile.email,
+              listingTitle: listingTitle ?? 'your listing',
+              bookingId,
+            }),
+          })
+        }
+      } catch { /* host notification non-fatal */ }
     }
   }
 
@@ -1232,6 +1257,49 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
   )
 }
 
+// ─── Next Step Callout ─────────────────────────────────────────────────────────
+
+function NextStepCallout({ isHost, status, hasCreative, hasProof }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean }) {
+  let message = ''
+
+  if (isHost) {
+    if (status === 'completed') {
+      message = 'Campaign complete \u2014 payout processed'
+    } else if (status === 'pop_pending') {
+      message = 'Proof submitted \u2014 awaiting review'
+    } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
+      message = 'Upload proof of posting to confirm placement'
+    } else if (status === 'confirmed') {
+      message = 'Awaiting creative files from the advertiser'
+    }
+  } else {
+    if (status === 'completed') {
+      message = 'Campaign complete \u2014 leave a review'
+    } else if (status === 'pop_pending') {
+      message = 'Proof of posting submitted \u2014 under review'
+    } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
+      message = 'Your campaign is live \u2014 proof of posting coming soon'
+    } else if (status === 'confirmed') {
+      message = 'Upload your creative file to get started'
+    }
+  }
+
+  if (!message) return null
+
+  return (
+    <div style={{
+      backgroundColor: 'rgba(126,207,192,0.08)',
+      borderLeft: '3px solid #7ecfc0',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      fontSize: '13px',
+      color: '#555',
+    }}>
+      {message}
+    </div>
+  )
+}
+
 // ─── Status badge ──────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }> = {
@@ -1401,6 +1469,14 @@ export default function BookingDetailPage() {
           <BookingProgressBar
             status={booking.status}
             endDate={booking.end_date ?? undefined}
+            hasCreative={hasCreativeFiles}
+            hasProof={hasProofFiles}
+          />
+
+          {/* Next step callout */}
+          <NextStepCallout
+            isHost={isHost}
+            status={booking.status}
             hasCreative={hasCreativeFiles}
             hasProof={hasProofFiles}
           />

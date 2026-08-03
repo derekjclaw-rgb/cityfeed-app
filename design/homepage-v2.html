@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Feed — Homepage v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+/* ═══════════════════════════════════════════
+   RESET & DESIGN TOKENS
+   ═══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --charcoal: #2b2b2b;
+  --cream: #f0f0ec;
+  --mint: #7ecfc0;
+  --mint-light: #e8f6f3;
+  --mint-dark: #5bb8a8;
+  --gold: #debb73;
+  --gold-light: #f5edda;
+  --gold-dark: #c9a54e;
+  --white: #ffffff;
+  --light-gray: #f8f8f5;
+  --border: #e0e0d8;
+  --text-secondary: #888888;
+  --text-tertiary: #9a9a90;
+  --green: #16a34a;
+  --green-light: #e8f5ec;
+  --red: #E63946;
+  --shadow-sm: 0 1px 3px rgba(43,43,43,0.04), 0 1px 2px rgba(43,43,43,0.06);
+  --shadow-md: 0 4px 16px rgba(43,43,43,0.06), 0 2px 6px rgba(43,43,43,0.04);
+  --shadow-lg: 0 12px 40px rgba(43,43,43,0.08), 0 4px 12px rgba(43,43,43,0.04);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 100px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--cream);
+  color: var(--charcoal);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* ═══════════════════════════════════════════
+   NAVBAR
+   ═══════════════════════════════════════════ */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--charcoal);
+}
+
+.nav-brand .brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.nav-links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--charcoal); }
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-nav-secondary {
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-nav-secondary:hover { border-color: var(--charcoal); }
+
+.btn-nav-primary {
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--charcoal);
+  background: var(--gold);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(222,187,115,0.3);
+}
+
+.btn-nav-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(222,187,115,0.4); }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+}
+
+/* ═══════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════ */
+.hero {
+  padding: 140px 24px 80px;
+  position: relative;
+  overflow: hidden;
+  background: var(--charcoal);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(126,207,192,0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(222,187,115,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 32px;
+  backdrop-filter: blur(8px);
+}
+
+.hero-eyebrow .dot-live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mint);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(126,207,192,0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(126,207,192,0); }
+}
+
+.hero h1 {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.08;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+
+.hero h1 .highlight {
+  color: var(--gold);
+  position: relative;
+}
+
+.hero-sub {
+  font-size: 18px;
+  color: rgba(255,255,255,0.55);
+  max-width: 560px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--charcoal);
+  background: var(--gold);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(222,187,115,0.4);
+}
+
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(222,187,115,0.5); }
+
+.btn-white-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-white-outline:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); }
+
+@media (max-width: 640px) {
+  .hero { padding: 120px 20px 60px; }
+  .hero h1 { font-size: 36px; letter-spacing: -1px; }
+  .hero-sub { font-size: 15px; }
+  .hero-ctas { flex-direction: column; align-items: center; }
+}
+
+/* ═══════════════════════════════════════════
+   VALUE PROPS / STATS BAR
+   ═══════════════════════════════════════════ */
+.stats-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+}
+
+.stats-bar-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.stat-pill {
+  padding: 28px 16px;
+  text-align: center;
+  position: relative;
+}
+
+.stat-pill:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+.stat-pill .stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.stat-pill .stat-icon.mint-bg { background: var(--mint-light); color: var(--mint-dark); }
+.stat-pill .stat-icon.gold-bg { background: var(--gold-light); color: var(--gold-dark); }
+.stat-pill .stat-icon.green-bg { background: var(--green-light); color: var(--green); }
+.stat-pill .stat-icon.cream-bg { background: var(--light-gray); color: var(--text-secondary); }
+
+.stat-pill .stat-icon i { width: 18px; height: 18px; }
+
+.stat-pill-value {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--charcoal);
+  margin-bottom: 2px;
+}
+
+.stat-pill-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .stats-bar-inner { grid-template-columns: repeat(2, 1fr); }
+  .stat-pill:nth-child(2)::after { display: none; }
+  .stat-pill { padding: 20px 12px; }
+  .stat-pill-value { font-size: 15px; }
+}
+
+/* ═══════════════════════════════════════════
+   SEARCH / FILTER AREA
+   ═══════════════════════════════════════════ */
+.search-section {
+  padding: 48px 24px 20px;
+  background: var(--cream);
+}
+
+.search-card {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+.search-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.search-input-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.search-input-wrap i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px 14px 46px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--light-gray);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--charcoal);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus { border-color: var(--mint); }
+
+.search-input::placeholder { color: var(--text-tertiary); }
+
+.search-select {
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--light-gray);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--charcoal);
+  cursor: pointer;
+  outline: none;
+  min-width: 180px;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+
+.search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--charcoal);
+  background: var(--gold);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(222,187,115,0.3);
+  white-space: nowrap;
+}
+
+.search-btn:hover { box-shadow: 0 4px 16px rgba(222,187,115,0.45); transform: translateY(-1px); }
+
+.search-btn i { width: 16px; height: 16px; }
+
+@media (max-width: 640px) {
+  .search-card { padding: 20px; }
+  .search-row { flex-direction: column; }
+  .search-select { min-width: 0; }
+}
+
+/* ═══════════════════════════════════════════
+   FEATURED LISTINGS
+   ═══════════════════════════════════════════ */
+.featured-section {
+  padding: 32px 24px 80px;
+  background: var(--cream);
+}
+
+.featured-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--charcoal);
+}
+
+.section-header .see-all {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mint-dark);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+}
+
+.section-header .see-all:hover { opacity: 0.7; }
+
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 900px) { .listing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px) { .listing-grid { grid-template-columns: 1fr; } }
+
+/* ─── Listing Card ─── */
+.listing-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: box-shadow 0.3s, transform 0.3s;
+  cursor: pointer;
+}
+
+.listing-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
+
+.card-image {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-gradient {
+  width: 100%;
+  height: 100%;
+}
+
+.grad-1 { background: linear-gradient(135deg, #e9d5ff, #c4b5fd); }
+.grad-2 { background: linear-gradient(135deg, #fde68a, #fbbf24); }
+.grad-3 { background: linear-gradient(135deg, #fed7aa, #fb923c); }
+.grad-4 { background: linear-gradient(135deg, #bfdbfe, #60a5fa); }
+.grad-5 { background: linear-gradient(135deg, #fecaca, #f87171); }
+.grad-6 { background: linear-gradient(135deg, #bbf7d0, #4ade80); }
+
+.card-badge-category {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  color: #555;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-badge-price {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--gold);
+  color: var(--charcoal);
+  box-shadow: 0 2px 8px rgba(222,187,115,0.4);
+}
+
+.card-body {
+  padding: 20px 22px 22px;
+}
+
+.card-body h3 {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--charcoal);
+  margin-bottom: 8px;
+  letter-spacing: -0.2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.listing-card:hover .card-body h3 { color: var(--mint-dark); }
+
+.card-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.card-location i { width: 14px; height: 14px; opacity: 0.6; }
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-rating i { width: 14px; height: 14px; color: var(--gold); fill: var(--gold); }
+
+.card-rating .rating-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.card-rating .rating-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.card-cta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mint-dark);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
+}
+
+.card-cta:hover { opacity: 0.7; }
+
+.card-cta i { width: 14px; height: 14px; }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════ */
+.footer {
+  background: var(--charcoal);
+  padding: 56px 24px 32px;
+}
+
+.footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+}
+
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--white);
+  margin-bottom: 14px;
+}
+
+.footer-brand .brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.footer-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.footer-col h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+.footer-col a {
+  display: block;
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 10px;
+  transition: color 0.2s;
+}
+
+.footer-col a:hover { color: var(--white); }
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-copy {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+}
+
+.footer-legal {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-legal a {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  transition: color 0.2s;
+}
+
+.footer-legal a:hover { color: rgba(255,255,255,0.6); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     NAVBAR
+     ═══════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="#" class="nav-brand">
+      <span class="brand-dot"></span>
+      City Feed
+    </a>
+    <div class="nav-links">
+      <a href="#">Marketplace</a>
+      <a href="#">How It Works</a>
+      <a href="#">For Hosts</a>
+      <a href="#">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-nav-secondary">Log In</button>
+      <button class="btn-nav-primary">Sign Up</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="dot-live"></span>
+      Placements available nationwide
+    </div>
+    <h1>
+      Advertise on<br><span class="highlight">your terms</span>
+    </h1>
+    <div class="hero-sub">
+      A marketplace for local, real-world advertising. Book unique placements in minutes — no contracts, no calls, no agency middlemen.
+    </div>
+    <div class="hero-ctas">
+      <a href="#listings" class="btn-gold">
+        Find Ad Space
+        <i data-lucide="arrow-right" style="width:18px;height:18px;"></i>
+      </a>
+      <a href="#" class="btn-white-outline">
+        <i data-lucide="home" style="width:18px;height:18px;"></i>
+        List Your Space
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     VALUE PROPS / STATS BAR
+     ═══════════════════════════════════════ -->
+<div class="stats-bar">
+  <div class="stats-bar-inner">
+    <div class="stat-pill">
+      <div class="stat-icon mint-bg"><i data-lucide="globe" style="width:18px;height:18px;"></i></div>
+      <div class="stat-pill-value">Real World</div>
+      <div class="stat-pill-label">Not another digital ad</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-icon gold-bg"><i data-lucide="zap" style="width:18px;height:18px;"></i></div>
+      <div class="stat-pill-value">Book in Minutes</div>
+      <div class="stat-pill-label">No contracts, no calls</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-icon green-bg"><i data-lucide="tag" style="width:18px;height:18px;"></i></div>
+      <div class="stat-pill-value">$0 to List</div>
+      <div class="stat-pill-label">Free for space owners</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-icon cream-bg"><i data-lucide="shield-check" style="width:18px;height:18px;"></i></div>
+      <div class="stat-pill-value">Escrow Protected</div>
+      <div class="stat-pill-label">Pay only for results</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SEARCH / FILTER AREA
+     ═══════════════════════════════════════ -->
+<section class="search-section">
+  <div class="search-card">
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <i data-lucide="search"></i>
+        <input type="text" class="search-input" placeholder="Search by city, location, or keyword...">
+      </div>
+      <select class="search-select">
+        <option>All Types</option>
+        <option>Digital Billboard</option>
+        <option>Static Billboard</option>
+        <option>Transit</option>
+        <option>Outdoor Static</option>
+        <option>Display On-Premise</option>
+        <option>Experiential</option>
+        <option>Street Furniture</option>
+      </select>
+      <button class="search-btn">
+        <i data-lucide="search"></i>
+        Search
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FEATURED LISTINGS
+     ═══════════════════════════════════════ -->
+<section class="featured-section" id="listings">
+  <div class="featured-inner">
+    <div class="section-header">
+      <h2>6 placements available</h2>
+      <a href="#" class="see-all">
+        View all
+        <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>
+      </a>
+    </div>
+
+    <div class="listing-grid">
+
+      <!-- Card 1 -->
+      <div class="listing-card">
+        <div class="card-image">
+          <div class="card-gradient grad-1"></div>
+          <span class="card-badge-category">Digital Billboard</span>
+          <span class="card-badge-price">$450/day</span>
+        </div>
+        <div class="card-body">
+          <h3>Downtown Digital Billboard — Las Vegas Blvd</h3>
+          <div class="card-location">
+            <i data-lucide="map-pin"></i>
+            Las Vegas, NV
+          </div>
+          <div class="card-footer">
+            <div class="card-rating">
+              <i data-lucide="star"></i>
+              <span class="rating-value">4.9</span>
+              <span class="rating-count">(23)</span>
+            </div>
+            <a href="#" class="card-cta">
+              View details
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="listing-card">
+        <div class="card-image">
+          <div class="card-gradient grad-2"></div>
+          <span class="card-badge-category">Outdoor Static</span>
+          <span class="card-badge-price">$85/day</span>
+        </div>
+        <div class="card-body">
+          <h3>Coffee Shop Window Wrap — Arts District</h3>
+          <div class="card-location">
+            <i data-lucide="map-pin"></i>
+            Los Angeles, CA
+          </div>
+          <div class="card-footer">
+            <div class="card-rating">
+              <i data-lucide="star"></i>
+              <span class="rating-value">4.7</span>
+              <span class="rating-count">(11)</span>
+            </div>
+            <a href="#" class="card-cta">
+              View details
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="listing-card">
+        <div class="card-image">
+          <div class="card-gradient grad-3"></div>
+          <span class="card-badge-category">Human-Based</span>
+          <span class="card-badge-price">$200/day</span>
+        </div>
+        <div class="card-body">
+          <h3>Food Truck Fleet Wraps — 5 Vehicles</h3>
+          <div class="card-location">
+            <i data-lucide="map-pin"></i>
+            Austin, TX
+          </div>
+          <div class="card-footer">
+            <div class="card-rating">
+              <i data-lucide="star"></i>
+              <span class="rating-value">4.8</span>
+              <span class="rating-count">(17)</span>
+            </div>
+            <a href="#" class="card-cta">
+              View details
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="listing-card">
+        <div class="card-image">
+          <div class="card-gradient grad-4"></div>
+          <span class="card-badge-category">Display On-Premise</span>
+          <span class="card-badge-price">$320/day</span>
+        </div>
+        <div class="card-body">
+          <h3>Indoor Digital Screen — Union Square Mall</h3>
+          <div class="card-location">
+            <i data-lucide="map-pin"></i>
+            San Francisco, CA
+          </div>
+          <div class="card-footer">
+            <div class="card-rating">
+              <i data-lucide="star"></i>
+              <span class="rating-value">4.6</span>
+              <span class="rating-count">(8)</span>
+            </div>
+            <a href="#" class="card-cta">
+              View details
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="listing-card">
+        <div class="card-image">
+          <div class="card-gradient grad-5"></div>
+          <span class="card-badge-category">Static Billboard</span>
+          <span class="card-badge-price">$380/day</span>
+        </div>
+        <div class="card-body">
+          <h3>Parking Lot Billboard — 15k Daily Impressions</h3>
+          <div class="card-location">
+            <i data-lucide="map-pin"></i>
+            Chicago, IL
+          </div>
+          <div class="card-footer">
+            <div class="card-rating">
+              <i data-lucide="star"></i>
+              <span class="rating-value">4.9</span>
+              <span class="rating-count">(31)</span>
+            </div>
+            <a href="#" class="card-cta">
+              View details
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="listing-card">
+        <div class="card-image">
+          <div class="card-gradient grad-6"></div>
+          <span class="card-badge-category">Outdoor Static</span>
+          <span class="card-badge-price">$150/day</span>
+        </div>
+        <div class="card-body">
+          <h3>Boutique Storefront Banner — SoHo Block</h3>
+          <div class="card-location">
+            <i data-lucide="map-pin"></i>
+            New York, NY
+          </div>
+          <div class="card-footer">
+            <div class="card-rating">
+              <i data-lucide="star"></i>
+              <span class="rating-value">4.5</span>
+              <span class="rating-count">(14)</span>
+            </div>
+            <a href="#" class="card-cta">
+              View details
+              <i data-lucide="arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.listing-grid -->
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <span class="brand-dot"></span>
+          City Feed
+        </div>
+        <div class="footer-desc">
+          The marketplace for local, real-world advertising. Book unique placements — billboards, storefronts, transit, and more.
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#">Marketplace</a>
+        <a href="#">How It Works</a>
+        <a href="#">Pricing</a>
+        <a href="#">For Hosts</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <a href="#">Help Center</a>
+        <a href="#">Community</a>
+        <a href="#">Status</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 City Feed, Inc. All rights reserved.</div>
+      <div class="footer-legal">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+</script>
+
+</body>
+</html>

@@ -149,23 +149,21 @@ function SignupForm() {
           />
         </div>
 
-        {/* Company name — advertisers only */}
-        {role === 'advertiser' && (
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="companyName">
-              Company name <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>
-            </label>
-            <input
-              id="companyName"
-              type="text"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. Acme Media Group"
-              className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
-              style={inputStyle}
-            />
-          </div>
-        )}
+        {/* Business name — optional for both roles */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="companyName">
+            Business name <span style={{ color: '#aaa', fontWeight: 400 }}>(optional)</span>
+          </label>
+          <input
+            id="companyName"
+            type="text"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="If operating on behalf of a business"
+            className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+            style={inputStyle}
+          />
+        </div>
 
         {/* Email */}
         <div>

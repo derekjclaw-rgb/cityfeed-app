@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, Camera, Loader2, CheckCircle, AlertCircle,
-  User, Mail, FileText, Calendar
+  User, Mail, FileText, Calendar, Building2
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -18,6 +18,7 @@ interface Profile {
   email: string
   role: string
   bio?: string
+  company_name?: string
   avatar_url?: string
   created_at: string
 }
@@ -50,6 +51,7 @@ export default function ProfilePage() {
   // Form state
   const [fullName, setFullName] = useState('')
   const [bio, setBio] = useState('')
+  const [companyName, setCompanyName] = useState('')
 
   function showToast(message: string, type: 'success' | 'error') {
     setToast({ message, type })
@@ -71,6 +73,7 @@ export default function ProfilePage() {
         setProfile(data)
         setFullName(data.full_name || '')
         setBio(data.bio || '')
+        setCompanyName(data.company_name || '')
       }
       setLoading(false)
     })
@@ -83,13 +86,13 @@ export default function ProfilePage() {
     const supabase = createClient()
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName, bio })
+      .update({ full_name: fullName, bio, company_name: companyName || null })
       .eq('id', profile!.id)
 
     if (error) {
       showToast('Failed to save changes.', 'error')
     } else {
-      setProfile(prev => prev ? { ...prev, full_name: fullName, bio } : null)
+      setProfile(prev => prev ? { ...prev, full_name: fullName, bio, company_name: companyName || undefined } : null)
       showToast('Profile updated!', 'success')
     }
     setSaving(false)
@@ -228,6 +231,15 @@ export default function ProfilePage() {
                 <p className="text-sm" style={{ color: '#2b2b2b' }}>{memberSince}</p>
               </div>
             </div>
+            {profile?.company_name && (
+              <div className="flex items-center gap-3">
+                <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
+                <div>
+                  <p className="text-xs font-medium" style={{ color: '#aaa' }}>Business</p>
+                  <p className="text-sm" style={{ color: '#2b2b2b' }}>{profile.company_name}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Edit form */}
@@ -244,6 +256,23 @@ export default function ProfilePage() {
                   type="text"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
+                  className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#555' }}>
+                Business name <span style={{ color: '#aaa' }}>(optional)</span>
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#aaa' }} />
+                <input
+                  type="text"
+                  value={companyName}
+                  onChange={e => setCompanyName(e.target.value)}
+                  placeholder="If operating on behalf of a business"
                   className="w-full rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none"
                   style={inputStyle}
                 />

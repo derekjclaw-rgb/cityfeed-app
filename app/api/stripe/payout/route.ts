@@ -147,7 +147,16 @@ export async function POST(req: NextRequest) {
       }).catch(err => console.warn('[Payout] Email notification failed:', err))
     }
 
-    // Payout notification via dashboard + email only (no chat message — was confusing coming from advertiser)
+    // Payout notification via dashboard
+    await supabase.from('notifications').insert({
+      user_id: booking.host_id,
+      type: 'payout_initiated',
+      title: 'Payout initiated',
+      body: `$${(payoutAmount / 100).toFixed(2)} payout for "${listingTitle}" is on its way.`,
+      href: `/dashboard/bookings/${booking_id}`,
+    }).then(({ error }) => {
+      if (error) console.warn('[Payout] Notification insert failed:', error.message)
+    })
 
     return NextResponse.json({
       success: true,

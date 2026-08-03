@@ -59,13 +59,14 @@ export type EmailEvent =
   | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
   | { type: 'new_booking_instant'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
   | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean }
-  | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser' }
+  | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser'; bookingId?: string }
   | { type: 'booking_request_submitted'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
   | { type: 'creative_submitted_advertiser'; advertiserEmail: string; listingTitle: string; bookingId: string }
   | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string }
   | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string }
-  | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number }
+  | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number; bookingId?: string }
+  | { type: 'pop_submitted_host'; hostEmail: string; listingTitle: string; bookingId: string }
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
   | { type: 'pop_reminder_morning'; hostEmail: string; listingTitle: string; bookingId: string }
 
@@ -97,7 +98,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0;color:#888">Your expected payout: <strong style="color:#16a34a">$${payout.toFixed(2)}</strong></p>
             </div>
             <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'Once confirmed, creative files will be uploaded by the advertiser.'} Log in to review and accept or decline this booking.</p>
-            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review Booking →</a>
+            <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review Booking →</a>
           `),
         })
         break
@@ -124,7 +125,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0;color:#888">Your expected payout: <strong style="color:#16a34a">$${payout.toFixed(2)}</strong></p>
             </div>
             <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload their creative files shortly.'}</p>
-            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+            <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break
@@ -156,7 +157,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <li style="margin-bottom:6px">The host will review and begin setup</li>
               <li>You'll receive proof of posting when your ad goes live</li>
             </ol>`}
-            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+            <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break
@@ -181,7 +182,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <li style="margin-bottom:6px">You'll be notified once the host accepts your booking</li>
               <li>After acceptance, upload your creative files to get started</li>
             </ol>
-            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Bookings →</a>
+            <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break
@@ -223,7 +224,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
               <p style="margin:0;color:#888">Dates: ${formatDateRange(event.dates)}</p>
             </div>
-            <a href="${BASE_URL}/dashboard/bookings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Dashboard →</a>
+            <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break
@@ -298,7 +299,31 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0;color:#888">Payout amount: <strong style="color:#16a34a">$${event.amount.toLocaleString()}</strong></p>
             </div>
             <p style="color:#555;margin:0 0 20px">Your payout is being processed via Stripe.</p>
-            <a href="${BASE_URL}/dashboard" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Dashboard →</a>
+            <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+          `),
+        })
+        break
+
+      case 'pop_submitted_host':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `Proof of posting submitted — payout incoming for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Proof of Posting Submitted ✅</h2>
+            <p style="font-family:monospace;font-size:14px;font-weight:700;color:#7ecfc0;margin:0 0 12px;letter-spacing:0.05em">${confirmationCode(event.bookingId)}</p>
+            <p style="color:#555;margin:0 0 12px">Your proof of posting for <strong>${event.listingTitle}</strong> has been submitted successfully.</p>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              <p style="margin:0;color:#888">Status: <strong style="color:#16a34a">Completed</strong></p>
+            </div>
+            <p style="color:#555;margin:0 0 8px"><strong>What happens next:</strong></p>
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Your payout is being processed via Stripe</li>
+              <li style="margin-bottom:6px">Expect funds within 2 business days</li>
+              <li>You'll receive a confirmation once the transfer completes</li>
+            </ol>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break
