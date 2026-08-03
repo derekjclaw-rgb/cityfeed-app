@@ -213,7 +213,7 @@ export default function Navbar() {
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center">
-          <img src="/logo-new.png" alt="City Feed" className="h-8 w-auto flex-shrink-0" />
+          <img src="/logo-new.png" alt="City Feed" className="h-10 w-auto flex-shrink-0" />
         </Link>
 
         {/* Desktop links */}

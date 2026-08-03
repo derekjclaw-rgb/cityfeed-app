@@ -403,10 +403,10 @@ function ChatPageInner() {
   }
 
   return (
-    <div className="flex flex-col pt-16" style={{ height: '100dvh', backgroundColor: '#f0f0ec' }}>
+    <div className="flex flex-col" style={{ height: '100%', backgroundColor: '#f0f0ec' }}>
       {/* Header */}
       <div className="flex items-center gap-4 px-6 py-4" style={{ backgroundColor: '#fff', borderBottom: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-        <Link href="/dashboard/messages" className="hover:opacity-70" style={{ color: '#888' }}>
+        <Link href="/dashboard/messages" className="hover:opacity-70 md:hidden" style={{ color: '#888' }}>
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div className="flex-1 min-w-0">

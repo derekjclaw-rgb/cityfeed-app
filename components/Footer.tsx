@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center mb-3.5 hover:opacity-80 transition-opacity">
-              <img src="/logo-nav.png" alt="City Feed" className="h-7 w-auto flex-shrink-0" />
+              <img src="/logo-nav.png" alt="City Feed" className="h-9 w-auto max-w-[180px] object-contain" />
             </Link>
             <p className="text-sm leading-relaxed max-w-[280px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
               The marketplace for local, real-world advertising. Book unique placements — billboards, storefronts, transit, and more.

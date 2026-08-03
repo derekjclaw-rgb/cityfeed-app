@@ -168,7 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Logo — links back to homepage */}
         <Link href="/" className="flex items-center px-6 pt-7 pb-5 hover:opacity-80 transition-opacity">
-          <img src="/logo-nav.png" alt="City Feed" className="h-8 w-auto flex-shrink-0" />
+          <img src="/logo-nav.png" alt="City Feed" className="h-10 w-auto max-w-[200px] object-contain" />
         </Link>
 
         {/* Role Toggle */}
@@ -284,11 +284,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ── Main Content ────────────────────────────────────────────────── */}
       <main className="flex-1 min-h-screen md:ml-[252px]">
-        <div className="max-w-[960px] mx-auto px-4 py-10 md:px-9 md:py-10 md:pb-20" style={{ paddingTop: 'max(40px, env(safe-area-inset-top))' }}>
-          {/* Mobile top spacer for hamburger clearance */}
-          <div className="h-14 md:hidden" />
-          {children}
-        </div>
+        {pathname.startsWith('/dashboard/messages') ? (
+          <>
+            {/* Mobile top spacer for hamburger clearance */}
+            <div className="h-14 md:hidden" />
+            {children}
+          </>
+        ) : (
+          <div className="max-w-[960px] mx-auto px-4 py-10 md:px-9 md:py-10 md:pb-20" style={{ paddingTop: 'max(40px, env(safe-area-inset-top))' }}>
+            {/* Mobile top spacer for hamburger clearance */}
+            <div className="h-14 md:hidden" />
+            {children}
+          </div>
+        )}
       </main>
     </div>
   )
