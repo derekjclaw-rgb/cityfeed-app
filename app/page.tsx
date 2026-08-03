@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map } from 'lucide-react'
+import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map, Globe, Zap, Tag, ShieldCheck, Home } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from './marketplace/page'
 import type { Listing } from './marketplace/page'
@@ -56,48 +56,85 @@ function ListingCard({ listing }: { listing: Listing }) {
   const firstImage = listing.images?.[0]
   return (
     <Link href={`/marketplace/${listing.id}`} className="block group">
-      <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all hover:-translate-y-0.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
-        <div className={`h-44 relative overflow-hidden`}>
+      <div
+        className="bg-white overflow-hidden transition-all duration-300 hover:-translate-y-[3px]"
+        style={{
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-sm)',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.boxShadow = 'var(--shadow-lg)')}
+        onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'var(--shadow-sm)')}
+      >
+        {/* Image area */}
+        <div className="h-[200px] relative overflow-hidden">
           {firstImage ? (
             <img src={firstImage} alt={listing.title} className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${listing.image_placeholder}`} />
           )}
-          <div className="absolute top-3 left-3">
-            <span className="bg-white/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-full font-medium shadow-sm" style={{ color: '#555' }}>
-              {listing.category}
-            </span>
-          </div>
-          <div className="absolute bottom-3 right-3">
-            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#debb73' }}>
-              ${listing.price_per_day}/day
-            </span>
-          </div>
+          {/* Category badge — top-left */}
+          <span
+            className="absolute top-3.5 left-3.5 text-xs font-semibold px-3.5 py-1"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              background: 'rgba(255,255,255,0.92)',
+              backdropFilter: 'blur(8px)',
+              color: '#555',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
+            {listing.category}
+          </span>
+          {/* Price badge — bottom-right */}
+          <span
+            className="absolute bottom-3.5 right-3.5 text-xs font-bold px-3.5 py-1"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              backgroundColor: 'var(--gold)',
+              color: 'var(--charcoal)',
+              boxShadow: '0 2px 8px rgba(222,187,115,0.4)',
+            }}
+          >
+            ${listing.price_per_day}/day
+          </span>
         </div>
-        <div className="p-5">
-          <h3 className="font-semibold leading-snug mb-2 line-clamp-2 text-sm transition-colors group-hover:text-[#7ecfc0]" style={{ color: '#2b2b2b' }}>
+
+        {/* Card body */}
+        <div className="px-[22px] pt-5 pb-[22px]">
+          <h3
+            className="text-base font-bold leading-snug mb-2 line-clamp-2 transition-colors group-hover:text-[var(--mint-dark)]"
+            style={{ color: 'var(--charcoal)', letterSpacing: '-0.2px' }}
+          >
             {listing.title}
           </h3>
-          <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#888' }}>
-            <MapPin className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 text-[13px] mb-3.5" style={{ color: 'var(--text-secondary)' }}>
+            <MapPin className="w-3.5 h-3.5 opacity-60" />
             {listing.city}, {listing.state}
           </div>
-          {listing.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {listing.tags.slice(0, 2).map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f8f8f5', color: '#888', border: '1px solid #e0e0d8' }}>
-                  {tag}
+          {/* Footer */}
+          <div
+            className="flex items-center justify-between pt-3.5"
+            style={{ borderTop: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 fill-[var(--gold)]" style={{ color: 'var(--gold)' }} />
+              <span className="text-[13px] font-bold" style={{ color: 'var(--charcoal)' }}>
+                {listing.rating > 0 ? listing.rating : 'New'}
+              </span>
+              {listing.review_count > 0 && (
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  ({listing.review_count})
                 </span>
-              ))}
+              )}
             </div>
-          )}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-[#debb73]" style={{ color: '#debb73' }} />
-              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating > 0 ? listing.rating : 'New'}</span>
-              {listing.review_count > 0 && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
-            </div>
-            <span className="text-xs font-medium" style={{ color: '#7ecfc0' }}>View details →</span>
+            <span
+              className="text-[13px] font-semibold flex items-center gap-1 transition-opacity hover:opacity-70"
+              style={{ color: 'var(--mint-dark)' }}
+            >
+              View details
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
           </div>
         </div>
       </div>
@@ -105,7 +142,7 @@ function ListingCard({ listing }: { listing: Listing }) {
   )
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+// ─── Home Map ──────────────────────────────────────────────────────────────────
 function HomeMap({ listings }: { listings: Listing[] }) {
   const mapContainer = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -140,12 +177,45 @@ function HomeMap({ listings }: { listings: Listing[] }) {
     return () => { map?.remove() }
   }, [listings])
   return (
-    <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid #e0e0d8' }}>
+    <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
       <div ref={mapContainer} className="w-full h-full" />
     </div>
   )
 }
 
+// ─── Stats Data ────────────────────────────────────────────────────────────────
+const STATS = [
+  {
+    icon: Globe,
+    value: 'Real World',
+    label: 'Not another digital ad',
+    bgClass: 'bg-[var(--mint-light)]',
+    iconColor: 'var(--mint-dark)',
+  },
+  {
+    icon: Zap,
+    value: 'Book in Minutes',
+    label: 'No contracts, no calls',
+    bgClass: 'bg-[var(--gold-light)]',
+    iconColor: 'var(--gold-dark)',
+  },
+  {
+    icon: Tag,
+    value: '$0 to List',
+    label: 'Free for space owners',
+    bgClass: 'bg-[#e8f5ec]',
+    iconColor: '#16a34a',
+  },
+  {
+    icon: ShieldCheck,
+    value: 'Escrow Protected',
+    label: 'Pay only for results',
+    bgClass: 'bg-[var(--light-gray)]',
+    iconColor: 'var(--text-secondary)',
+  },
+]
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All Types')
@@ -205,139 +275,296 @@ export default function HomePage() {
   }, [featuredListings, search, selectedCategory])
 
   return (
-    <div style={{ backgroundColor: '#f0f0ec' }}>
-      {/* Hero */}
-      <section className="pt-28 pb-6 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-3 leading-[1.1]" style={{ color: '#2b2b2b' }}>
-            Advertise on{' '}
-            <span style={{ color: '#debb73' }}>your terms</span>
+    <div style={{ backgroundColor: 'var(--cream)' }}>
+
+      {/* ═══════════════════════════════════════
+          HERO — Dark charcoal with radial accents
+          ═══════════════════════════════════════ */}
+      <section
+        className="relative overflow-hidden pt-[140px] pb-20 px-6"
+        style={{ backgroundColor: 'var(--charcoal)' }}
+      >
+        {/* Radial gradient accents */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: '-40%',
+            right: '-15%',
+            width: 700,
+            height: 700,
+            background: 'radial-gradient(circle, rgba(126,207,192,0.12) 0%, transparent 65%)',
+          }}
+        />
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            bottom: '-30%',
+            left: '10%',
+            width: 500,
+            height: 500,
+            background: 'radial-gradient(circle, rgba(222,187,115,0.08) 0%, transparent 65%)',
+          }}
+        />
+
+        <div className="relative z-10 max-w-[900px] mx-auto text-center">
+          {/* Eyebrow pill */}
+          <div
+            className="inline-flex items-center gap-2 px-5 py-2 mb-8 text-[13px] font-medium backdrop-blur-sm"
+            style={{
+              borderRadius: 'var(--radius-pill)',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.6)',
+            }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full animate-pulse-glow"
+              style={{ backgroundColor: 'var(--mint)' }}
+            />
+            Placements available nationwide
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="text-4xl sm:text-5xl md:text-[56px] font-extrabold leading-[1.08] mb-5"
+            style={{ color: 'var(--white)', letterSpacing: '-2px' }}
+          >
+            Advertise on<br />
+            <span style={{ color: 'var(--gold)' }}>your terms</span>
           </h1>
-          <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto leading-relaxed" style={{ color: '#555' }}>
-            A marketplace for local advertising. Book unique, real-world ad placements in minutes—No haggling, no long-term contracts, no agency middlemen.
+
+          {/* Subtitle */}
+          <p
+            className="text-base sm:text-lg max-w-[560px] mx-auto mb-10 leading-relaxed font-normal"
+            style={{ color: 'rgba(255,255,255,0.55)' }}
+          >
+            A marketplace for local, real-world advertising. Book unique placements
+            in minutes — no contracts, no calls, no agency middlemen.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+
+          {/* CTA Buttons */}
+          <div className="flex gap-3.5 justify-center flex-wrap">
             <Link
               href="/marketplace"
-              className="group inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105 shadow-lg"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
+              className="inline-flex items-center gap-2 px-8 py-3.5 text-[15px] font-bold transition-all hover:-translate-y-0.5"
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                backgroundColor: 'var(--gold)',
+                color: 'var(--charcoal)',
+                boxShadow: '0 4px 20px rgba(222,187,115,0.4)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 30px rgba(222,187,115,0.5)')}
+              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(222,187,115,0.4)')}
             >
               Find Ad Space
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-[18px] h-[18px]" />
             </Link>
             <Link
               href={isLoggedIn ? '/dashboard/create-listing' : '/signup?role=host'}
-              className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm hover:opacity-90 transition-all hover:scale-105"
-              style={{ backgroundColor: '#fff', color: '#2b2b2b', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              className="inline-flex items-center gap-2 px-8 py-3.5 text-[15px] font-semibold transition-all hover:bg-white/5"
+              style={{
+                borderRadius: 'var(--radius-pill)',
+                color: 'var(--white)',
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.25)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
             >
+              <Home className="w-[18px] h-[18px]" />
               List Your Space
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="py-3 px-4 sm:px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
-        <div className="max-w-5xl mx-auto grid grid-cols-4 gap-2 sm:gap-16 text-center">
-          {[
-            { value: 'Real World', label: 'Not another digital ad' },
-            { value: 'Book in Minutes', label: 'No contracts, no calls' },
-            { value: '$0', label: 'Free to list' },
-            { value: 'Escrow Protected', label: 'Pay only for results' },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <div className="text-base sm:text-xl font-bold" style={{ color: '#7ecfc0' }}>{stat.value}</div>
-              <div className="text-[10px] sm:text-xs" style={{ color: '#888' }}>{stat.label}</div>
+      {/* ═══════════════════════════════════════
+          STATS BAR — White bg, 4 value props
+          ═══════════════════════════════════════ */}
+      <div
+        className="px-6"
+        style={{ backgroundColor: 'var(--white)', borderBottom: '1px solid var(--border)' }}
+      >
+        <div className="max-w-[1000px] mx-auto grid grid-cols-2 sm:grid-cols-4">
+          {STATS.map((stat, i) => {
+            const Icon = stat.icon
+            return (
+              <div key={stat.label} className="relative py-7 px-4 text-center">
+                {/* Divider between items */}
+                {i < STATS.length - 1 && (
+                  <div
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-10 hidden sm:block"
+                    style={{ backgroundColor: 'var(--border)' }}
+                  />
+                )}
+                {/* Icon box */}
+                <div
+                  className={`w-9 h-9 rounded-[10px] flex items-center justify-center mx-auto mb-2.5 ${stat.bgClass}`}
+                >
+                  <Icon className="w-[18px] h-[18px]" style={{ color: stat.iconColor }} />
+                </div>
+                <div
+                  className="text-lg font-extrabold mb-0.5"
+                  style={{ color: 'var(--charcoal)', letterSpacing: '-0.5px' }}
+                >
+                  {stat.value}
+                </div>
+                <div className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  {stat.label}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════
+          SEARCH SECTION — Cream bg, white card
+          ═══════════════════════════════════════ */}
+      <section className="pt-12 pb-5 px-6" style={{ backgroundColor: 'var(--cream)' }}>
+        <div
+          className="max-w-[900px] mx-auto bg-white px-8 py-7 relative z-10"
+          style={{
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-md)',
+          }}
+        >
+          {/* Main search row */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            {/* Search input */}
+            <div className="relative flex-1">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px]"
+                style={{ color: 'var(--text-secondary)' }}
+              />
+              <input
+                type="text"
+                placeholder="Search by city, location, or keyword..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full py-3.5 pl-[46px] pr-4 text-sm focus:outline-none transition-colors"
+                style={{
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--light-gray)',
+                  color: 'var(--charcoal)',
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--mint)')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              />
             </div>
-          ))}
+            {/* Category select */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="py-3.5 px-4 text-sm focus:outline-none cursor-pointer min-w-[180px]"
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--light-gray)',
+                color: 'var(--charcoal)',
+              }}
+            >
+              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+            {/* Search button */}
+            <Link
+              href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold whitespace-nowrap transition-all hover:-translate-y-0.5"
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--gold)',
+                color: 'var(--charcoal)',
+                boxShadow: '0 2px 8px rgba(222,187,115,0.3)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(222,187,115,0.45)')}
+              onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(222,187,115,0.3)')}
+            >
+              <Search className="w-4 h-4" />
+              Search
+            </Link>
+          </div>
+
+          {/* Date range picker */}
+          <div>
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+              Dates (optional)
+            </label>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
+              placeholder="Pick start & end date"
+            />
+          </div>
         </div>
       </section>
 
-      {/* Search + Filter */}
-      <section className="py-6 sm:py-10 px-4 sm:px-6" style={{ backgroundColor: '#f0f0ec' }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm overflow-visible relative z-10" style={{ border: '1px solid #e0e0d8' }}>
-            <div className="flex flex-col md:flex-row gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
-                <input
-                  type="text"
-                  placeholder="Search by city or location..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl pl-11 pr-4 py-3 text-sm focus:outline-none"
-                  style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
-                />
-              </div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-                style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8', color: '#2b2b2b', minWidth: 0 }}
+      {/* ═══════════════════════════════════════
+          FEATURED LISTINGS — Cream bg
+          ═══════════════════════════════════════ */}
+      <section className="pt-8 pb-20 px-6" style={{ backgroundColor: 'var(--cream)' }}>
+        <div className="max-w-[1120px] mx-auto">
+          {/* Section header */}
+          <div className="flex items-baseline justify-between mb-7 flex-wrap gap-2">
+            <h2
+              className="text-2xl font-bold"
+              style={{ color: 'var(--charcoal)', letterSpacing: '-0.3px' }}
+            >
+              {filtered.length > 0
+                ? `${filtered.length} placements available`
+                : 'No placements found'}
+            </h2>
+            <div className="flex items-center gap-4">
+              {/* Grid / Map toggle */}
+              <div
+                className="flex items-center gap-1 rounded-xl p-1"
+                style={{ backgroundColor: 'var(--white)', border: '1px solid var(--border)' }}
               >
-                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-3">
-              <div className="min-w-0">
-                <label className="block text-xs font-medium mb-1.5" style={{ color: '#888' }}>Dates (optional)</label>
-                <DateRangePicker
-                  startDate={startDate}
-                  endDate={endDate}
-                  onChange={(start, end) => { setStartDate(start); setEndDate(end) }}
-                  placeholder="Pick start & end date"
-                />
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    backgroundColor: viewMode === 'grid' ? 'var(--mint)' : 'transparent',
+                    color: viewMode === 'grid' ? '#fff' : 'var(--text-secondary)',
+                  }}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    backgroundColor: viewMode === 'map' ? 'var(--mint)' : 'transparent',
+                    color: viewMode === 'map' ? '#fff' : 'var(--text-secondary)',
+                  }}
+                >
+                  <Map className="w-3.5 h-3.5" />
+                  Map
+                </button>
               </div>
+              {/* View all link */}
               <Link
-                href={`/marketplace?search=${encodeURIComponent(search)}&category=${encodeURIComponent(selectedCategory)}`}
-                className="font-semibold px-8 py-3 rounded-xl text-sm flex items-center justify-center gap-2 hover:opacity-90 w-full sm:w-auto"
-                style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
+                href="/marketplace"
+                className="text-sm font-medium flex items-center gap-1 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--mint-dark)' }}
               >
-                <Search className="w-4 h-4" />
-                Search
+                View all
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Placements Grid */}
-      <section className="pb-20 px-4 sm:px-6" style={{ backgroundColor: '#f0f0ec' }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold" style={{ color: '#2b2b2b' }}>
-              {filtered.length > 0 ? `${filtered.length} placements available` : 'No placements found'}
-            </h2>
-            <div className="flex items-center gap-1 rounded-xl p-1" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-              <button
-                onClick={() => setViewMode('grid')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{
-                  backgroundColor: viewMode === 'grid' ? '#7ecfc0' : 'transparent',
-                  color: viewMode === 'grid' ? '#fff' : '#888',
-                }}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{
-                  backgroundColor: viewMode === 'map' ? '#7ecfc0' : 'transparent',
-                  color: viewMode === 'map' ? '#fff' : '#888',
-                }}
-              >
-                <Map className="w-3.5 h-3.5" />
-                Map
-              </button>
-            </div>
-          </div>
+          {/* Listings */}
           {filtered.length > 0 ? (
             <>
               {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                  {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[22px] mb-8">
+                  {filtered.map(listing => (
+                    <ListingCard key={listing.id} listing={listing} />
+                  ))}
                 </div>
               ) : (
                 <div className="flex flex-col lg:flex-row gap-4 mb-8">
@@ -345,7 +572,10 @@ export default function HomePage() {
                   <div className="lg:w-1/3 space-y-3 max-h-[600px] overflow-y-auto pr-2">
                     {filtered.map(listing => (
                       <Link key={listing.id} href={`/marketplace/${listing.id}`} className="block group">
-                        <div className="flex gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all" style={{ border: '1px solid #e0e0d8' }}>
+                        <div
+                          className="flex gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all"
+                          style={{ border: '1px solid var(--border)' }}
+                        >
                           <div className="w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden">
                             {listing.images?.[0] ? (
                               <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
@@ -354,22 +584,36 @@ export default function HomePage() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <div className="text-sm font-semibold truncate group-hover:text-[#7ecfc0]" style={{ color: '#2b2b2b' }}>{listing.title}</div>
-                            <div className="text-xs flex items-center gap-1 mt-1" style={{ color: '#888' }}>
+                            <div
+                              className="text-sm font-semibold truncate group-hover:text-[var(--mint)]"
+                              style={{ color: 'var(--charcoal)' }}
+                            >
+                              {listing.title}
+                            </div>
+                            <div
+                              className="text-xs flex items-center gap-1 mt-1"
+                              style={{ color: 'var(--text-secondary)' }}
+                            >
                               <MapPin className="w-3 h-3" />{listing.city}, {listing.state}
                             </div>
-                            <div className="text-sm font-bold mt-1" style={{ color: '#debb73' }}>${listing.price_per_day}/day</div>
+                            <div className="text-sm font-bold mt-1" style={{ color: 'var(--gold)' }}>
+                              ${listing.price_per_day}/day
+                            </div>
                           </div>
                         </div>
                       </Link>
                     ))}
                   </div>
-                  {/* Map with pins */}
+                  {/* Map */}
                   <HomeMap listings={filtered} />
                 </div>
               )}
               <div className="text-center">
-                <Link href="/marketplace" className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: '#7ecfc0' }}>
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 font-semibold text-sm hover:opacity-80"
+                  style={{ color: 'var(--mint)' }}
+                >
                   View all placements →
                 </Link>
               </div>
@@ -377,9 +621,18 @@ export default function HomePage() {
           ) : (
             <div className="text-center py-16">
               <div className="text-4xl mb-4">🗺️</div>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No listings found</h3>
-              <p className="text-sm mb-6" style={{ color: '#888' }}>Try a different search or category</p>
-              <button onClick={() => { setSearch(''); setSelectedCategory('All Types') }} className="text-sm font-medium" style={{ color: '#7ecfc0' }} type="button">
+              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>
+                No listings found
+              </h3>
+              <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Try a different search or category
+              </p>
+              <button
+                onClick={() => { setSearch(''); setSelectedCategory('All Types') }}
+                className="text-sm font-medium"
+                style={{ color: 'var(--mint)' }}
+                type="button"
+              >
                 Clear filters
               </button>
             </div>

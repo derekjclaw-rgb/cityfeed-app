@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import { Geist } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
+import LayoutShell from '@/components/LayoutShell'
 import { GlobalToastContainer } from '@/components/Toast'
 
 const geist = Geist({
@@ -113,12 +112,12 @@ export default function RootLayout({
       </head>
       <body
         className={`${geist.variable} font-sans antialiased`}
-        style={{ backgroundColor: '#f0f0ec', color: '#2b2b2b' }}
+        style={{ backgroundColor: 'var(--cream)', color: 'var(--charcoal)' }}
       >
-        <Navbar />
-        <GlobalToastContainer />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <LayoutShell>
+          <GlobalToastContainer />
+          {children}
+        </LayoutShell>
       </body>
     </html>
   )
