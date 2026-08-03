@@ -213,12 +213,7 @@ export default function Navbar() {
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, var(--mint), var(--mint-dark))' }}
-          >
-            <MapPin className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-          </div>
+          <img src="/C.png" alt="City Feed" className="w-8 h-8 rounded-full flex-shrink-0" />
           <span
             className="text-xl font-extrabold tracking-tight"
             style={{ color: 'var(--charcoal)', letterSpacing: '-0.5px' }}

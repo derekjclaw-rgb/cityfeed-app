@@ -168,12 +168,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Logo — links back to homepage */}
         <Link href="/" className="flex items-center gap-3 px-6 pt-7 pb-5 hover:opacity-80 transition-opacity">
-          <div
-            className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, var(--mint, #7ecfc0), var(--mint-dark, #5bb8a8))' }}
-          >
-            <MapPin className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
-          </div>
+          <img src="/C.png" alt="City Feed" className="w-[34px] h-[34px] rounded-full flex-shrink-0" />
           <span className="text-[17px] font-bold text-white tracking-[-0.3px]">City Feed</span>
         </Link>
 

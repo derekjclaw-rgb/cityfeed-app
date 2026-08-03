@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { MapPin } from 'lucide-react'
 
 /**
  * Footer v2 — Dark charcoal with 4-column grid
@@ -14,12 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2.5 mb-3.5 hover:opacity-80 transition-opacity">
-              <div
-                className="w-6 h-6 rounded-[7px] flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #7ecfc0, #5bb8a8)' }}
-              >
-                <MapPin className="w-3 h-3 text-white" strokeWidth={2.5} />
-              </div>
+              <img src="/C.png" alt="City Feed" className="w-7 h-7 rounded-full flex-shrink-0" />
               <span className="text-lg font-extrabold text-white">City Feed</span>
             </Link>
             <p className="text-sm leading-relaxed max-w-[280px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
