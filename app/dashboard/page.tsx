@@ -181,7 +181,6 @@ function DashboardContent() {
   // Finance
   const [totalSpent, setTotalSpent] = useState(0)
   const [avgPerPlacement, setAvgPerPlacement] = useState(0)
-  const [pendingCharges, setPendingCharges] = useState(0)
   const [completedCount, setCompletedCount] = useState(0)
 
   // ── Stripe success ──────────────────────────────────────────────────────────
@@ -365,9 +364,6 @@ function DashboardContent() {
       setCompletedCount(paidBookings.length)
       setAvgPerPlacement(paidBookings.length > 0 ? Math.round(spent / paidBookings.length) : 0)
 
-      const pendingBkgs = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed')
-      const pending = pendingBkgs.reduce((sum, b) => sum + (b.total_price || 0), 0)
-      setPendingCharges(Math.round(pending))
 
       // ── Activity timeline (from notifications) ────────────────────────────
       const { data: notifs } = await supabase
@@ -781,13 +777,7 @@ function DashboardContent() {
                   {completedCount > 0 ? `across ${completedCount} bookings` : 'no bookings yet'}
                 </div>
               </div>
-              <div className="text-center p-[14px] rounded-[10px]" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
-                <div className="text-[11px] font-medium uppercase tracking-[0.6px] mb-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Pending Charges</div>
-                <div className="text-[22px] font-extrabold tracking-[-0.5px]">${pendingCharges.toLocaleString()}</div>
-                <div className="text-[11px] font-medium mt-[2px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
-                  {pendingCharges > 0 ? 'upcoming' : 'none pending'}
-                </div>
-              </div>
+
             </div>
           </div>
         </>

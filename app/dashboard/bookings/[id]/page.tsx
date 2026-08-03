@@ -1279,7 +1279,7 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
     }
   } else {
     if (status === 'completed' && campaignLive) {
-      message = 'Your campaign is live \u2014 proof of posting confirmed'
+      message = 'Your campaign is live \u2014 check proof of posting in messages'
     } else if (status === 'completed') {
       message = 'Campaign complete \u2014 leave a review'
     } else if (status === 'pop_pending') {
