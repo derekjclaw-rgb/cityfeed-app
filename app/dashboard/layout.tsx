@@ -167,9 +167,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         style={{ backgroundColor: 'var(--charcoal, #2b2b2b)' }}
       >
         {/* Logo — links back to homepage */}
-        <Link href="/" className="flex items-center gap-2.5 px-6 pt-7 pb-5 hover:opacity-80 transition-opacity">
-          <img src="/C.png" alt="CF" className="w-8 h-8 rounded-lg flex-shrink-0" />
-          <span className="text-[18px] font-extrabold text-white tracking-tight" style={{ letterSpacing: '-0.5px' }}>CITY FEED</span>
+        <Link href="/" className="block px-6 pt-7 pb-5 hover:opacity-80 transition-opacity">
+          <img src="/logo-new.png" alt="City Feed" className="h-10 w-auto" style={{ filter: 'invert(1)', opacity: 0.9 }} />
         </Link>
 
         {/* Role Toggle */}
