@@ -1,98 +1,104 @@
 import Link from 'next/link'
-import Image from 'next/image'
 
 /**
- * Footer — shared site-wide footer with updated legal links
+ * Footer v2 — Dark charcoal with 4-column grid
+ * Matches the design mockups: brand dot, link columns, bottom bar
  */
 export default function Footer() {
   return (
-    <footer style={{ backgroundColor: '#ddddd4', borderTop: '1px solid #c8c8be' }}>
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-8">
+    <footer style={{ backgroundColor: 'var(--charcoal)' }}>
+      <div className="max-w-[1120px] mx-auto px-6 pt-14 pb-8">
+        {/* Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="mb-4">
-              <Image
-                src="/logo.png"
-                alt="City Feed"
-                width={100}
-                height={71}
-                style={{ height: '32px', width: 'auto' }}
+          <div>
+            <div className="flex items-center gap-2.5 mb-3.5">
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: 'var(--gold)' }}
               />
+              <span className="text-lg font-extrabold text-white">City Feed</span>
             </div>
-            <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
-              Real world marketplace for local advertising. Connect brands with real-world ad spaces.
+            <p className="text-sm leading-relaxed max-w-[280px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              The marketplace for local, real-world advertising. Book unique placements — billboards, storefronts, transit, and more.
             </p>
+          </div>
+
+          {/* Product */}
+          <div>
+            <h4
+              className="text-xs font-bold uppercase tracking-widest mb-4"
+              style={{ color: 'rgba(255,255,255,0.35)' }}
+            >
+              Product
+            </h4>
+            <div className="space-y-2.5">
+              <Link href="/marketplace" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Marketplace
+              </Link>
+              <Link href="/how-it-works" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                How It Works
+              </Link>
+              <Link href="/how-it-works#pricing" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Pricing
+              </Link>
+              <Link href="/signup?role=host" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                For Hosts
+              </Link>
+            </div>
           </div>
 
           {/* Company */}
           <div>
-            <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>Company</h4>
-            <ul className="space-y-2.5">
-              <li><Link href="/about" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>About</Link></li>
-              <li><Link href="/how-it-works" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>How It Works</Link></li>
-            </ul>
+            <h4
+              className="text-xs font-bold uppercase tracking-widest mb-4"
+              style={{ color: 'rgba(255,255,255,0.35)' }}
+            >
+              Company
+            </h4>
+            <div className="space-y-2.5">
+              <Link href="/about" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                About
+              </Link>
+              <a href="mailto:mk@cityfeed.io" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Contact
+              </a>
+            </div>
           </div>
 
-          {/* For You */}
+          {/* Support */}
           <div>
-            <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>For You</h4>
-            <ul className="space-y-2.5">
-              <li>
-                <Link href="/signup?role=host" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  For Hosts
-                </Link>
-              </li>
-              <li>
-                <Link href="/signup?role=advertiser" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  For Advertisers
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <a href="mailto:mk@cityfeed.io" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  Help Center
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="font-semibold text-sm mb-4" style={{ color: '#2b2b2b' }}>Legal</h4>
-            <ul className="space-y-2.5">
-              <li>
-                <Link href="/terms" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacy#cookies" className="text-sm transition-colors hover:opacity-70" style={{ color: '#888' }}>
-                  Cookie Policy
-                </Link>
-              </li>
-            </ul>
+            <h4
+              className="text-xs font-bold uppercase tracking-widest mb-4"
+              style={{ color: 'rgba(255,255,255,0.35)' }}
+            >
+              Support
+            </h4>
+            <div className="space-y-2.5">
+              <a href="mailto:mk@cityfeed.io" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Help Center
+              </a>
+              <Link href="/terms" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Terms of Service
+              </Link>
+              <Link href="/privacy" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Privacy Policy
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3" style={{ borderTop: '1px solid #c8c8be' }}>
-          <p className="text-xs" style={{ color: '#aaa' }}>
+        <div
+          className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-3"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+        >
+          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
             © {new Date().getFullYear()} City Feed, Inc. All rights reserved.
           </p>
           <div className="flex gap-5">
-            <Link href="/privacy" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Privacy</Link>
-            <Link href="/terms" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Terms</Link>
-            <a href="mailto:mk@cityfeed.io" className="text-xs transition-colors hover:opacity-70" style={{ color: '#aaa' }}>Contact</a>
+            <Link href="/privacy" className="text-xs transition-colors hover:text-white/60" style={{ color: 'rgba(255,255,255,0.3)' }}>Privacy</Link>
+            <Link href="/terms" className="text-xs transition-colors hover:text-white/60" style={{ color: 'rgba(255,255,255,0.3)' }}>Terms</Link>
           </div>
         </div>
       </div>

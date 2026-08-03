@@ -1,14 +1,12 @@
 'use client'
 
 /**
- * Navbar — shared navigation across all pages
- * When logged in: user dropdown with Dashboard, My Profile, Settings, Log Out
- * Phase 5: Notification bell with unread count
- * Phase 6: Host/Advertiser mode indicator + quick switch
+ * Navbar v2 — Glassmorphic navigation
+ * Frosted glass effect, brand dot, pill buttons
+ * All auth/notification/dropdown/mobile behavior preserved from v1
  */
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X, ChevronDown, LayoutDashboard, User, Settings, LogOut, Bell, ArrowLeftRight, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -69,10 +67,8 @@ export default function Navbar() {
         avatarUrl: profile?.avatar_url ?? undefined,
       })
 
-      // Fetch notifications
       await loadNotifications(data.user.id)
 
-      // Fetch unread message count
       const { count: msgCount } = await supabase
         .from('messages')
         .select('id', { count: 'exact', head: true })
@@ -80,7 +76,6 @@ export default function Navbar() {
         .eq('read', false)
       setUnreadMessages(msgCount ?? 0)
 
-      // Subscribe to new notifications via Realtime
       const channel = supabase
         .channel(`notifications:${data.user.id}`)
         .on(
@@ -101,11 +96,9 @@ export default function Navbar() {
       channelRef.current = channel
     })
 
-    // Sync mode from localStorage
     const saved = localStorage.getItem('cf_dash_mode') as DashMode | null
     if (saved) setDashMode(saved)
 
-    // Listen for mode changes from dashboard
     const handleModeChange = (e: Event) => {
       const newMode = (e as CustomEvent<DashMode>).detail
       setDashMode(newMode)
@@ -157,7 +150,6 @@ export default function Navbar() {
     if (href) router.push(href)
   }
 
-  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -191,9 +183,9 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
-    { href: '/about', label: 'About' },
     { href: '/how-it-works', label: 'How It Works' },
-    { href: '/dashboard/create-listing', label: 'List Your Space' },
+    { href: '/dashboard/create-listing', label: 'For Hosts' },
+    { href: '/about', label: 'About' },
   ]
 
   const initials = user?.firstName?.charAt(0).toUpperCase() ?? 'U'
@@ -209,18 +201,28 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 w-full z-50" style={{ backgroundColor: '#2b2b2b', backdropFilter: 'blur(12px)', borderBottom: '1px solid #1a1a1a' }}>
-      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src="/logo-nav.png"
-            alt="City Feed"
-            width={180}
-            height={100}
-            style={{ height: '48px', width: 'auto' }}
-            priority
+    <nav
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
+      <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2.5">
+          <span
+            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: 'var(--gold)' }}
           />
+          <span
+            className="text-xl font-extrabold tracking-tight"
+            style={{ color: 'var(--charcoal)', letterSpacing: '-0.5px' }}
+          >
+            City Feed
+          </span>
         </Link>
 
         {/* Desktop links */}
@@ -229,8 +231,11 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium transition-colors"
-              style={{ color: pathname === link.href ? '#7ecfc0' : '#f0f0ec' }}
+              className="text-sm font-medium transition-colors hover:text-[var(--charcoal)]"
+              style={{
+                color: pathname === link.href ? 'var(--charcoal)' : 'var(--text-secondary)',
+                fontWeight: pathname === link.href ? 600 : 500,
+              }}
             >
               {link.label}
             </Link>
@@ -245,12 +250,15 @@ export default function Navbar() {
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => { setNotifOpen(!notifOpen); if (!notifOpen && unreadCount > 0) markAllRead() }}
-                  className="relative w-9 h-9 rounded-xl flex items-center justify-center hover:opacity-80 transition-opacity"
-                  style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-black/5"
+                  style={{ border: '1px solid var(--border)' }}
                 >
-                  <Bell className="w-4 h-4" style={{ color: '#f0f0ec' }} />
+                  <Bell className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: '#E63946', color: '#fff', fontSize: '10px' }}>
+                    <span
+                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--red)', color: '#fff', fontSize: '10px' }}
+                    >
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -258,54 +266,54 @@ export default function Navbar() {
 
                 {notifOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-80 rounded-xl overflow-hidden"
-                    style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                    className="absolute right-0 mt-2 w-80 rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: '#fff', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
                   >
-                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f0ea' }}>
-                      <p className="font-semibold text-sm" style={{ color: '#2b2b2b' }}>Notifications</p>
+                    <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--light-gray)' }}>
+                      <p className="font-semibold text-sm" style={{ color: 'var(--charcoal)' }}>Notifications</p>
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} className="text-xs hover:opacity-70" style={{ color: '#7ecfc0' }}>Mark all read</button>
+                        <button onClick={markAllRead} className="text-xs hover:opacity-70" style={{ color: 'var(--mint-dark)' }}>Mark all read</button>
                       )}
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="px-4 py-8 text-center">
-                          <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: '#e0e0d8' }} />
-                          <p className="text-sm" style={{ color: '#888' }}>No notifications yet</p>
+                          <Bell className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--border)' }} />
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>No notifications yet</p>
                         </div>
                       ) : (
                         notifications.slice(0, 5).map(notif => (
                           <button
                             key={notif.id}
                             onClick={() => markNotifRead(notif.id, notif.href)}
-                            className="w-full text-left px-4 py-3 hover:opacity-70 transition-opacity"
+                            className="w-full text-left px-4 py-3 hover:bg-[var(--light-gray)] transition-colors"
                             style={{
-                              borderBottom: '1px solid #f5f5f0',
+                              borderBottom: '1px solid var(--light-gray)',
                               backgroundColor: notif.read ? 'transparent' : 'rgba(126,207,192,0.05)',
                             }}
                           >
                             <div className="flex items-start gap-2">
                               {!notif.read && (
-                                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: '#7ecfc0' }} />
+                                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: 'var(--mint)' }} />
                               )}
-                              <div className={notif.read ? '' : 'ml-0'} style={{ flex: 1 }}>
-                                <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>{notif.title}</p>
+                              <div style={{ flex: 1 }}>
+                                <p className="text-sm font-medium" style={{ color: 'var(--charcoal)' }}>{notif.title}</p>
                                 {notif.body && (
-                                  <p className="text-xs mt-0.5 line-clamp-2" style={{ color: '#888' }}>{notif.body}</p>
+                                  <p className="text-xs mt-0.5 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>{notif.body}</p>
                                 )}
-                                <p className="text-xs mt-1" style={{ color: '#bbb' }}>{timeAgo(notif.created_at)}</p>
+                                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{timeAgo(notif.created_at)}</p>
                               </div>
                             </div>
                           </button>
                         ))
                       )}
                     </div>
-                    <div className="px-4 py-2.5" style={{ borderTop: '1px solid #f0f0ea' }}>
+                    <div className="px-4 py-2.5" style={{ borderTop: '1px solid var(--light-gray)' }}>
                       <Link
                         href="/dashboard/notifications"
                         onClick={() => setNotifOpen(false)}
                         className="block text-center text-sm hover:opacity-70"
-                        style={{ color: '#7ecfc0' }}
+                        style={{ color: 'var(--mint-dark)' }}
                       >
                         View all notifications
                       </Link>
@@ -315,8 +323,11 @@ export default function Navbar() {
               </div>
 
               {/* Mode indicator pill */}
-              <Link href="/dashboard" className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: 'rgba(222,187,115,0.15)', color: '#debb73', border: '1px solid rgba(222,187,115,0.3)' }}>
+              <Link
+                href="/dashboard"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: 'var(--gold-light)', color: 'var(--gold-dark)', border: '1px solid rgba(222,187,115,0.3)' }}
+              >
                 {dashMode === 'host' ? '🏠 Host' : '📢 Advertiser'}
               </Link>
 
@@ -324,69 +335,79 @@ export default function Navbar() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl hover:opacity-80 transition-opacity"
-                  style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-black/5 transition-colors"
+                  style={{ border: '1px solid var(--border)' }}
                 >
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.firstName || 'Profile'} className="w-7 h-7 rounded-full object-cover" />
                   ) : (
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.2)', color: '#7ecfc0' }}>
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{ backgroundColor: 'var(--gold-light)', color: 'var(--gold-dark)' }}
+                    >
                       {user.firstName ? initials : <User className="w-4 h-4" />}
                     </div>
                   )}
                   {user.firstName && (
-                    <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--charcoal)' }}>{user.firstName}</span>
                   )}
-                  <ChevronDown className="w-4 h-4" style={{ color: '#888', transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                  <ChevronDown
+                    className="w-4 h-4"
+                    style={{
+                      color: 'var(--text-secondary)',
+                      transform: dropdownOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.2s',
+                    }}
+                  />
                 </button>
 
                 {dropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-48 rounded-xl overflow-hidden"
-                    style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                    className="absolute right-0 mt-2 w-52 rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: '#fff', border: '1px solid var(--border)', boxShadow: 'var(--shadow-lg)' }}
                   >
-                    <div className="px-4 py-3" style={{ borderBottom: '1px solid #f0f0ea' }}>
-                      <p className="text-xs font-medium" style={{ color: '#aaa' }}>Signed in as</p>
-                      <p className="text-sm font-semibold truncate" style={{ color: '#2b2b2b' }}>{user.firstName || user.email || 'you'}</p>
+                    <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--light-gray)' }}>
+                      <p className="text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>Signed in as</p>
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--charcoal)' }}>{user.firstName || user.email || 'you'}</p>
                     </div>
                     <div className="py-1">
-                      <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
-                        <LayoutDashboard className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+                      <Link href="/dashboard" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-[var(--light-gray)] transition-colors" style={{ color: 'var(--charcoal)' }}>
+                        <LayoutDashboard className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} />
                         Dashboard
                       </Link>
-                      <Link href="/dashboard/messages" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
+                      <Link href="/dashboard/messages" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-[var(--light-gray)] transition-colors" style={{ color: 'var(--charcoal)' }}>
                         <div className="relative">
-                          <MessageSquare className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+                          <MessageSquare className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} />
                           {unreadMessages > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: '#E63946', color: '#fff', fontSize: '9px' }}>
+                            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full text-xs font-bold flex items-center justify-center" style={{ backgroundColor: 'var(--red)', color: '#fff', fontSize: '9px' }}>
                               {unreadMessages > 9 ? '9+' : unreadMessages}
                             </span>
                           )}
                         </div>
                         Messages
                         {unreadMessages > 0 && (
-                          <span className="ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#E63946', color: '#fff' }}>
+                          <span className="ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--red)', color: '#fff' }}>
                             {unreadMessages}
                           </span>
                         )}
                       </Link>
-                      <Link href="/dashboard/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
-                        <User className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+                      <Link href="/dashboard/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-[var(--light-gray)] transition-colors" style={{ color: 'var(--charcoal)' }}>
+                        <User className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} />
                         My Profile
                       </Link>
-                      <Link href="/dashboard/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#2b2b2b' }}>
-                        <Settings className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+                      <Link href="/dashboard/settings" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-[var(--light-gray)] transition-colors" style={{ color: 'var(--charcoal)' }}>
+                        <Settings className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} />
                         Settings
                       </Link>
                     </div>
-                    <div className="py-1" style={{ borderTop: '1px solid #f0f0ea' }}>
-                      <button onClick={handleSwitchMode} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#888' }}>
-                        <ArrowLeftRight className="w-4 h-4" style={{ color: '#debb73' }} />
+                    <div className="py-1" style={{ borderTop: '1px solid var(--light-gray)' }}>
+                      <button onClick={handleSwitchMode} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-[var(--light-gray)] transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                        <ArrowLeftRight className="w-4 h-4" style={{ color: 'var(--gold)' }} />
                         {dashMode === 'host' ? 'Switch to Advertiser' : 'Switch to Host'}
                       </button>
                     </div>
-                    <div className="py-1" style={{ borderTop: '1px solid #f0f0ea' }}>
-                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:opacity-70 transition-opacity" style={{ color: '#dc2626' }}>
+                    <div className="py-1" style={{ borderTop: '1px solid var(--light-gray)' }}>
+                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-[var(--light-gray)] transition-colors" style={{ color: 'var(--red)' }}>
                         <LogOut className="w-4 h-4" />
                         Log Out
                       </button>
@@ -397,13 +418,21 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="text-sm font-medium transition-colors" style={{ color: '#f0f0ec' }}>
-                Login
+              <Link
+                href="/login"
+                className="text-sm font-semibold px-5 py-2 rounded-full transition-all hover:border-[var(--charcoal)]"
+                style={{ color: 'var(--charcoal)', border: '1px solid var(--border)' }}
+              >
+                Log In
               </Link>
               <Link
                 href="/signup"
-                className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                className="text-sm font-semibold px-5 py-2 rounded-full transition-all hover:-translate-y-0.5"
+                style={{
+                  backgroundColor: 'var(--gold)',
+                  color: 'var(--charcoal)',
+                  boxShadow: '0 2px 8px rgba(222,187,115,0.3)',
+                }}
               >
                 Sign Up
               </Link>
@@ -413,79 +442,104 @@ export default function Navbar() {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden"
-          style={{ color: '#f0f0ec' }}
+          className="md:hidden w-9 h-9 rounded-full flex items-center justify-center transition-colors hover:bg-black/5"
+          style={{ color: 'var(--charcoal)', border: '1px solid var(--border)' }}
           onClick={() => setMobileOpen(!mobileOpen)}
         >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden px-6 pb-4 space-y-1" style={{ backgroundColor: '#2b2b2b', borderTop: '1px solid #3d3d3d' }}>
+        <div
+          className="md:hidden px-6 pb-5 space-y-1"
+          style={{
+            background: 'rgba(255,255,255,0.96)',
+            backdropFilter: 'blur(16px)',
+            borderTop: '1px solid var(--border)',
+          }}
+        >
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium" style={{ color: pathname === link.href ? '#7ecfc0' : '#f0f0ec' }}>
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className="block py-2.5 text-sm font-medium transition-colors"
+              style={{
+                color: pathname === link.href ? 'var(--charcoal)' : 'var(--text-secondary)',
+                fontWeight: pathname === link.href ? 600 : 500,
+              }}
+            >
               {link.label}
             </Link>
           ))}
-          <div style={{ borderTop: '1px solid #3d3d3d', paddingTop: '12px', marginTop: '8px' }}>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '8px' }}>
             {user ? (
               <>
                 <div className="flex items-center gap-3 py-2 mb-2">
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.firstName || 'Profile'} className="w-8 h-8 rounded-full object-cover" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(126,207,192,0.2)', color: '#7ecfc0' }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'var(--gold-light)', color: 'var(--gold-dark)' }}>
                       {user.firstName ? initials : <User className="w-4 h-4" />}
                     </div>
                   )}
                   {user.firstName && (
-                    <span className="text-sm font-medium" style={{ color: '#f0f0ec' }}>{user.firstName}</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--charcoal)' }}>{user.firstName}</span>
                   )}
-                  {/* Mode indicator badge */}
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-lg" style={{ backgroundColor: 'rgba(222,187,115,0.15)', color: '#debb73', border: '1px solid rgba(222,187,115,0.3)' }}>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-light)', color: 'var(--gold-dark)' }}>
                     {dashMode === 'host' ? '🏠 Host' : '📢 Advertiser'}
                   </span>
                   {unreadCount > 0 && (
-                    <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#E63946', color: '#fff' }}>
+                    <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--red)', color: '#fff' }}>
                       {unreadCount} notif{unreadCount !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
-                  <LayoutDashboard className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Dashboard
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm hover:opacity-70" style={{ color: 'var(--charcoal)' }}>
+                  <LayoutDashboard className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} /> Dashboard
                 </Link>
-                <Link href="/dashboard/notifications" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
-                  <Bell className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Notifications
+                <Link href="/dashboard/notifications" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm hover:opacity-70" style={{ color: 'var(--charcoal)' }}>
+                  <Bell className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} /> Notifications
                   {unreadCount > 0 && (
-                    <span className="ml-1 text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#E63946', color: '#fff' }}>
+                    <span className="ml-1 text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--red)', color: '#fff' }}>
                       {unreadCount}
                     </span>
                   )}
                 </Link>
-                <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
-                  <User className="w-4 h-4" style={{ color: '#7ecfc0' }} /> My Profile
+                <Link href="/dashboard/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm hover:opacity-70" style={{ color: 'var(--charcoal)' }}>
+                  <User className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} /> My Profile
                 </Link>
-                <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm" style={{ color: '#f0f0ec' }}>
-                  <Settings className="w-4 h-4" style={{ color: '#7ecfc0' }} /> Settings
+                <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm hover:opacity-70" style={{ color: 'var(--charcoal)' }}>
+                  <Settings className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} /> Settings
                 </Link>
-                <button onClick={() => { handleSwitchMode(); setMobileOpen(false) }} className="flex items-center gap-3 py-2.5 text-sm w-full" style={{ color: '#debb73' }}>
+                <button onClick={() => { handleSwitchMode(); setMobileOpen(false) }} className="flex items-center gap-3 py-2.5 text-sm w-full hover:opacity-70" style={{ color: 'var(--gold-dark)' }}>
                   <ArrowLeftRight className="w-4 h-4" /> {dashMode === 'host' ? 'Switch to Advertiser' : 'Switch to Host'}
                 </button>
-                <button onClick={handleLogout} className="flex items-center gap-3 py-2.5 text-sm w-full" style={{ color: '#dc2626' }}>
+                <button onClick={handleLogout} className="flex items-center gap-3 py-2.5 text-sm w-full hover:opacity-70" style={{ color: 'var(--red)' }}>
                   <LogOut className="w-4 h-4" /> Log Out
                 </button>
               </>
             ) : (
-              <>
-                <Link href="/login" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-medium" style={{ color: '#f0f0ec' }}>
-                  Login
+              <div className="flex flex-col gap-2 pt-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-2.5 text-sm font-semibold text-center rounded-full"
+                  style={{ color: 'var(--charcoal)', border: '1px solid var(--border)' }}
+                >
+                  Log In
                 </Link>
-                <Link href="/signup" onClick={() => setMobileOpen(false)} className="block py-2.5 text-sm font-semibold px-4 rounded-lg text-center mt-2" style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="block py-2.5 text-sm font-semibold text-center rounded-full"
+                  style={{ backgroundColor: 'var(--gold)', color: 'var(--charcoal)' }}
+                >
                   Sign Up
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>

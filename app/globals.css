@@ -1,16 +1,50 @@
 @import "tailwindcss";
 @import "mapbox-gl/dist/mapbox-gl.css";
 
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS — City Feed v2
+   ═══════════════════════════════════════════ */
 :root {
-  --background: #e6e6dd;
+  /* Core palette */
+  --charcoal: #2b2b2b;
+  --cream: #f0f0ec;
+  --mint: #7ecfc0;
+  --mint-light: #e8f6f3;
+  --mint-dark: #5bb8a8;
+  --gold: #debb73;
+  --gold-light: #f5edda;
+  --gold-dark: #c9a54e;
+  --white: #ffffff;
+  --light-gray: #f8f8f5;
+  --border: #e0e0d8;
+  --text-secondary: #888888;
+  --text-tertiary: #9a9a90;
+  --green: #16a34a;
+  --green-light: #e8f5ec;
+  --red: #E63946;
+  --blue: #5b8def;
+  --orange: #e8944a;
+
+  /* Semantic aliases */
+  --background: #f0f0ec;
   --foreground: #2b2b2b;
   --muted: #888888;
-  --border: #d4d4c9;
   --card: #ffffff;
-  --accent: #e6964d;
-  --accent-hover: #d4793a;
-  --surface: #e6e6dd;
-  --surface-alt: #ddddd4;
+  --accent: #debb73;
+  --accent-hover: #c9a54e;
+  --surface: #f0f0ec;
+  --surface-alt: #e6e6dd;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(43,43,43,0.04), 0 1px 2px rgba(43,43,43,0.06);
+  --shadow-md: 0 4px 16px rgba(43,43,43,0.06), 0 2px 6px rgba(43,43,43,0.04);
+  --shadow-lg: 0 12px 40px rgba(43,43,43,0.08), 0 4px 12px rgba(43,43,43,0.04);
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 100px;
 }
 
 @theme inline {
@@ -33,7 +67,7 @@ html {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #e6e6dd;
+  background: var(--cream);
 }
 ::-webkit-scrollbar-thumb {
   background: #c4c4bb;
@@ -54,4 +88,25 @@ html {
   font-size: 18px;
   padding: 4px 8px;
   color: #888;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════ */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(126,207,192,0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(126,207,192,0); }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(22,163,74,0); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s ease-in-out infinite;
 }

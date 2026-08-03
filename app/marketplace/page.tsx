@@ -3,14 +3,23 @@
 /**
  * Marketplace page — browse listing cards with search + category filter
  * Phase 3: Real Supabase data with mock fallback
+ * Design: marketplace-v2 (clean toolbar, category pills with icons, enhanced cards)
  */
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { MapPin, Search, Star, SlidersHorizontal, X, LayoutGrid, Map } from 'lucide-react'
+import {
+  MapPin, Search, Star, X, LayoutGrid, Map, ArrowUpDown,
+  Layers, Monitor, Image, Bus, TreePine, Tv, Store, Calendar,
+  Users, Sparkles, MonitorSmartphone, Frame, Lamp, MoreHorizontal,
+  ArrowRight,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import FavoriteButton from '@/components/FavoriteButton'
 import { SHOW_MOCK_DATA } from '@/lib/constants'
+
+// We alias Star as StarIcon to use as a component in the category list without conflict
+const StarIcon = Star
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface Listing {
@@ -44,6 +53,25 @@ export const MOCK_LISTINGS: Listing[] = [
 ]
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
+// Category icon mapping for the pill strip
+const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+  'all': Layers,
+  'Digital Billboard': Monitor,
+  'Static Billboard': Image,
+  'Transit': Bus,
+  'Outdoor Static': TreePine,
+  'Outdoor Digital': Tv,
+  'Display On-Premise': Store,
+  'Event-Based': Calendar,
+  'Human-Based': Users,
+  'Experiential': Sparkles,
+  'Indoor Digital': MonitorSmartphone,
+  'Indoor Static': Frame,
+  'Street Furniture': Lamp,
+  'Unique': StarIcon,
+  'Other': MoreHorizontal,
+}
+
 const CATEGORIES = [
   { value: 'all', label: 'All types' },
   { value: 'Digital Billboard', label: 'Digital Billboard' },
@@ -117,79 +145,126 @@ function normalizeDbListing(row: Record<string, any>, index: number): Listing {
   }
 }
 
-// ─── Listing Card ──────────────────────────────────────────────────────────────
+// ─── Listing Card (v2 design) ──────────────────────────────────────────────────
 function ListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
   const firstImage = listing.images?.[0]
 
   return (
     <Link href={`/marketplace/${listing.id}`} className="block">
       <div
-        className={`group bg-white rounded-2xl overflow-hidden transition-all ${compact ? '' : 'hover:-translate-y-1'}`}
-        style={{ border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
-        onMouseEnter={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)' }}
-        onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+        className={`group overflow-hidden transition-all duration-300 ${compact ? '' : 'hover:-translate-y-[3px]'}`}
+        style={{
+          backgroundColor: 'var(--white, #ffffff)',
+          borderRadius: 'var(--radius-md, 16px)',
+          border: '1px solid var(--border, #e0e0d8)',
+          boxShadow: compact ? 'none' : undefined,
+        }}
+        onMouseEnter={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-lg, 0 12px 40px rgba(43,43,43,0.08), 0 4px 12px rgba(43,43,43,0.04))' }}
+        onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '' }}
       >
-        {/* Image */}
-        <div className={`${compact ? 'h-32' : 'h-44'} relative overflow-hidden`}>
+        {/* Image area */}
+        <div className={`relative overflow-hidden ${compact ? 'h-32' : 'h-[200px]'}`}>
           {firstImage ? (
             <img src={firstImage} alt={listing.title} className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${listing.image_placeholder}`} />
           )}
-          <div className="absolute top-3 left-3">
-            <span className="bg-white/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-full font-medium shadow-sm" style={{ color: '#555' }}>
-              {listing.category}
-            </span>
-          </div>
-          {/* Favorite button — only show for real listings (non-numeric IDs) */}
+          {/* Category badge — top left */}
+          <span
+            className="absolute top-3.5 left-3.5 text-xs font-semibold px-3.5 py-1 rounded-full shadow-sm"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.92)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              color: '#555',
+            }}
+          >
+            {listing.category}
+          </span>
+          {/* Favorite button — top right (only for real listings) */}
           {!/^\d+$/.test(listing.id) && (
-            <div className="absolute top-3 right-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)' }}>
-                <FavoriteButton listingId={listing.id} size={16} />
-              </div>
+            <div
+              className="absolute top-3.5 right-3.5 w-[34px] h-[34px] rounded-full flex items-center justify-center shadow-sm transition-transform hover:scale-110"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+              }}
+            >
+              <FavoriteButton listingId={listing.id} size={16} />
             </div>
           )}
-          <div className="absolute bottom-3 right-3">
-            <span className="text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm" style={{ backgroundColor: '#debb73' }}>
-              ${listing.price_per_day}/day
-            </span>
-          </div>
+          {/* Price badge — bottom right */}
+          <span
+            className="absolute bottom-3.5 right-3.5 text-xs font-bold px-3.5 py-1 rounded-full"
+            style={{
+              backgroundColor: 'var(--gold, #debb73)',
+              color: 'var(--charcoal, #2b2b2b)',
+              boxShadow: '0 2px 8px rgba(222,187,115,0.4)',
+            }}
+          >
+            ${listing.price_per_day}/day
+          </span>
         </div>
 
-        {/* Content */}
-        <div className={`${compact ? 'p-3' : 'p-5'}`}>
-          <h3 className={`font-semibold leading-snug mb-2 line-clamp-2 transition-colors ${compact ? 'text-xs' : 'text-sm'}`} style={{ color: '#2b2b2b' }}>
+        {/* Card body */}
+        <div className={compact ? 'p-3' : 'px-[22px] pt-5 pb-[22px]'}>
+          <h3
+            className={`font-bold leading-snug line-clamp-2 transition-colors ${compact ? 'text-xs mb-2' : 'text-base mb-2'}`}
+            style={{ color: 'var(--charcoal, #2b2b2b)', letterSpacing: '-0.2px' }}
+          >
             {listing.title}
           </h3>
 
-          <div className="flex items-center gap-1.5 text-xs mb-3" style={{ color: '#888' }}>
-            <MapPin className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 text-[13px] mb-3.5" style={{ color: 'var(--text-secondary, #888888)' }}>
+            <MapPin className="w-3.5 h-3.5 opacity-60" />
             {listing.city}, {listing.state}
           </div>
 
-          {!compact && listing.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {listing.tags.slice(0, 2).map(tag => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#f8f8f5', color: '#888', border: '1px solid #e0e0d8' }}>
-                  {tag}
+          {/* Footer — rating + CTA */}
+          {!compact && (
+            <div
+              className="flex items-center justify-between pt-3.5"
+              style={{ borderTop: '1px solid var(--border, #e0e0d8)' }}
+            >
+              <div className="flex items-center gap-1.5">
+                <Star className="w-3.5 h-3.5" style={{ color: 'var(--gold, #debb73)', fill: 'var(--gold, #debb73)' }} />
+                <span className="text-[13px] font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                  {listing.rating > 0 ? listing.rating : 'New'}
                 </span>
-              ))}
+                {listing.review_count > 0 && (
+                  <span className="text-xs" style={{ color: 'var(--text-secondary, #888888)' }}>
+                    ({listing.review_count})
+                  </span>
+                )}
+              </div>
+              <span
+                className="text-[13px] font-semibold flex items-center gap-1 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--mint-dark, #5bb8a8)' }}
+              >
+                View details <ArrowRight className="w-3.5 h-3.5" />
+              </span>
             </div>
           )}
 
-          {/* Rating + CTA */}
-          <div className="flex items-center justify-between">
+          {/* Compact mode: just rating */}
+          {compact && (
             <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-[#debb73]" style={{ color: '#debb73' }} />
-              <span className="text-xs font-semibold" style={{ color: '#2b2b2b' }}>{listing.rating > 0 ? listing.rating : 'New'}</span>
-              {!compact && listing.review_count > 0 && <span className="text-xs" style={{ color: '#888' }}>({listing.review_count})</span>}
+              <Star className="w-3.5 h-3.5" style={{ color: 'var(--gold, #debb73)', fill: 'var(--gold, #debb73)' }} />
+              <span className="text-xs font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                {listing.rating > 0 ? listing.rating : 'New'}
+              </span>
+              {listing.review_count > 0 && (
+                <span className="text-xs" style={{ color: 'var(--text-secondary, #888888)' }}>({listing.review_count})</span>
+              )}
             </div>
-            {!compact && (
-              <span className="text-xs font-medium" style={{ color: '#7ecfc0' }}>View details →</span>
-            )}
-          </div>
+          )}
         </div>
       </div>
+      {/* Title color change on hover via group */}
+      <style jsx>{`
+        .group:hover h3 { color: var(--mint-dark, #5bb8a8) !important; }
+      `}</style>
     </Link>
   )
 }
@@ -426,123 +501,214 @@ export default function MarketplacePage() {
       })
   }, [allListings, search, selectedCategory, sortBy])
 
+  // Suppress unused var warning — usingRealData can be used for UI hints later
+  void usingRealData
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f0f0ec' }}>
-      <div className="pt-16 max-w-7xl mx-auto px-6 pb-20">
-        {/* Header */}
-        <div className="py-10">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Browse ad placements</h1>
-          <p style={{ color: '#888' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+      <div className="max-w-[1200px] mx-auto px-6">
+
+        {/* ── Page Header ── */}
+        <div className="pt-24">
+          <h1
+            className="text-[32px] font-extrabold mb-1.5"
+            style={{ color: 'var(--charcoal, #2b2b2b)', letterSpacing: '-0.8px' }}
+          >
+            Browse ad placements
+          </h1>
+          <p className="text-[15px]" style={{ color: 'var(--text-secondary, #888888)' }}>
             {isLoading ? 'Loading...' : `${filtered.length} listing${filtered.length !== 1 ? 's' : ''} across the US`}
           </p>
         </div>
 
-        {/* Search + Filter Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#888' }} />
+        {/* ── Toolbar: Search + Sort + View Toggle ── */}
+        <div className="flex gap-3 items-stretch flex-wrap mt-6">
+          {/* Search */}
+          <div className="relative flex-1 min-w-[220px]">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4"
+              style={{ color: 'var(--text-secondary, #888888)' }}
+            />
             <input
               type="text"
               placeholder="Search by location, type..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none"
-              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              className="w-full py-3 pl-11 pr-10 text-sm focus:outline-none"
+              style={{
+                borderRadius: 'var(--radius-sm, 10px)',
+                border: '1px solid var(--border, #e0e0d8)',
+                backgroundColor: 'var(--white, #ffffff)',
+                color: 'var(--charcoal, #2b2b2b)',
+                boxShadow: 'var(--shadow-sm)',
+                fontFamily: 'inherit',
+              }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#888' }}>
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--text-secondary, #888888)' }}
+              >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
+
+          {/* Sort */}
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4" style={{ color: '#888' }} />
+            <ArrowUpDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary, #888888)' }} />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="rounded-xl px-4 py-3 text-sm focus:outline-none cursor-pointer"
-              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+              className="py-3 pl-4 pr-10 text-sm cursor-pointer focus:outline-none"
+              style={{
+                borderRadius: 'var(--radius-sm, 10px)',
+                border: '1px solid var(--border, #e0e0d8)',
+                backgroundColor: 'var(--white, #ffffff)',
+                color: 'var(--charcoal, #2b2b2b)',
+                boxShadow: 'var(--shadow-sm)',
+                fontFamily: 'inherit',
+                WebkitAppearance: 'none',
+                appearance: 'none' as const,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+              }}
             >
               <option value="rating">Top rated</option>
               <option value="price_asc">Price: Low to high</option>
               <option value="price_desc">Price: High to low</option>
             </select>
           </div>
-          <div className="flex items-center rounded-xl overflow-hidden" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+
+          {/* View toggle (segmented control) */}
+          <div
+            className="flex overflow-hidden"
+            style={{
+              borderRadius: 'var(--radius-sm, 10px)',
+              border: '1px solid var(--border, #e0e0d8)',
+              backgroundColor: 'var(--white, #ffffff)',
+              boxShadow: 'var(--shadow-sm)',
+            }}
+          >
             <button
               onClick={() => setViewMode('grid')}
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-              style={viewMode === 'grid' ? { backgroundColor: '#debb73', color: '#2b2b2b' } : { color: '#888' }}
+              className="flex items-center gap-1.5 px-[18px] py-3 text-[13px] font-semibold transition-colors border-none cursor-pointer"
+              style={{
+                backgroundColor: viewMode === 'grid' ? 'var(--gold, #debb73)' : 'transparent',
+                color: viewMode === 'grid' ? 'var(--charcoal, #2b2b2b)' : 'var(--text-secondary, #888888)',
+                fontFamily: 'inherit',
+              }}
             >
               <LayoutGrid className="w-4 h-4" />
-              <span className="hidden sm:inline">Grid</span>
+              Grid
             </button>
             <button
               onClick={() => setViewMode('map')}
-              className="flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
-              style={viewMode === 'map' ? { backgroundColor: '#debb73', color: '#2b2b2b' } : { color: '#888' }}
+              className="flex items-center gap-1.5 px-[18px] py-3 text-[13px] font-semibold transition-colors border-none cursor-pointer"
+              style={{
+                backgroundColor: viewMode === 'map' ? 'var(--gold, #debb73)' : 'transparent',
+                color: viewMode === 'map' ? 'var(--charcoal, #2b2b2b)' : 'var(--text-secondary, #888888)',
+                fontFamily: 'inherit',
+              }}
             >
               <Map className="w-4 h-4" />
-              <span className="hidden sm:inline">Map</span>
+              Map
             </button>
           </div>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex gap-2 flex-wrap mb-6">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.value}
-              onClick={() => setSelectedCategory(cat.value)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-              style={selectedCategory === cat.value ? { backgroundColor: '#debb73', color: '#2b2b2b' } : { backgroundColor: '#fff', color: '#555', border: '1px solid #e0e0d8' }}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* ── Category Pills Strip ── */}
+        <div className="mt-5">
+          <div
+            className="flex gap-2.5 overflow-x-auto pb-4 pt-1"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            <style jsx>{`
+              div::-webkit-scrollbar { display: none; }
+            `}</style>
+            {CATEGORIES.map(cat => {
+              const Icon = CATEGORY_ICONS[cat.value] || Layers
+              const isActive = selectedCategory === cat.value
+              return (
+                <button
+                  key={cat.value}
+                  onClick={() => setSelectedCategory(cat.value)}
+                  className="flex items-center gap-[7px] px-5 py-2.5 text-[13px] whitespace-nowrap flex-shrink-0 transition-all duration-200 cursor-pointer border-none"
+                  style={{
+                    borderRadius: 'var(--radius-pill, 100px)',
+                    fontFamily: 'inherit',
+                    fontWeight: isActive ? 600 : 500,
+                    backgroundColor: isActive ? 'var(--gold, #debb73)' : 'var(--white, #ffffff)',
+                    color: isActive ? 'var(--charcoal, #2b2b2b)' : 'var(--text-secondary, #888888)',
+                    border: isActive ? '1px solid var(--gold, #debb73)' : '1px solid var(--border, #e0e0d8)',
+                    boxShadow: isActive ? '0 2px 8px rgba(222,187,115,0.3)' : 'none',
+                  }}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  {cat.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Results count */}
-        <div className="text-sm mb-6" style={{ color: '#888' }}>
+        {/* ── Result Count Bar ── */}
+        <div className="text-[13px] pb-1.5" style={{ color: 'var(--text-secondary, #888888)' }}>
           {isLoading ? 'Searching...' : (
             <>
               {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-              {selectedCategory !== 'all' && ` in ${CATEGORIES.find(c => c.value === selectedCategory)?.label}`}
+              {selectedCategory !== 'all' && (
+                <> in <strong>{CATEGORIES.find(c => c.value === selectedCategory)?.label}</strong></>
+              )}
               {search && ` for "${search}"`}
             </>
           )}
         </div>
 
-        {/* Content */}
-        {viewMode === 'grid' ? (
-          filtered.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
-            </div>
+        {/* ── Content ── */}
+        <div className="pt-2 pb-20">
+          {viewMode === 'grid' ? (
+            filtered.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[22px]">
+                {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
+              </div>
+            ) : (
+              <div className="text-center py-24">
+                <div className="text-4xl mb-4">🗺️</div>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>
+                  No placements found. Try a different search or check back soon.
+                </h3>
+                <button
+                  onClick={() => { setSearch(''); setSelectedCategory('all') }}
+                  className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90 cursor-pointer border-none"
+                  style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )
           ) : (
-            <div className="text-center py-24">
-              <div className="text-4xl mb-4">🗺️</div>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#555' }}>No placements found. Try a different search or check back soon.</h3>
-              <button onClick={() => { setSearch(''); setSelectedCategory('all') }} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-xl hover:opacity-90" style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}>
-                Clear filters
-              </button>
+            /* Map view — stacks vertically on mobile, side-by-side on lg */
+            <div className="flex flex-col lg:flex-row gap-5 lg:h-[680px]">
+              {/* Map first on mobile (full width), sidebar on desktop */}
+              <div className="w-full lg:hidden rounded-2xl overflow-hidden shadow-sm" style={{ height: '320px', border: '1px solid var(--border, #e0e0d8)' }}>
+                <MapView listings={filtered} />
+              </div>
+              <div className="w-full lg:w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
+                {filtered.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
+              </div>
+              <div className="hidden lg:block flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid var(--border, #e0e0d8)' }}>
+                <MapView listings={filtered} />
+              </div>
             </div>
-          )
-        ) : (
-          /* Map view — stacks vertically on mobile, side-by-side on lg */
-          <div className="flex flex-col lg:flex-row gap-5 lg:h-[680px]">
-            {/* Map first on mobile (full width), sidebar on desktop */}
-            <div className="w-full lg:hidden rounded-2xl overflow-hidden shadow-sm" style={{ height: '320px', border: '1px solid #e0e0d8' }}>
-              <MapView listings={filtered} />
-            </div>
-            <div className="w-full lg:w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
-              {filtered.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
-            </div>
-            <div className="hidden lg:block flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid #e0e0d8' }}>
-              <MapView listings={filtered} />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
