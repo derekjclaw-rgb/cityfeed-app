@@ -140,9 +140,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ── Mobile hamburger button ─────────────────────────────────────── */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-[200] w-[42px] h-[42px] rounded-xl items-center justify-center md:hidden"
+        className={`fixed top-4 left-4 z-[200] w-[42px] h-[42px] rounded-xl items-center justify-center md:hidden ${mobileOpen ? 'hidden' : 'flex'}`}
         style={{
-          display: mobileOpen ? 'none' : 'flex',
           backgroundColor: 'var(--charcoal, #2b2b2b)',
           boxShadow: 'var(--shadow-md, 0 4px 16px rgba(43,43,43,0.06))',
         }}
@@ -168,7 +167,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Logo — links back to homepage */}
         <Link href="/" className="block px-6 pt-7 pb-5 hover:opacity-80 transition-opacity">
-          <img src="/logo-new.png" alt="City Feed" className="h-10 w-auto" style={{ filter: 'invert(1)', opacity: 0.9 }} />
+          <img src="/logo-new.png" alt="City Feed" className="h-12 w-auto" style={{ filter: 'invert(1)', opacity: 0.95 }} />
         </Link>
 
         {/* Role Toggle */}

@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="block mb-3.5 hover:opacity-80 transition-opacity">
-              <img src="/logo-new.png" alt="City Feed" className="h-9 w-auto" style={{ filter: 'invert(1)', opacity: 0.9 }} />
+              <img src="/logo-new.png" alt="City Feed" className="h-11 w-auto" style={{ filter: 'invert(1)', opacity: 0.9 }} />
             </Link>
             <p className="text-sm leading-relaxed max-w-[280px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
               The marketplace for local, real-world advertising. Book unique placements — billboards, storefronts, transit, and more.
