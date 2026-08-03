@@ -93,8 +93,21 @@ export default function MessagesPage() {
   return (
     <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Messages</h1>
-        <p className="text-sm mb-8" style={{ color: '#888' }}>One conversation per booking</p>
+        <h1 className="text-2xl font-bold mb-1" style={{ color: '#2b2b2b' }}>Messages</h1>
+        <p className="text-sm mb-5" style={{ color: '#888' }}>One conversation per booking</p>
+
+        {/* Search */}
+        <div className="relative mb-5">
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            className="w-full rounded-xl px-4 py-2.5 pl-10 text-sm focus:outline-none"
+            style={{ backgroundColor: 'rgba(0,0,0,0.04)', border: 'none', color: '#2b2b2b' }}
+          />
+          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#aaa' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
 
         {threads.length === 0 ? (
           <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
@@ -110,53 +123,75 @@ export default function MessagesPage() {
             </Link>
           </div>
         ) : (
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
-          >
-            {threads.map((thread, i) => (
-              <Link key={thread.booking_id} href={`/dashboard/messages/${thread.booking_id}`}>
-                <div
-                  className="px-5 py-4 flex items-center gap-3.5 cursor-pointer transition-colors hover:bg-[#f8f8f5]"
-                  style={i < threads.length - 1 ? { borderBottom: '1px solid #f0f0ec' } : {}}
-                >
-                  {/* Avatar initial */}
+          <div className="space-y-1">
+            {threads.map(thread => {
+              const isUnread = thread.unread > 0
+              const msgDate = new Date(thread.last_message_at)
+              const now = new Date()
+              const diffDays = Math.floor((now.getTime() - msgDate.getTime()) / 86400000)
+              let dateStr = ''
+              if (isNaN(msgDate.getTime())) {
+                dateStr = ''
+              } else if (diffDays === 0) {
+                dateStr = msgDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+              } else if (diffDays === 1) {
+                dateStr = 'Yesterday'
+              } else if (diffDays < 7) {
+                dateStr = msgDate.toLocaleDateString('en-US', { weekday: 'long' })
+              } else {
+                dateStr = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              }
+              return (
+                <Link key={thread.booking_id} href={`/dashboard/messages/${thread.booking_id}`}>
                   <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm"
-                    style={{ backgroundColor: 'rgba(126,207,192,0.15)', color: '#7ecfc0' }}
+                    className="flex items-start gap-3 px-4 py-3.5 rounded-xl cursor-pointer transition-colors hover:bg-white"
+                    style={{ backgroundColor: isUnread ? 'rgba(255,255,255,0.9)' : 'transparent' }}
                   >
-                    {thread.other_party.charAt(0).toUpperCase()}
-                  </div>
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <h3
-                        className="text-[14px] truncate"
-                        style={{ color: '#2b2b2b', fontWeight: thread.unread > 0 ? 700 : 600 }}
-                      >
-                        {thread.other_party}
-                      </h3>
-                      <span className="text-[11px] flex-shrink-0 ml-2 font-medium" style={{ color: thread.unread > 0 ? '#7ecfc0' : '#aaa' }}>
-                        {new Date(thread.last_message_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
+                    {/* Unread dot */}
+                    <div className="flex flex-col items-center pt-1.5 w-3 flex-shrink-0">
+                      {isUnread && (
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
+                      )}
                     </div>
-                    <p className="text-xs truncate mb-0.5" style={{ color: '#555' }}>
-                      {thread.listing_title}
-                    </p>
-                    <p
-                      className="text-[13px] truncate leading-snug"
-                      style={{ color: thread.unread > 0 ? '#2b2b2b' : '#888', fontWeight: thread.unread > 0 ? 500 : 400 }}
+                    {/* Avatar */}
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-base font-semibold"
+                      style={{ background: 'linear-gradient(135deg, #e0e0d8, #ccc)', color: '#fff' }}
                     >
-                      {thread.last_message}
-                    </p>
+                      {thread.other_party.charAt(0).toUpperCase()}
+                    </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex items-baseline justify-between gap-2 mb-0.5">
+                        <h3
+                          className="text-[15px] truncate"
+                          style={{ color: '#2b2b2b', fontWeight: isUnread ? 700 : 500 }}
+                        >
+                          {thread.other_party}
+                        </h3>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className="text-[12px]" style={{ color: isUnread ? '#2b2b2b' : '#aaa', fontWeight: isUnread ? 600 : 400 }}>
+                            {dateStr}
+                          </span>
+                          <svg className="w-3.5 h-3.5" style={{ color: '#ccc' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                      <p className="text-[13px] truncate mb-0.5" style={{ color: '#888', fontWeight: isUnread ? 500 : 400 }}>
+                        {thread.listing_title}
+                      </p>
+                      <p
+                        className="text-[13px] line-clamp-2 leading-[1.35]"
+                        style={{ color: isUnread ? '#555' : '#aaa', fontWeight: isUnread ? 500 : 400 }}
+                      >
+                        {thread.last_message}
+                      </p>
+                    </div>
                   </div>
-                  {/* Unread dot */}
-                  {thread.unread > 0 && (
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#7ecfc0' }} />
-                  )}
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>
