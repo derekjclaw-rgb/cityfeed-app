@@ -1337,6 +1337,7 @@ export default function BookingDetailPage() {
   const [listing, setListing] = useState<Listing | null>(null)
   const [hasCreativeFiles, setHasCreativeFiles] = useState(false)
   const [hasProofFiles, setHasProofFiles] = useState(false)
+  const [popImageUrls, setPopImageUrls] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -1378,6 +1379,12 @@ export default function BookingDetailPage() {
         const popJson = await popRes.json()
         if (popJson.files && popJson.files.length > 0) {
           setHasProofFiles(true)
+          // Extract image URLs for gallery display
+          const imageUrls = (popJson.files as CollateralFile[])
+            .filter((f) => f.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+            .map((f) => f.url)
+            .filter(Boolean) as string[]
+          setPopImageUrls(imageUrls)
         }
       } catch { /* non-fatal */ }
 
@@ -1432,7 +1439,7 @@ export default function BookingDetailPage() {
 
   return (
     <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8">
         <Link href="/dashboard/bookings" className="flex items-center gap-2 text-sm mb-8 hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
           All Bookings
@@ -1472,6 +1479,33 @@ export default function BookingDetailPage() {
         </div>
 
         <div className="space-y-4">
+          {/* POP Photo Gallery — shown when proof-of-posting images exist */}
+          {popImageUrls.length > 0 && (
+            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', backgroundColor: '#fff' }}>
+              {popImageUrls.length === 1 ? (
+                <img
+                  src={popImageUrls[0]}
+                  alt="Proof of posting"
+                  className="w-full object-cover"
+                  style={{ maxHeight: '400px', borderRadius: '16px' }}
+                />
+              ) : (
+                <div className="flex gap-3 p-4 overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
+                  {popImageUrls.map((url, i) => (
+                    <div key={i} className="flex-shrink-0 rounded-xl overflow-hidden" style={{ border: '1px solid var(--border, #e0e0d8)' }}>
+                      <img
+                        src={url}
+                        alt={`Proof of posting ${i + 1}`}
+                        className="object-cover rounded-xl"
+                        style={{ height: '192px', width: 'auto' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Progress bar */}
           <BookingProgressBar
             status={booking.status}

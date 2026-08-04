@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   LayoutDashboard, Calendar, Grid3X3, MessageSquare, Bookmark,
-  Settings, HelpCircle, MapPin, LayoutGrid, Home, Menu, X,
+  Settings, HelpCircle, MapPin, LayoutGrid, Home, Menu, X, DollarSign,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -33,6 +33,7 @@ const MENU_ITEMS: Omit<NavItem, 'badge' | 'section'>[] = [
   { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Bookings', href: '/dashboard/bookings', icon: Calendar },
   { label: 'Listings', href: '/dashboard/listings', icon: Grid3X3 },
+  { label: 'Transactions', href: '/dashboard/transactions', icon: DollarSign },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
   { label: 'Saved', href: '/dashboard/saved', icon: Bookmark },
 ]
@@ -214,6 +215,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             // Bookings visible only for advertisers, Listings only for hosts
             if (item.label === 'Bookings' && mode === 'host') return false
             if (item.label === 'Listings' && mode === 'advertiser') return false
+            if (item.label === 'Transactions' && mode === 'advertiser') return false
             return true
           }).map((item) => {
             const active = isActive(item.href)

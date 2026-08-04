@@ -39,6 +39,7 @@ interface Notification {
   type: string
   title: string
   body?: string
+  href?: string
   created_at: string
 }
 
@@ -149,6 +150,14 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+function formatActivityBody(text: string): string {
+  // "From Mike Kot" → "From Mike K.", also handles by/for/to prefixes
+  return text.replace(
+    /\b(From|from|By|by|For|for|To|to)\s+([A-Z][a-z]+)\s+([A-Z][a-zA-Z]+)\b/g,
+    (_, prefix, first, last) => `${prefix} ${first} ${last.charAt(0)}.`
+  )
+}
+
 // ─── Dashboard Content ────────────────────────────────────────────────────────
 
 function DashboardContent() {
@@ -172,6 +181,11 @@ function DashboardContent() {
   const [activeCampaigns, setActiveCampaigns] = useState(0)
   const [savedListings, setSavedListings] = useState(0)
   const [placementsThisMonth, setPlacementsThisMonth] = useState(0)
+
+  // Host-specific status chip counts
+  const [hostConfirmedCount, setHostConfirmedCount] = useState(0)
+  const [hostActiveCount, setHostActiveCount] = useState(0)
+  const [hostTotalPlacements, setHostTotalPlacements] = useState(0)
 
   // Sections
   const [campaignCards, setCampaignCards] = useState<CampaignCard[]>([])
@@ -322,6 +336,20 @@ function DashboardContent() {
       }).length
       setPlacementsThisMonth(thisMonthCount)
 
+      // ── Host-specific status chips ────────────────────────────────────────
+      if (isHost) {
+        const confirmedCt = bookings.filter(b => b.status === 'confirmed').length
+        setHostConfirmedCount(confirmedCt)
+
+        const activeCt = bookings.filter(b =>
+          b.status === 'active' || isCampaignLive(b.status, b.start_date, b.end_date)
+        ).length
+        setHostActiveCount(activeCt)
+
+        const totalNonCancelled = bookings.filter(b => b.status !== 'cancelled').length
+        setHostTotalPlacements(totalNonCancelled)
+      }
+
       // ── Campaign cards (active ones only, limit 4) ────────────────────────
       const activeBkgs = bookings.filter(b => {
         if (b.status === 'cancelled') return false
@@ -382,7 +410,7 @@ function DashboardContent() {
       // ── Activity timeline (from notifications) ────────────────────────────
       const { data: notifs } = await supabase
         .from('notifications')
-        .select('id, type, title, body, created_at')
+        .select('id, type, title, body, href, created_at')
         .eq('user_id', uid)
         .order('created_at', { ascending: false })
         .limit(5)
@@ -546,41 +574,83 @@ function DashboardContent() {
                STATUS CHIPS ROW
                ═══════════════════════════════════════ */}
           <div className="flex flex-wrap gap-3 mb-9">
-            {/* Active Campaigns */}
-            <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
-              style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
-              <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
-                style={{ backgroundColor: 'var(--green-light, #e8f5ec)' }}>
-                <Activity className="w-[14px] h-[14px]" style={{ color: 'var(--green, #16a34a)' }} />
-              </div>
-              <span className="text-base font-extrabold tracking-[-0.3px] flex items-center gap-1">
-                <span className="inline-block w-[7px] h-[7px] rounded-full animate-pulse" style={{ backgroundColor: 'var(--green, #16a34a)' }} />
-                {activeCampaigns}
-              </span>
-              <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Active Campaigns</span>
-            </div>
+            {mode === 'host' ? (
+              <>
+                {/* Confirmed */}
+                <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
+                  style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                  <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--mint-light, #e8f6f3)' }}>
+                    <CheckCircle2 className="w-[14px] h-[14px]" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
+                  </div>
+                  <span className="text-base font-extrabold tracking-[-0.3px]">{hostConfirmedCount}</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Confirmed</span>
+                </div>
 
-            {/* Saved Listings */}
-            <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
-              style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
-              <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
-                style={{ backgroundColor: 'var(--gold-light, #f5edda)' }}>
-                <Bookmark className="w-[14px] h-[14px]" style={{ color: 'var(--gold-dark, #c9a54e)' }} />
-              </div>
-              <span className="text-base font-extrabold tracking-[-0.3px]">{savedListings}</span>
-              <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Saved Listings</span>
-            </div>
+                {/* Active */}
+                <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
+                  style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                  <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--green-light, #e8f5ec)' }}>
+                    <Activity className="w-[14px] h-[14px]" style={{ color: 'var(--green, #16a34a)' }} />
+                  </div>
+                  <span className="text-base font-extrabold tracking-[-0.3px] flex items-center gap-1">
+                    <span className="inline-block w-[7px] h-[7px] rounded-full animate-pulse" style={{ backgroundColor: 'var(--green, #16a34a)' }} />
+                    {hostActiveCount}
+                  </span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Active</span>
+                </div>
 
-            {/* Placements This Month */}
-            <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
-              style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
-              <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
-                style={{ backgroundColor: '#e8effd' }}>
-                <CheckCircle2 className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
-              </div>
-              <span className="text-base font-extrabold tracking-[-0.3px]">{placementsThisMonth}</span>
-              <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Placements This Month</span>
-            </div>
+                {/* Total Placements */}
+                <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
+                  style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                  <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: '#e8effd' }}>
+                    <Calendar className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
+                  </div>
+                  <span className="text-base font-extrabold tracking-[-0.3px]">{hostTotalPlacements}</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Placements</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Active Campaigns */}
+                <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
+                  style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                  <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--green-light, #e8f5ec)' }}>
+                    <Activity className="w-[14px] h-[14px]" style={{ color: 'var(--green, #16a34a)' }} />
+                  </div>
+                  <span className="text-base font-extrabold tracking-[-0.3px] flex items-center gap-1">
+                    <span className="inline-block w-[7px] h-[7px] rounded-full animate-pulse" style={{ backgroundColor: 'var(--green, #16a34a)' }} />
+                    {activeCampaigns}
+                  </span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Active Campaigns</span>
+                </div>
+
+                {/* Saved Listings */}
+                <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
+                  style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                  <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--gold-light, #f5edda)' }}>
+                    <Bookmark className="w-[14px] h-[14px]" style={{ color: 'var(--gold-dark, #c9a54e)' }} />
+                  </div>
+                  <span className="text-base font-extrabold tracking-[-0.3px]">{savedListings}</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Saved Listings</span>
+                </div>
+
+                {/* Placements This Month */}
+                <div className="flex items-center gap-[10px] rounded-full px-5 py-[10px] pr-5 pl-[14px]"
+                  style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                  <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: '#e8effd' }}>
+                    <CheckCircle2 className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
+                  </div>
+                  <span className="text-base font-extrabold tracking-[-0.3px]">{placementsThisMonth}</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Placements This Month</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* ═══════════════════════════════════════
@@ -740,6 +810,24 @@ function DashboardContent() {
                     : dotClass === 'gold' ? 'var(--gold-dark, #c9a54e)'
                     : 'var(--green, #16a34a)'
 
+                  const formattedBody = n.body ? formatActivityBody(n.body) : ''
+
+                  const activityCard = (
+                    <div className={`flex-1 rounded-[10px] px-[18px] py-[14px] transition-colors${n.href ? ' hover:bg-[var(--light-gray,#f8f8f5)] cursor-pointer' : ''}`}
+                      style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: `<strong>${n.title}</strong>${formattedBody ? ' \u2014 ' + formattedBody : ''}` }} />
+                          <div className="text-xs mt-[3px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>{timeAgo(n.created_at)}</div>
+                        </div>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
+                          <ImageIcon className="w-4 h-4" style={{ color: '#ccc' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )
+
                   return (
                     <div key={n.id} className="flex items-start gap-4 py-[10px] relative">
                       <div
@@ -748,11 +836,13 @@ function DashboardContent() {
                       >
                         <Icon className="w-[15px] h-[15px]" style={{ color: dotColor }} />
                       </div>
-                      <div className="flex-1 rounded-[10px] px-[18px] py-[14px]"
-                        style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
-                        <div className="text-sm leading-snug" dangerouslySetInnerHTML={{ __html: `<strong>${n.title}</strong>${n.body ? ' — ' + n.body : ''}` }} />
-                        <div className="text-xs mt-[3px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>{timeAgo(n.created_at)}</div>
-                      </div>
+                      {n.href ? (
+                        <Link href={n.href} className="flex-1">
+                          {activityCard}
+                        </Link>
+                      ) : (
+                        activityCard
+                      )}
                     </div>
                   )
                 })}
@@ -765,7 +855,7 @@ function DashboardContent() {
                ═══════════════════════════════════════ */}
           <div className="flex items-baseline justify-between mb-[18px] flex-wrap gap-2">
             <h2 className="text-xl font-bold tracking-[-0.3px]">{mode === 'host' ? 'Earnings Summary' : 'Spending Summary'}</h2>
-            <Link href={mode === 'host' ? '/dashboard/listings' : '/dashboard/bookings'} className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>Details →</Link>
+            <Link href={mode === 'host' ? '/dashboard/transactions' : '/dashboard/bookings'} className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>Details →</Link>
           </div>
           <div className="rounded-2xl p-6 mb-9"
             style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>

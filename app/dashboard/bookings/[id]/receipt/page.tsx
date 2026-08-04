@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, Printer, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -173,7 +174,7 @@ export default function ReceiptPage() {
             <div className="px-8 py-6" style={{ backgroundColor: 'var(--charcoal, #2b2b2b)' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold" style={{ color: 'var(--mint, #7ecfc0)' }}>City Feed</p>
+                  <Image src="/logo-new.png" alt="City Feed" width={120} height={32} className="h-8 w-auto" style={{ filter: 'invert(1)' }} />
                   <p className="text-xs mt-0.5" style={{ color: '#888' }}>Real World Advertising Marketplace</p>
                 </div>
                 {isLive ? (
