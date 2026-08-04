@@ -44,11 +44,11 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; d
     label: 'Active — Campaign Running', description: 'Your campaign is live',
   },
   pop_pending: {
-    bg: '#f0f8f5', text: '#7ecfc0',
+    bg: '#f0f8f5', text: 'var(--mint, #7ecfc0)',
     label: 'Proof of Posting Submitted', description: 'Proof of posting awaiting your approval',
   },
   pop_review: {
-    bg: '#f0f8f5', text: '#7ecfc0',
+    bg: '#f0f8f5', text: 'var(--mint, #7ecfc0)',
     label: 'Proof of Posting Submitted', description: 'Review the proof of posting',
   },
   completed: {
@@ -101,7 +101,7 @@ function getSimpleStatusBadge(status: string, startDate?: string, endDate?: stri
     cancelled: { label: 'Cancelled', emoji: '❌', bg: '#fef2f2', text: '#dc2626' },
     disputed: { label: 'Disputed', emoji: '⚠️', bg: '#fef2f2', text: '#dc2626' },
   }
-  return map[status] ?? { label: status, emoji: '•', bg: '#f8f8f5', text: '#888' }
+  return map[status] ?? { label: status, emoji: '•', bg: 'var(--light-gray, #f8f8f5)', text: '#888' }
 }
 
 export default function BookingsPage() {
@@ -319,8 +319,8 @@ export default function BookingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     )
   }
@@ -360,7 +360,7 @@ export default function BookingsPage() {
     : 0
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -368,7 +368,7 @@ export default function BookingsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               {isHost ? 'Bookings' : 'My Campaigns'}
             </h1>
             <p className="text-sm" style={{ color: '#888' }}>
@@ -380,12 +380,12 @@ export default function BookingsPage() {
         {/* Host earnings summary */}
         {isHost && completed.length > 0 && (
           <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
-            style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <div className="p-3 rounded-xl" style={{ backgroundColor: '#f0fdf4' }}>
               <DollarSign className="w-6 h-6" style={{ color: '#16a34a' }} />
             </div>
             <div>
-              <p className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>
+              <p className="text-2xl font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
                 ${totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="text-sm" style={{ color: '#888' }}>Total earnings from {completed.length} completed booking{completed.length !== 1 ? 's' : ''}</p>
@@ -394,9 +394,9 @@ export default function BookingsPage() {
         )}
 
         {bookings.length === 0 ? (
-          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <ClipboardList className="w-12 h-12 mx-auto mb-4" style={{ color: '#e0e0d8' }} />
-            <h2 className="text-lg font-semibold mb-2" style={{ color: '#2b2b2b' }}>
+          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <ClipboardList className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--border, #e0e0d8)' }} />
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               {isHost ? 'No bookings yet' : 'No campaigns yet'}
             </h2>
             <p className="text-sm mb-6" style={{ color: '#888' }}>
@@ -407,7 +407,7 @@ export default function BookingsPage() {
             <Link
               href={isHost ? '/dashboard/create-listing' : '/marketplace'}
               className="inline-block px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+              style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
             >
               {isHost ? 'Create a Listing' : 'Browse Marketplace'}
             </Link>
@@ -568,17 +568,17 @@ function BookingCard({
   return (
     <div
       className="rounded-2xl p-5 cursor-pointer hover:shadow-md transition-all"
-      style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+      style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
       onClick={navigateToBooking}
     >
       {/* Top row */}
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold truncate" style={{ color: '#2b2b2b' }}>{booking.listing_title}</h3>
+          <h3 className="font-semibold truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{booking.listing_title}</h3>
           <p className="text-xs mt-0.5" style={{ color: '#888' }}>
             {isHost ? `Advertiser: ${booking.other_party_name}` : `Host: ${booking.other_party_name}`}
           </p>
-          <p className="text-xs font-mono font-semibold mt-1" style={{ color: '#7ecfc0' }}>{confirmationCode(booking.id)}</p>
+          <p className="text-xs font-mono font-semibold mt-1" style={{ color: 'var(--mint, #7ecfc0)' }}>{confirmationCode(booking.id)}</p>
         </div>
         <span
           className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
@@ -597,7 +597,7 @@ function BookingCard({
           {' — '}
           {new Date(booking.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
-        <span className="font-semibold" style={{ color: '#2b2b2b' }}>
+        <span className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
           ${booking.total_price?.toLocaleString()}
         </span>
         {earnings !== null && (
@@ -677,7 +677,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}#pop`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: '#7ecfc0' }}
+            style={{ backgroundColor: '#f0f8f5', border: '1px solid #d0ede9', color: 'var(--mint, #7ecfc0)' }}
           >
             <Upload className="w-3.5 h-3.5" />
             Upload Proof of Posting
@@ -689,7 +689,7 @@ function BookingCard({
           <Link
             href={`/dashboard/messages/${booking.id}`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ color: '#888', border: '1px solid #e0e0d8' }}
+            style={{ color: '#888', border: '1px solid var(--border, #e0e0d8)' }}
           >
             Report an issue
           </Link>
@@ -699,7 +699,7 @@ function BookingCard({
         <Link
           href={`/dashboard/messages/${booking.id}`}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-          style={{ border: '1px solid #e0e0d8', color: '#555' }}
+          style={{ border: '1px solid var(--border, #e0e0d8)', color: '#555' }}
         >
           <MessageSquare className="w-3.5 h-3.5" />
           Message
@@ -710,7 +710,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}/review`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ border: '1px solid #7ecfc0', color: '#7ecfc0' }}
+            style={{ border: '1px solid var(--mint, #7ecfc0)', color: 'var(--mint, #7ecfc0)' }}
           >
             <Star className="w-3.5 h-3.5" />
             Leave Review
@@ -722,7 +722,7 @@ function BookingCard({
           <Link
             href={`/dashboard/bookings/${booking.id}/receipt`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-80 transition-opacity"
-            style={{ border: '1px solid #e0e0d8', color: '#555' }}
+            style={{ border: '1px solid var(--border, #e0e0d8)', color: '#555' }}
           >
             <Receipt className="w-3.5 h-3.5" />
             Receipt

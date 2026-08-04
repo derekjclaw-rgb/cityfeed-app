@@ -105,7 +105,7 @@ const ACCEPTED_MIME = [
 function FileIcon({ type, name }: { type: string; name: string }) {
   const ext = name.split('.').pop()?.toLowerCase() ?? ''
   if (type.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
-    return <Image className="w-5 h-5" style={{ color: '#7ecfc0' }} />
+    return <Image className="w-5 h-5" style={{ color: 'var(--mint, #7ecfc0)' }} />
   }
   if (type.startsWith('video/') || ext === 'mp4') {
     return <Film className="w-5 h-5" style={{ color: '#8b5cf6' }} />
@@ -336,10 +336,10 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
   const showSuccessState = showUploadArea && (uploadComplete || hasFiles)
 
   return (
-    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold" style={{ color: '#2b2b2b' }}>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
           {isHost ? 'Advertiser Creative Files' : 'Upload Your Creative Files'}
         </h2>
         {showSuccessState ? null : hasFiles ? (
@@ -357,8 +357,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
       {/* ── PRINT CHOICE — for requires_print listings, advertiser picks delivery mode ── */}
       {!isHost && listing?.requires_print && !booking?.delivery_mode && canUpload && !showSuccessState && (
-        <div className="mb-5 rounded-xl p-5" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
-          <p className="text-sm font-semibold mb-3" style={{ color: '#2b2b2b' }}>How would you like to deliver your creative?</p>
+        <div className="mb-5 rounded-xl p-5" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
+          <p className="text-sm font-semibold mb-3" style={{ color: 'var(--charcoal, #2b2b2b)' }}>How would you like to deliver your creative?</p>
           <div className="space-y-2">
             <button
               type="button"
@@ -368,11 +368,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 onBookingUpdate?.({ delivery_mode: 'self_deliver' })
               }}
               className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
-              style={{ border: '1px solid #e0e0d8' }}
+              style={{ border: '1px solid var(--border, #e0e0d8)' }}
             >
-              <Truck className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
+              <Truck className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
               <div>
-                <span className="font-medium" style={{ color: '#2b2b2b' }}>I&apos;ll provide my own printed materials</span>
+                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>I&apos;ll provide my own printed materials</span>
                 <p className="text-xs mt-0.5" style={{ color: '#888' }}>Ship or deliver prints to the host&apos;s address</p>
               </div>
             </button>
@@ -385,11 +385,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                   onBookingUpdate?.({ delivery_mode: 'host_prints' })
                 }}
                 className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
-                style={{ border: '1px solid #e0e0d8' }}
+                style={{ border: '1px solid var(--border, #e0e0d8)' }}
               >
-                <Upload className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
+                <Upload className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
                 <div>
-                  <span className="font-medium" style={{ color: '#2b2b2b' }}>Have the host print for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
+                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Have the host print for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
                   <p className="text-xs mt-0.5" style={{ color: '#888' }}>Upload your digital files and the host will print them</p>
                 </div>
               </button>
@@ -433,7 +433,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
           <div
             className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-4"
             style={{
-              borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
+              borderColor: isDragging ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
               backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
             }}
             onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
@@ -441,9 +441,9 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             onDrop={e => { e.preventDefault(); setIsDragging(false); handleStagedFiles(e.dataTransfer.files) }}
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
-            <p className="text-sm font-medium mb-1" style={{ color: '#2b2b2b' }}>
-              Drag & drop or <span style={{ color: '#7ecfc0' }}>click to browse</span>
+            <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: isDragging ? 'var(--mint, #7ecfc0)' : '#ccc' }} />
+            <p className="text-sm font-medium mb-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+              Drag & drop or <span style={{ color: 'var(--mint, #7ecfc0)' }}>click to browse</span>
             </p>
             <p className="text-xs" style={{ color: '#aaa' }}>
               Accepted formats: {ACCEPTED_FORMATS.join(', ')} · Max 100MB per file
@@ -465,11 +465,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 <div
                   key={i}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                  style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+                  style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}
                 >
                   <FileIcon type={file.type} name={file.name} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: '#2b2b2b' }}>{file.name}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{file.name}</p>
                     <p className="text-xs" style={{ color: '#aaa' }}>{formatBytes(file.size)}</p>
                   </div>
                   <button
@@ -491,7 +491,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               onClick={handleUpload}
               disabled={uploading}
               className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 mb-4"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+              style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
             >
               {uploading ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
@@ -529,7 +529,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       {/* Files list */}
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#7ecfc0' }} />
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
         </div>
       ) : hasFiles ? (
         <div className="space-y-2">
@@ -537,11 +537,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             <div
               key={file.path}
               className="flex items-center gap-3 px-4 py-3 rounded-xl"
-              style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+              style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}
             >
               <FileIcon type={file.type} name={file.name} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: '#2b2b2b' }}>{file.name}</p>
+                <p className="text-sm font-medium truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{file.name}</p>
                 {file.size > 0 && (
                   <p className="text-xs" style={{ color: '#aaa' }}>{formatBytes(file.size)}</p>
                 )}
@@ -600,7 +600,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               <div
                 className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors"
                 style={{
-                  borderColor: isDraggingAdditional ? '#7ecfc0' : '#e0e0d8',
+                  borderColor: isDraggingAdditional ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
                   backgroundColor: isDraggingAdditional ? 'rgba(126,207,192,0.05)' : 'transparent',
                 }}
                 onDragOver={e => { e.preventDefault(); setIsDraggingAdditional(true) }}
@@ -610,14 +610,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               >
                 {uploading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#7ecfc0' }} />
+                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
                     <span className="text-xs" style={{ color: '#888' }}>Uploading...</span>
                   </div>
                 ) : (
                   <>
                     <Upload className="w-5 h-5 mx-auto mb-1.5" style={{ color: '#ccc' }} />
                     <p className="text-xs" style={{ color: '#888' }}>
-                      Drop files or <span style={{ color: '#7ecfc0' }}>click to browse</span>
+                      Drop files or <span style={{ color: 'var(--mint, #7ecfc0)' }}>click to browse</span>
                     </p>
                   </>
                 )}
@@ -720,10 +720,10 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
   // Advertiser view
   if (!isHost) {
     return (
-      <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+      <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
         <div className="flex items-center gap-2 mb-3">
-          <Package className="w-4 h-4" style={{ color: '#7ecfc0' }} />
-          <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Delivery Address</p>
+          <Package className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
+          <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Delivery Address</p>
         </div>
         <p className="text-sm mb-4 leading-relaxed" style={{ color: '#555' }}>{deliveryAddress}</p>
 
@@ -759,7 +759,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
                 onChange={e => setTrackingNumber(e.target.value)}
                 placeholder="e.g. 1Z999AA10123456784"
                 className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
-                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
+                style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', color: 'var(--charcoal, #2b2b2b)' }}
               />
             </div>
             <button
@@ -767,7 +767,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
               onClick={markShipped}
               disabled={saving}
               className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+              style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
               Mark as Shipped
@@ -780,17 +780,17 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
 
   // Host view
   return (
-    <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+    <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
       <div className="flex items-center gap-2 mb-3">
-        <Truck className="w-4 h-4" style={{ color: '#7ecfc0' }} />
-        <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Material Delivery</p>
+        <Truck className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
+        <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Material Delivery</p>
       </div>
       {!booking.shipped_at ? (
         <p className="text-sm" style={{ color: '#888' }}>The advertiser is preparing their printed materials for delivery.</p>
       ) : !booking.received_at ? (
         <>
           <div className="flex items-center gap-2 mb-3">
-            <CheckCircle className="w-4 h-4" style={{ color: '#7ecfc0' }} />
+            <CheckCircle className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
             <p className="text-sm" style={{ color: '#555' }}>
               Materials shipped on {new Date(booking.shipped_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </p>
@@ -803,7 +803,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
             onClick={markReceived}
             disabled={saving}
             className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-            style={{ backgroundColor: '#7ecfc0', color: '#fff' }}
+            style={{ backgroundColor: 'var(--mint, #7ecfc0)', color: '#fff' }}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
             Mark as Received
@@ -1029,26 +1029,26 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   if (!isHost) {
     if (files.length === 0) return null
     return (
-      <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.08)' }}>
             <Camera className="w-5 h-5" style={{ color: '#16a34a' }} />
           </div>
           <div>
-            <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Proof of Posting</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Proof of Posting</p>
             <p className="text-xs mt-0.5" style={{ color: '#888' }}>Your host uploaded these photos as proof your ad is live.</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           {files.filter(f => f.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(f.name)).map(f => (
-            <div key={f.path} className="rounded-xl overflow-hidden aspect-video" style={{ border: '1px solid #e0e0d8' }}>
+            <div key={f.path} className="rounded-xl overflow-hidden aspect-video" style={{ border: '1px solid var(--border, #e0e0d8)' }}>
               <img src={f.url} alt={f.name} className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
         <div className="space-y-2">
           {files.map(f => (
-            <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+            <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
               <FileIcon type={f.type} name={f.name} />
               <span className="text-sm flex-1 truncate" style={{ color: '#555' }}>{f.name}</span>
               {f.url && (
@@ -1070,20 +1070,20 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
 
   if (alreadySubmitted) {
     return (
-      <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+      <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(22,163,74,0.08)' }}>
             <CheckCircle className="w-5 h-5" style={{ color: '#16a34a' }} />
           </div>
           <div>
-            <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Proof of Posting Submitted ✅</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Proof of Posting Submitted ✅</p>
             <p className="text-xs mt-0.5" style={{ color: '#888' }}>Payout initiated — expected within 2 business days</p>
           </div>
         </div>
         {files.length > 0 && (
           <div className="space-y-2 mt-4">
             {files.map(f => (
-              <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}>
+              <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
                 <FileIcon type={f.type} name={f.name} />
                 <span className="text-sm flex-1 truncate" style={{ color: '#555' }}>{f.name}</span>
                 {f.url && (
@@ -1104,13 +1104,13 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   }
 
   return (
-    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #7ecfc0', boxShadow: '0 4px 16px rgba(126,207,192,0.12)' }}>
+    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--mint, #7ecfc0)', boxShadow: '0 4px 16px rgba(126,207,192,0.12)' }}>
       <div className="flex items-start gap-3 mb-5">
         <div className="p-2.5 rounded-xl flex-shrink-0" style={{ backgroundColor: 'rgba(126,207,192,0.1)' }}>
-          <Camera className="w-5 h-5" style={{ color: '#7ecfc0' }} />
+          <Camera className="w-5 h-5" style={{ color: 'var(--mint, #7ecfc0)' }} />
         </div>
         <div>
-          <h2 className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Creative received — mark your ad as live</h2>
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Creative received — mark your ad as live</h2>
           <p className="text-sm mt-1 leading-relaxed" style={{ color: '#555' }}>
             Submit proof of posting to complete this campaign and unlock your payout.
           </p>
@@ -1120,7 +1120,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       <div
         className="border-2 border-dashed rounded-xl p-5 text-center cursor-pointer mb-4 transition-colors"
         style={{
-          borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
+          borderColor: isDragging ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
           backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
         }}
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
@@ -1139,20 +1139,20 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           input.click()
         }}
       >
-        <Upload className="w-7 h-7 mx-auto mb-2" style={{ color: isDragging ? '#7ecfc0' : '#ccc' }} />
-        <p className="text-sm font-medium" style={{ color: '#2b2b2b' }}>Upload proof photos or video</p>
+        <Upload className="w-7 h-7 mx-auto mb-2" style={{ color: isDragging ? 'var(--mint, #7ecfc0)' : '#ccc' }} />
+        <p className="text-sm font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Upload proof photos or video</p>
         <p className="text-xs mt-1" style={{ color: '#aaa' }}>JPG, PNG, MP4 · Drag & drop or click to browse</p>
       </div>
 
       {/* Staged files preview */}
       {pendingFiles.length > 0 && (
         <div className="space-y-2 mb-4">
-          <p className="text-xs font-medium" style={{ color: '#2b2b2b' }}>{pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} ready to submit</p>
+          <p className="text-xs font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} ready to submit</p>
           {pendingFiles.map((file, i) => (
             <div
               key={i}
               className="flex items-center gap-3 px-3 py-2 rounded-xl"
-              style={{ backgroundColor: '#f8f8f5', border: '1px solid #e0e0d8' }}
+              style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}
             >
               {file.type.startsWith('image/') ? (
                 <img
@@ -1161,7 +1161,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
                   className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#e0e0d8' }}>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--border, #e0e0d8)' }}>
                   <Upload className="w-4 h-4" style={{ color: '#888' }} />
                 </div>
               )}
@@ -1182,7 +1182,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             disabled={uploading}
             className="w-full py-3 rounded-xl text-sm font-semibold transition-colors"
             style={{
-              backgroundColor: uploading ? '#a0a0a0' : '#7ecfc0',
+              backgroundColor: uploading ? '#a0a0a0' : 'var(--mint, #7ecfc0)',
               color: '#fff',
               cursor: uploading ? 'not-allowed' : 'pointer',
             }}
@@ -1225,22 +1225,22 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
   const proof = hasProof || status === 'completed'
 
   const dots = [
-    { label: 'Booked', color: '#7ecfc0' },
-    { label: 'Accepted', color: approved ? '#7ecfc0' : '#ddd' },
-    { label: 'Creative', color: creative ? '#7ecfc0' : '#ddd' },
-    { label: isLive ? 'LIVE' : 'Proof', color: isLive ? '#16a34a' : proof ? '#7ecfc0' : '#ddd' },
-    { label: 'Complete', color: isFullyComplete ? '#7ecfc0' : '#ddd' },
+    { label: 'Booked', color: 'var(--mint, #7ecfc0)' },
+    { label: 'Accepted', color: approved ? 'var(--mint, #7ecfc0)' : '#ddd' },
+    { label: 'Creative', color: creative ? 'var(--mint, #7ecfc0)' : '#ddd' },
+    { label: isLive ? 'LIVE' : 'Proof', color: isLive ? '#16a34a' : proof ? 'var(--mint, #7ecfc0)' : '#ddd' },
+    { label: 'Complete', color: isFullyComplete ? 'var(--mint, #7ecfc0)' : '#ddd' },
   ]
 
   const lines = [
-    approved ? '#7ecfc0' : '#e0e0d8',
-    creative ? '#7ecfc0' : '#e0e0d8',
-    proof ? '#7ecfc0' : '#e0e0d8',
-    isFullyComplete ? '#7ecfc0' : '#e0e0d8',
+    approved ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
+    creative ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
+    proof ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
+    isFullyComplete ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
   ]
 
   return (
-    <div style={{ padding: '14px 16px 8px', borderRadius: '16px', backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+    <div style={{ padding: '14px 16px 8px', borderRadius: '16px', backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 20px 1fr 20px 1fr 20px 1fr 20px', alignItems: 'center', maxWidth: 360, margin: '0 auto' }}>
         {dots.map((d, i) => {
           const els = [<div key={`d${i}`} style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: d.color, margin: '0 auto' }} />]
@@ -1296,7 +1296,7 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
   return (
     <div style={{
       backgroundColor: 'rgba(126,207,192,0.08)',
-      borderLeft: '3px solid #7ecfc0',
+      borderLeft: '3px solid var(--mint, #7ecfc0)',
       padding: '12px 16px',
       borderRadius: '8px',
       fontSize: '13px',
@@ -1314,8 +1314,8 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
   pending: { bg: '#fef9ec', text: '#b45309', label: 'Pending Review' },
   confirmed: { bg: '#eff6ff', text: '#1d4ed8', label: 'Confirmed' },
   active: { bg: '#f0fdf4', text: '#16a34a', label: 'Active — Live' },
-  pop_pending: { bg: '#f0f8f5', text: '#7ecfc0', label: 'Proof of Posting Submitted' },
-  pop_review: { bg: '#f0f8f5', text: '#7ecfc0', label: 'Proof of Posting Review' },
+  pop_pending: { bg: '#f0f8f5', text: 'var(--mint, #7ecfc0)', label: 'Proof of Posting Submitted' },
+  pop_review: { bg: '#f0f8f5', text: 'var(--mint, #7ecfc0)', label: 'Proof of Posting Review' },
   completed: { bg: '#f0fdf4', text: '#16a34a', label: 'Completed ✓' },
   cancelled: { bg: '#fef2f2', text: '#dc2626', label: 'Cancelled' },
   disputed: { bg: '#fef2f2', text: '#dc2626', label: 'Disputed' },
@@ -1397,25 +1397,25 @@ export default function BookingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     )
   }
 
   if (!booking) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
         <div className="text-center">
           <p className="text-sm mb-4" style={{ color: '#888' }}>Booking not found</p>
-          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>← Back to bookings</Link>
+          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: 'var(--mint, #7ecfc0)' }}>← Back to bookings</Link>
         </div>
       </div>
     )
   }
 
   const isHost = currentUserId === booking.host_id
-  const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: '#f8f8f5', text: '#888', label: booking.status }
+  const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: 'var(--light-gray, #f8f8f5)', text: '#888', label: booking.status }
   const now = new Date()
   const startD = booking.start_date ? new Date(booking.start_date + 'T00:00:00') : null
   const endD = booking.end_date ? new Date(booking.end_date + 'T00:00:00') : null
@@ -1431,7 +1431,7 @@ export default function BookingDetailPage() {
   const showCollateralSection = ['confirmed', 'completed'].includes(booking.status)
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
         <Link href="/dashboard/bookings" className="flex items-center gap-2 text-sm mb-8 hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -1441,13 +1441,13 @@ export default function BookingDetailPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold mb-1" style={{ color: '#2b2b2b' }}>
+            <h1 className="text-2xl font-bold mb-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               {listing?.title ?? 'Booking'}
             </h1>
             {listing && (
               <p className="text-sm" style={{ color: '#888' }}>{listing.city}, {listing.state}</p>
             )}
-            <p className="text-xs font-mono font-semibold mt-1.5 tracking-wider" style={{ color: '#7ecfc0' }}>
+            <p className="text-xs font-mono font-semibold mt-1.5 tracking-wider" style={{ color: 'var(--mint, #7ecfc0)' }}>
               {confirmationCode(bookingId)}
             </p>
           </div>
@@ -1490,7 +1490,7 @@ export default function BookingDetailPage() {
           />
 
           {/* Booking details card */}
-          <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Booking Details</h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
               {[
@@ -1501,24 +1501,24 @@ export default function BookingDetailPage() {
               ].map(item => (
                 <div key={item.label} className="flex flex-col gap-0.5">
                   <span style={{ color: '#aaa' }}>{item.label}</span>
-                  <span className="font-medium" style={{ color: '#2b2b2b' }}>{item.value}</span>
+                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{item.value}</span>
                 </div>
               ))}
             </div>
             {listing?.production_time && (
-              <div className="mt-4 pt-4 text-sm" style={{ borderTop: '1px solid #f0f0ec' }}>
+              <div className="mt-4 pt-4 text-sm" style={{ borderTop: '1px solid var(--cream, #f0f0ec)' }}>
                 <span style={{ color: '#aaa' }}>Production window: </span>
-                <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.production_time}</span>
+                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.production_time}</span>
               </div>
             )}
           </div>
 
           {/* Delivery instructions */}
           {listing?.delivery_instructions && (
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <Package className="w-4 h-4" style={{ color: '#7ecfc0' }} />
-                <h2 className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>Delivery Instructions</h2>
+                <Package className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
+                <h2 className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Delivery Instructions</h2>
               </div>
               <p className="text-sm leading-relaxed" style={{ color: '#555' }}>
                 {listing.delivery_instructions}
@@ -1529,43 +1529,43 @@ export default function BookingDetailPage() {
           {/* Creative specs */}
           {showCollateralSection &&
             (listing?.dimensions || listing?.creative_formats?.length || listing?.creative_dimensions || listing?.creative_max_file_size) && (
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Requirements</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 {listing?.dimensions && (
                   <div>
                     <p style={{ color: '#aaa' }}>Listing Dimensions</p>
-                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.dimensions}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.dimensions}</p>
                   </div>
                 )}
                 {listing?.creative_formats && listing.creative_formats.length > 0 && (
                   <div>
                     <p style={{ color: '#aaa' }}>Accepted Formats</p>
-                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_formats.join(', ')}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_formats.join(', ')}</p>
                   </div>
                 )}
                 {listing?.creative_dimensions && (
                   <div>
                     <p style={{ color: '#aaa' }}>Dimensions</p>
-                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_dimensions}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_dimensions}</p>
                   </div>
                 )}
                 {listing?.creative_max_file_size && (
                   <div>
                     <p style={{ color: '#aaa' }}>Max File Size</p>
-                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_max_file_size}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_max_file_size}</p>
                   </div>
                 )}
                 {listing?.creative_video_duration && (
                   <div>
                     <p style={{ color: '#aaa' }}>Video Duration</p>
-                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_video_duration}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_video_duration}</p>
                   </div>
                 )}
                 {listing?.creative_audio_allowed !== undefined && (
                   <div>
                     <p style={{ color: '#aaa' }}>Audio</p>
-                    <p className="font-medium mt-0.5" style={{ color: '#2b2b2b' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</p>
                   </div>
                 )}
               </div>
@@ -1574,7 +1574,7 @@ export default function BookingDetailPage() {
 
           {/* ── Host Earnings Card ─────────────────────────────────── */}
           {isHost && booking.total_price > 0 && (
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign className="w-4 h-4" style={{ color: '#16a34a' }} />
                 <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#888' }}>Earnings</h2>
@@ -1598,7 +1598,7 @@ export default function BookingDetailPage() {
                       <span>City Feed fee (7%)</span>
                       <span>-${platformFee.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between font-bold pt-2" style={{ borderTop: '1px solid #e0e0d8', color: '#2b2b2b' }}>
+                    <div className="flex justify-between font-bold pt-2" style={{ borderTop: '1px solid var(--border, #e0e0d8)', color: 'var(--charcoal, #2b2b2b)' }}>
                       <span>Your payout</span>
                       <span>${payout.toFixed(2)}</span>
                     </div>
@@ -1616,43 +1616,43 @@ export default function BookingDetailPage() {
 
           {/* Creative Specs from Listing */}
           {listing && (listing.creative_formats || listing.creative_dimensions || listing.creative_max_file_size) && (
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Specs</h2>
               <div className="space-y-3 text-sm">
                 {listing.creative_formats && listing.creative_formats.length > 0 && (
                   <div className="flex flex-col gap-0.5">
                     <span style={{ color: '#aaa' }}>Accepted formats</span>
-                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_formats.join(', ')}</span>
+                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_formats.join(', ')}</span>
                   </div>
                 )}
                 {listing.creative_dimensions && (
                   <div className="flex flex-col gap-0.5">
                     <span style={{ color: '#aaa' }}>Dimensions</span>
-                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_dimensions}</span>
+                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_dimensions}</span>
                   </div>
                 )}
                 {listing.creative_max_file_size && (
                   <div className="flex flex-col gap-0.5">
                     <span style={{ color: '#aaa' }}>Max file size</span>
-                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_max_file_size}</span>
+                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_max_file_size}</span>
                   </div>
                 )}
                 {listing.creative_video_duration && (
                   <div className="flex flex-col gap-0.5">
                     <span style={{ color: '#aaa' }}>Video duration</span>
-                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_video_duration}</span>
+                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_video_duration}</span>
                   </div>
                 )}
                 {listing.creative_audio_allowed !== undefined && (
                   <div className="flex flex-col gap-0.5">
                     <span style={{ color: '#aaa' }}>Audio</span>
-                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</span>
+                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</span>
                   </div>
                 )}
                 {listing.dimensions && (
                   <div className="flex flex-col gap-0.5">
                     <span style={{ color: '#aaa' }}>Physical dimensions</span>
-                    <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.dimensions}</span>
+                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.dimensions}</span>
                   </div>
                 )}
               </div>
@@ -1691,14 +1691,14 @@ export default function BookingDetailPage() {
             <Link
               href={`/dashboard/bookings/${bookingId}/receipt`}
               className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
+              style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', color: '#555' }}
             >
               View Receipt
             </Link>
             <Link
               href={`/dashboard/messages/${bookingId}`}
               className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-              style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
+              style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', color: '#555' }}
             >
               Messages
             </Link>
@@ -1706,7 +1706,7 @@ export default function BookingDetailPage() {
               <Link
                 href={`/dashboard/messages/${bookingId}`}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#888' }}
+                style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', color: '#888' }}
               >
                 Report an issue
               </Link>
@@ -1715,7 +1715,7 @@ export default function BookingDetailPage() {
               <Link
                 href={`/dashboard/bookings/${bookingId}/review`}
                 className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-colors"
-                style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#555' }}
+                style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', color: '#555' }}
               >
                 Leave Review
               </Link>
@@ -1724,7 +1724,7 @@ export default function BookingDetailPage() {
               <Link
                 href={`/marketplace/${booking.listing_id}`}
                 className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-colors"
-                style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
+                style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)', boxShadow: '0 2px 8px rgba(222,187,115,0.3)' }}
               >
                 🔁 Book Again
               </Link>

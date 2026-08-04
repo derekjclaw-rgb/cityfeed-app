@@ -99,19 +99,19 @@ export default function ReceiptPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     )
   }
 
   if (error || !receipt) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: '#7ecfc0' }} />
+          <AlertCircle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
           <p className="text-sm mb-4" style={{ color: '#888' }}>{error || 'Receipt unavailable'}</p>
-          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: '#7ecfc0' }}>Back to Bookings</Link>
+          <Link href="/dashboard/bookings" className="text-sm font-medium" style={{ color: 'var(--mint, #7ecfc0)' }}>Back to Bookings</Link>
         </div>
       </div>
     )
@@ -144,7 +144,7 @@ export default function ReceiptPage() {
         }
       `}</style>
 
-      <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
+      <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
         <div className="max-w-lg mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between gap-4 mb-8 no-print">
@@ -153,14 +153,14 @@ export default function ReceiptPage() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>Receipt</h1>
+                <h1 className="text-2xl font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Receipt</h1>
                 <p className="text-sm" style={{ color: '#888' }}>Campaign summary</p>
               </div>
             </div>
             <button
               onClick={() => window.print()}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium hover:opacity-80 transition-opacity"
-              style={{ border: '1px solid #e0e0d8', color: '#555', backgroundColor: '#fff' }}
+              style={{ border: '1px solid var(--border, #e0e0d8)', color: '#555', backgroundColor: '#fff' }}
             >
               <Printer className="w-4 h-4" />
               Print
@@ -168,12 +168,12 @@ export default function ReceiptPage() {
           </div>
 
           {/* Receipt Card */}
-          <div className="rounded-2xl overflow-hidden receipt-card" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div className="rounded-2xl overflow-hidden receipt-card" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             {/* Receipt Header */}
-            <div className="px-8 py-6" style={{ backgroundColor: '#2b2b2b' }}>
+            <div className="px-8 py-6" style={{ backgroundColor: 'var(--charcoal, #2b2b2b)' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-lg font-bold" style={{ color: '#7ecfc0' }}>City Feed</p>
+                  <p className="text-lg font-bold" style={{ color: 'var(--mint, #7ecfc0)' }}>City Feed</p>
                   <p className="text-xs mt-0.5" style={{ color: '#888' }}>Real World Advertising Marketplace</p>
                 </div>
                 {isLive ? (
@@ -196,7 +196,7 @@ export default function ReceiptPage() {
               <div className="flex items-start justify-between text-xs" style={{ color: '#888' }}>
                 <div>
                   <p className="font-medium mb-0.5" style={{ color: '#aaa' }}>CONFIRMATION</p>
-                  <p className="font-mono font-bold text-sm" style={{ color: '#7ecfc0' }}>{confirmationCode}</p>
+                  <p className="font-mono font-bold text-sm" style={{ color: 'var(--mint, #7ecfc0)' }}>{confirmationCode}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-medium mb-0.5" style={{ color: '#aaa' }}>PAYMENT DATE</p>
@@ -209,27 +209,27 @@ export default function ReceiptPage() {
               {/* Campaign Details */}
               <div>
                 <p className="text-xs font-semibold mb-3" style={{ color: '#aaa' }}>CAMPAIGN DETAILS</p>
-                <h3 className="font-bold text-base mb-2" style={{ color: '#2b2b2b' }}>{receipt.listing_title}</h3>
+                <h3 className="font-bold text-base mb-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.listing_title}</h3>
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>Advertiser</span>
-                    <span style={{ color: '#2b2b2b' }}>{receipt.advertiser_name}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.advertiser_name}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>Host</span>
-                    <span style={{ color: '#2b2b2b' }}>{receipt.host_name}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.host_name}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>Campaign Start</span>
-                    <span style={{ color: '#2b2b2b' }}>{fmtDate(receipt.start_date)}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtDate(receipt.start_date)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>Campaign End</span>
-                    <span style={{ color: '#2b2b2b' }}>{fmtDate(receipt.end_date)}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtDate(receipt.end_date)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>Duration</span>
-                    <span style={{ color: '#2b2b2b' }}>{receipt.total_days} day{receipt.total_days !== 1 ? 's' : ''}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.total_days} day{receipt.total_days !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function ReceiptPage() {
                     <span style={{ color: '#888' }}>
                       {fmtMoney(receipt.price_per_day)} × {receipt.total_days} day{receipt.total_days !== 1 ? 's' : ''}
                     </span>
-                    <span style={{ color: '#2b2b2b' }}>{fmtMoney(receipt.subtotal ?? receipt.price_per_day * receipt.total_days)}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtMoney(receipt.subtotal ?? receipt.price_per_day * receipt.total_days)}</span>
                   </div>
                   {isHost ? (
                     <div className="flex justify-between text-sm">
@@ -256,16 +256,16 @@ export default function ReceiptPage() {
                   ) : (
                     <div className="flex justify-between text-sm">
                       <span style={{ color: '#888' }}>Buyer service fee (7%)</span>
-                      <span style={{ color: '#2b2b2b' }}>{fmtMoney(receipt.buyer_fee)}</span>
+                      <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtMoney(receipt.buyer_fee)}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="flex justify-between mt-4 pt-4" style={{ borderTop: '2px solid #f0f0ea' }}>
-                  <span className="font-bold" style={{ color: '#2b2b2b' }}>
+                  <span className="font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
                     {isHost ? 'Your Payout' : 'Total Charged'}
                   </span>
-                  <span className="font-bold text-lg" style={{ color: '#7ecfc0' }}>
+                  <span className="font-bold text-lg" style={{ color: 'var(--mint, #7ecfc0)' }}>
                     {isHost ? fmtMoney(hostPayout) : fmtMoney(receipt.total_price)}
                   </span>
                 </div>
@@ -283,7 +283,7 @@ export default function ReceiptPage() {
                     {receipt.payout_at && (
                       <div className="flex justify-between text-sm mt-1.5">
                         <span style={{ color: '#888' }}>Payout date</span>
-                        <span style={{ color: '#2b2b2b' }}>{fmtDate(receipt.payout_at)}</span>
+                        <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtDate(receipt.payout_at)}</span>
                       </div>
                     )}
                   </div>
@@ -294,7 +294,7 @@ export default function ReceiptPage() {
 
               <p className="text-xs text-center" style={{ color: '#aaa' }}>
                 Processed by City Feed. For questions, contact{' '}
-                <a href="mailto:mk@cityfeed.io" style={{ color: '#7ecfc0' }}>mk@cityfeed.io</a>
+                <a href="mailto:mk@cityfeed.io" style={{ color: 'var(--mint, #7ecfc0)' }}>mk@cityfeed.io</a>
               </p>
             </div>
           </div>
@@ -303,7 +303,7 @@ export default function ReceiptPage() {
             <button
               onClick={() => window.print()}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#2b2b2b', color: '#f0f0ec' }}
+              style={{ backgroundColor: 'var(--charcoal, #2b2b2b)', color: 'var(--cream, #f0f0ec)' }}
             >
               <Printer className="w-4 h-4" />
               Download Receipt

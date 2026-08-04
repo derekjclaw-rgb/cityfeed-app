@@ -69,8 +69,8 @@ function StripeOnboardingContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     )
   }
@@ -78,7 +78,7 @@ function StripeOnboardingContent() {
   const isConnected = profile?.stripe_connected === true
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -86,7 +86,7 @@ function StripeOnboardingContent() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>Payout Setup</h1>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Payout Setup</h1>
             <p className="text-sm" style={{ color: '#888' }}>Connect your bank account to receive payouts</p>
           </div>
         </div>
@@ -122,7 +122,7 @@ function StripeOnboardingContent() {
         )}
 
         {/* Main Card */}
-        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-2xl p-8" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
           {isConnected ? (
             <>
               {/* Connected State */}
@@ -131,24 +131,24 @@ function StripeOnboardingContent() {
                   <CheckCircle className="w-7 h-7" style={{ color: '#16a34a' }} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold" style={{ color: '#2b2b2b' }}>Payouts: Connected ✅</h2>
+                  <h2 className="text-lg font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Payouts: Connected ✅</h2>
                   <p className="text-sm" style={{ color: '#888' }}>Your bank account is linked and ready for payouts</p>
                 </div>
               </div>
 
-              <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: '#f8f8f5', border: '1px solid #e8e8e0' }}>
+              <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid #e8e8e0' }}>
                 <p className="text-xs font-semibold mb-2" style={{ color: '#888' }}>HOW PAYOUTS WORK</p>
                 <ul className="space-y-2">
                   <li className="text-sm flex items-start gap-2" style={{ color: '#555' }}>
-                    <span style={{ color: '#7ecfc0' }}>1.</span>
+                    <span style={{ color: 'var(--mint, #7ecfc0)' }}>1.</span>
                     Advertiser completes their campaign and approves your POP
                   </li>
                   <li className="text-sm flex items-start gap-2" style={{ color: '#555' }}>
-                    <span style={{ color: '#7ecfc0' }}>2.</span>
+                    <span style={{ color: 'var(--mint, #7ecfc0)' }}>2.</span>
                     City Feed releases payment to your bank account (minus 7% platform fee)
                   </li>
                   <li className="text-sm flex items-start gap-2" style={{ color: '#555' }}>
-                    <span style={{ color: '#7ecfc0' }}>3.</span>
+                    <span style={{ color: 'var(--mint, #7ecfc0)' }}>3.</span>
                     Funds typically arrive in 2-3 business days
                   </li>
                 </ul>
@@ -158,7 +158,7 @@ function StripeOnboardingContent() {
                 onClick={handleConnect}
                 disabled={connecting}
                 className="w-full font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ border: '1px solid #e0e0d8', color: '#555', backgroundColor: '#f8f8f5' }}
+                style={{ border: '1px solid var(--border, #e0e0d8)', color: '#555', backgroundColor: 'var(--light-gray, #f8f8f5)' }}
               >
                 {connecting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Update Bank Account
@@ -169,10 +169,10 @@ function StripeOnboardingContent() {
               {/* Not Connected State */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#f0f8f5' }}>
-                  <CreditCard className="w-7 h-7" style={{ color: '#7ecfc0' }} />
+                  <CreditCard className="w-7 h-7" style={{ color: 'var(--mint, #7ecfc0)' }} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold" style={{ color: '#2b2b2b' }}>Payouts: Setup Required ⚠️</h2>
+                  <h2 className="text-lg font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Payouts: Setup Required ⚠️</h2>
                   <p className="text-sm" style={{ color: '#888' }}>Connect your bank to receive earnings from bookings</p>
                 </div>
               </div>
@@ -181,7 +181,7 @@ function StripeOnboardingContent() {
               <div className="space-y-3 mb-6">
                 {[
                   { icon: DollarSign, text: 'Receive payouts directly to your bank account', color: '#16a34a' },
-                  { icon: Shield, text: 'Powered by Stripe — bank-grade security', color: '#7ecfc0' },
+                  { icon: Shield, text: 'Powered by Stripe — bank-grade security', color: 'var(--mint, #7ecfc0)' },
                   { icon: Clock, text: 'Setup takes about 5 minutes', color: '#888' },
                 ].map(({ icon: Icon, text, color }) => (
                   <div key={text} className="flex items-center gap-3">
@@ -204,7 +204,7 @@ function StripeOnboardingContent() {
                 onClick={handleConnect}
                 disabled={connecting}
                 className="w-full font-semibold py-3.5 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+                style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
               >
                 {connecting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {connecting ? 'Redirecting to Stripe...' : 'Connect Your Bank Account'}
@@ -230,8 +230,8 @@ function StripeOnboardingContent() {
 export default function StripeOnboardingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: "#f0f0ec" }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: "var(--cream, #f0f0ec)" }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     }>
       <StripeOnboardingContent />

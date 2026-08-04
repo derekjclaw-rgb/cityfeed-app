@@ -190,7 +190,7 @@ function Toggle({
         style={{
           width: '48px',
           height: '28px',
-          backgroundColor: value ? '#7ecfc0' : '#d1d5db',
+          backgroundColor: value ? 'var(--mint, #7ecfc0)' : '#d1d5db',
           border: 'none',
           outline: 'none',
         }}
@@ -449,13 +449,13 @@ export default function CreateListingPage() {
   const inputClass =
     'w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors'
   const inputStyle = {
-    backgroundColor: '#f8f8f5',
-    border: '1px solid #e0e0d8',
-    color: '#2b2b2b',
+    backgroundColor: 'var(--light-gray, #f8f8f5)',
+    border: '1px solid var(--border, #e0e0d8)',
+    color: 'var(--charcoal, #2b2b2b)',
   }
   const cardStyle = {
     backgroundColor: '#fff',
-    border: '1px solid #e0e0d8',
+    border: '1px solid var(--border, #e0e0d8)',
     boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
   }
 
@@ -468,9 +468,9 @@ export default function CreateListingPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center pt-20"
-        style={{ backgroundColor: '#f0f0ec' }}
+        style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}
       >
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     )
   }
@@ -479,7 +479,7 @@ export default function CreateListingPage() {
     return (
       <div
         className="min-h-screen flex items-center justify-center pt-20 px-6"
-        style={{ backgroundColor: '#f0f0ec' }}
+        style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}
       >
         <div className="text-center max-w-md">
           <div
@@ -489,9 +489,9 @@ export default function CreateListingPage() {
               border: '1px solid rgba(222,187,115,0.3)',
             }}
           >
-            <CheckCircle className="w-8 h-8" style={{ color: '#7ecfc0' }} />
+            <CheckCircle className="w-8 h-8" style={{ color: 'var(--mint, #7ecfc0)' }} />
           </div>
-          <h2 className="text-2xl font-bold mb-3" style={{ color: '#2b2b2b' }}>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
             Listing is now live!
           </h2>
           <p className="text-sm mb-8" style={{ color: '#888' }}>
@@ -501,7 +501,7 @@ export default function CreateListingPage() {
             <Link
               href="/dashboard/listings"
               className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
+              style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
             >
               View my listings
             </Link>
@@ -514,7 +514,7 @@ export default function CreateListingPage() {
               className="font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 text-sm"
               style={{
                 backgroundColor: '#fff',
-                border: '1px solid #e0e0d8',
+                border: '1px solid var(--border, #e0e0d8)',
                 color: '#555',
               }}
             >
@@ -527,7 +527,7 @@ export default function CreateListingPage() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: '#f0f0ec' }}>
+    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
       <div className="max-w-2xl mx-auto px-6 py-8">
         <Link
           href="/dashboard/listings"
@@ -538,7 +538,7 @@ export default function CreateListingPage() {
           My Listings
         </Link>
 
-        <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
           List your space
         </h1>
         <p className="text-sm mb-8" style={{ color: '#888' }}>
@@ -562,7 +562,7 @@ export default function CreateListingPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Info */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
-            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Basic information
             </h2>
             <FormField label="Listing title" required>
@@ -605,7 +605,7 @@ export default function CreateListingPage() {
 
           {/* Location */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
-            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Location
             </h2>
             <FormField label="Street address" required>
@@ -660,13 +660,13 @@ export default function CreateListingPage() {
 
           {/* Photos */}
           <div className="rounded-2xl p-6" style={cardStyle}>
-            <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold mb-4" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Photos
             </h2>
             <div
               className="border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer"
               style={{
-                borderColor: isDragging ? '#7ecfc0' : '#e0e0d8',
+                borderColor: isDragging ? 'var(--mint, #7ecfc0)' : 'var(--border, #e0e0d8)',
                 backgroundColor: isDragging ? 'rgba(126,207,192,0.05)' : 'transparent',
               }}
               onDragOver={e => {
@@ -683,7 +683,7 @@ export default function CreateListingPage() {
             >
               <Upload
                 className="w-8 h-8 mx-auto mb-3"
-                style={{ color: isDragging ? '#7ecfc0' : '#ccc' }}
+                style={{ color: isDragging ? 'var(--mint, #7ecfc0)' : '#ccc' }}
               />
               <p className="text-sm mb-1" style={{ color: '#888' }}>
                 Drag photos here or click to upload
@@ -707,7 +707,7 @@ export default function CreateListingPage() {
                   <div
                     key={i}
                     className="relative rounded-xl overflow-hidden aspect-square"
-                    style={{ border: '1px solid #e0e0d8' }}
+                    style={{ border: '1px solid var(--border, #e0e0d8)' }}
                   >
                     <img src={photo.preview} alt="" className="w-full h-full object-cover" />
                     {photo.uploading && (
@@ -746,7 +746,7 @@ export default function CreateListingPage() {
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="aspect-square rounded-xl flex flex-col items-center justify-center border-2 border-dashed transition-colors"
-                    style={{ borderColor: '#e0e0d8', color: '#aaa' }}
+                    style={{ borderColor: 'var(--border, #e0e0d8)', color: '#aaa' }}
                   >
                     <ImageIcon className="w-5 h-5 mb-1" />
                     <span className="text-xs">Add more</span>
@@ -758,7 +758,7 @@ export default function CreateListingPage() {
 
           {/* Ad Specs */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
-            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Ad specs &amp; performance
             </h2>
             <FormField label="Dimensions" hint="e.g. 14ft × 48ft or 1920×1080px">
@@ -813,7 +813,7 @@ export default function CreateListingPage() {
 
           {/* Pricing */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
-            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Pricing &amp; availability
             </h2>
             <FormField label="Price per day (USD)" required>
@@ -870,7 +870,7 @@ export default function CreateListingPage() {
 
           {/* Content restrictions */}
           <div className="rounded-2xl p-6" style={cardStyle}>
-            <h2 className="font-semibold mb-4" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold mb-4" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Content restrictions
             </h2>
             <FormField
@@ -891,7 +891,7 @@ export default function CreateListingPage() {
           {/* Printed Materials — static categories only */}
           {isStaticCat(form.category) && (
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
-            <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+            <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Printed materials
             </h2>
             <Toggle
@@ -915,7 +915,7 @@ export default function CreateListingPage() {
                         name="print_handling"
                         checked={form.offers_printing === true}
                         onChange={() => { set('offers_printing', true); set('delivery_address', '') }}
-                        className="w-4 h-4 accent-[#7ecfc0]"
+                        className="w-4 h-4 accent-[var(--mint, #7ecfc0)]"
                       />
                       <span className="text-sm" style={{ color: '#555' }}>Host prints &amp; installs</span>
                     </label>
@@ -925,7 +925,7 @@ export default function CreateListingPage() {
                         name="print_handling"
                         checked={form.offers_printing === false}
                         onChange={() => { set('offers_printing', false); set('print_fee', '') }}
-                        className="w-4 h-4 accent-[#7ecfc0]"
+                        className="w-4 h-4 accent-[var(--mint, #7ecfc0)]"
                       />
                       <span className="text-sm" style={{ color: '#555' }}>Advertiser ships materials</span>
                     </label>
@@ -976,7 +976,7 @@ export default function CreateListingPage() {
           {/* Creative Specifications */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
             <div>
-              <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+              <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
                 Creative specifications
               </h2>
               <p className="text-xs mt-1" style={{ color: '#aaa' }}>
@@ -1002,9 +1002,9 @@ export default function CreateListingPage() {
                       onClick={() => toggleFormat(fmt)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                       style={{
-                        backgroundColor: checked ? '#7ecfc0' : '#f8f8f5',
+                        backgroundColor: checked ? 'var(--mint, #7ecfc0)' : 'var(--light-gray, #f8f8f5)',
                         color: checked ? '#fff' : '#555',
-                        border: checked ? '1px solid #7ecfc0' : '1px solid #e0e0d8',
+                        border: checked ? '1px solid var(--mint, #7ecfc0)' : '1px solid var(--border, #e0e0d8)',
                         flexShrink: 0,
                       }}
                     >
@@ -1048,7 +1048,7 @@ export default function CreateListingPage() {
 
             {/* Video toggle — hidden for static categories */}
             {!isStaticCat(form.category) && (
-            <div className="pt-3" style={{ borderTop: '1px solid #f0f0ec' }}>
+            <div className="pt-3" style={{ borderTop: '1px solid var(--cream, #f0f0ec)' }}>
               <Toggle
                 value={form.accepts_video}
                 onChange={v => set('accepts_video', v)}
@@ -1120,7 +1120,7 @@ export default function CreateListingPage() {
           {/* Restricted Dates Calendar */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
             <div>
-              <h2 className="font-semibold" style={{ color: '#2b2b2b' }}>
+              <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
                 Restricted Dates
               </h2>
               <p className="text-xs mt-1" style={{ color: '#aaa' }}>
@@ -1150,7 +1150,7 @@ export default function CreateListingPage() {
                     >
                       ‹
                     </button>
-                    <span className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>{monthLabel}</span>
+                    <span className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{monthLabel}</span>
                     <button
                       type="button"
                       onClick={() => setCalendarMonth(prev => {
@@ -1191,10 +1191,10 @@ export default function CreateListingPage() {
                           }}
                           className="w-full aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-colors"
                           style={{
-                            backgroundColor: isBlocked ? '#ef4444' : isPast ? '#f5f5f5' : '#f8f8f5',
-                            color: isBlocked ? '#fff' : isPast ? '#ccc' : '#2b2b2b',
+                            backgroundColor: isBlocked ? '#ef4444' : isPast ? '#f5f5f5' : 'var(--light-gray, #f8f8f5)',
+                            color: isBlocked ? '#fff' : isPast ? '#ccc' : 'var(--charcoal, #2b2b2b)',
                             cursor: isPast ? 'default' : 'pointer',
-                            border: isBlocked ? '1px solid #dc2626' : '1px solid #e0e0d8',
+                            border: isBlocked ? '1px solid #dc2626' : '1px solid var(--border, #e0e0d8)',
                           }}
                         >
                           {day}
@@ -1255,8 +1255,8 @@ export default function CreateListingPage() {
             disabled={loading}
             className="w-full font-semibold py-4 rounded-xl hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base"
             style={{
-              backgroundColor: '#debb73',
-              color: '#2b2b2b',
+              backgroundColor: 'var(--gold, #debb73)',
+              color: 'var(--charcoal, #2b2b2b)',
               boxShadow: '0 4px 16px rgba(222,187,115,0.35)',
             }}
           >

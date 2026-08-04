@@ -82,8 +82,8 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
-        <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
+      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+        <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--mint, #7ecfc0)' }} />
       </div>
     )
   }
@@ -92,22 +92,22 @@ export default function NotificationsPage() {
   const read = notifications.filter(n => n.read)
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: '#f0f0ec' }}>
+    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Link href="/dashboard" className="hover:opacity-70" style={{ color: '#888' }}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>Notifications</h1>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Notifications</h1>
             <p className="text-sm" style={{ color: '#888' }}>{notifications.length} total</p>
           </div>
         </div>
 
         {notifications.length === 0 ? (
-          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-            <Bell className="w-12 h-12 mx-auto mb-4" style={{ color: '#e0e0d8' }} />
-            <h2 className="text-lg font-semibold mb-2" style={{ color: '#2b2b2b' }}>All caught up!</h2>
+          <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
+            <Bell className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--border, #e0e0d8)' }} />
+            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>All caught up!</h2>
             <p className="text-sm" style={{ color: '#888' }}>No notifications yet. They'll appear here when something happens.</p>
           </div>
         ) : (
@@ -119,34 +119,34 @@ export default function NotificationsPage() {
                 className="rounded-2xl p-4 transition-all"
                 style={{
                   backgroundColor: '#fff',
-                  border: notif.read ? '1px solid #e0e0d8' : '1px solid rgba(126,207,192,0.4)',
+                  border: notif.read ? '1px solid var(--border, #e0e0d8)' : '1px solid rgba(126,207,192,0.4)',
                   boxShadow: notif.read ? '0 1px 4px rgba(0,0,0,0.05)' : '0 1px 8px rgba(126,207,192,0.15)',
                   opacity: notif.read ? 0.8 : 1,
                   cursor: notif.href ? 'pointer' : 'default',
                 }}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg" style={{ backgroundColor: '#f8f8f5' }}>
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}>
                     {TYPE_ICONS[notif.type] ?? '🔔'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold" style={{ color: '#2b2b2b' }}>{notif.title}</p>
+                      <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{notif.title}</p>
                       <span className="text-xs flex-shrink-0" style={{ color: '#bbb' }}>{timeAgo(notif.created_at)}</span>
                     </div>
                     {notif.body && (
                       <p className="text-xs mt-0.5" style={{ color: '#888' }}>{notif.body}</p>
                     )}
                     {notif.href && (
-                      <p className="text-xs mt-1.5 font-medium" style={{ color: '#7ecfc0' }}>
+                      <p className="text-xs mt-1.5 font-medium" style={{ color: 'var(--mint, #7ecfc0)' }}>
                         View →
                       </p>
                     )}
                   </div>
                   {notif.read ? (
-                    <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#e0e0d8' }} />
+                    <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--border, #e0e0d8)' }} />
                   ) : (
-                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: '#7ecfc0' }} />
+                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ backgroundColor: 'var(--mint, #7ecfc0)' }} />
                   )}
                 </div>
               </div>
