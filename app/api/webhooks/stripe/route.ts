@@ -320,7 +320,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
       type: 'new_booking',
       title: hostNotifTitle,
       body: `From ${advertiserProfile?.full_name ?? 'An advertiser'} — ${dates}`,
-      href: `/dashboard/bookings`,
+      href: `/dashboard/bookings/${bookingId}`,
     },
   ])
 }
