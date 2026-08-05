@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import {
   ArrowLeft, DollarSign, Loader2, Image as ImageIcon, Calendar,
+  ChevronDown, ExternalLink,
 } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -22,18 +23,20 @@ interface TransactionRow {
   host_payout: number
   status: string
   end_date_raw: string
+  num_days: number
+  daily_rate: number
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDate(d: string): string {
-  if (!d) return '—'
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
 function formatShortDate(d: string): string {
   if (!d) return '—'
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatFullDate(d: string): string {
+  if (!d) return '—'
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function formatName(fullName: string | null | undefined): string {
@@ -43,22 +46,130 @@ function formatName(fullName: string | null | undefined): string {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`
 }
 
-function getPayoutStatus(bookingStatus: string, endDate: string): { label: string; isPaid: boolean } {
+function daysBetween(start: string, end: string): number {
+  const s = new Date(start + 'T00:00:00')
+  const e = new Date(end + 'T00:00:00')
+  return Math.max(1, Math.round((e.getTime() - s.getTime()) / 86400000) + 1)
+}
+
+function getPayoutStatus(bookingStatus: string, endDate: string): { label: string; isPaid: boolean; isCancelled: boolean } {
   const now = new Date()
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
 
-  if (bookingStatus === 'cancelled') return { label: 'Cancelled', isPaid: false }
-  if (bookingStatus === 'completed' && end && now > end) return { label: 'Paid', isPaid: true }
-  return { label: 'Pending', isPaid: false }
+  if (bookingStatus === 'cancelled') return { label: 'Cancelled', isPaid: false, isCancelled: true }
+  if (bookingStatus === 'completed' && end && now > end) return { label: 'Paid', isPaid: true, isCancelled: false }
+  return { label: 'Pending', isPaid: false, isCancelled: false }
 }
 
 function getPayoutDate(bookingStatus: string, endDate: string): string | null {
   const { isPaid } = getPayoutStatus(bookingStatus, endDate)
   if (!isPaid || !endDate) return null
-  // Payout typically processes a few days after campaign end
   const payoutDate = new Date(endDate + 'T00:00:00')
   payoutDate.setDate(payoutDate.getDate() + 3)
   return payoutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// ─── Status Pill ──────────────────────────────────────────────────────────────
+
+function StatusPill({ label }: { label: string }) {
+  const styles = label === 'Paid'
+    ? { bg: 'var(--green-light, #e8f5ec)', color: 'var(--green, #16a34a)', dot: 'var(--green, #16a34a)' }
+    : label === 'Cancelled'
+    ? { bg: '#fce8ea', color: 'var(--red, #E63946)', dot: 'var(--red, #E63946)' }
+    : { bg: 'var(--gold-light, #f5edda)', color: 'var(--gold-dark, #c9a54e)', dot: 'var(--gold-dark, #c9a54e)' }
+
+  return (
+    <span
+      className="inline-flex items-center gap-[4px] px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap"
+      style={{ backgroundColor: styles.bg, color: styles.color }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: styles.dot }} />
+      {label}
+    </span>
+  )
+}
+
+// ─── Receipt Panel ────────────────────────────────────────────────────────────
+
+function ReceiptPanel({ t, payoutStatus, payoutDate }: {
+  t: TransactionRow
+  payoutStatus: { label: string; isPaid: boolean; isCancelled: boolean }
+  payoutDate: string | null
+}) {
+  return (
+    <div
+      className="px-6 pb-5 pt-1"
+      style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}
+    >
+      <div
+        className="rounded-xl p-5 max-w-md"
+        style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}
+      >
+        {/* Receipt header */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+            Payout Receipt
+          </span>
+          <StatusPill label={payoutStatus.label} />
+        </div>
+
+        {/* Line items */}
+        <div className="space-y-2.5 mb-4">
+          <div className="flex justify-between text-[13px]">
+            <span style={{ color: 'var(--text-secondary, #888)' }}>
+              Campaign ({t.num_days} {t.num_days === 1 ? 'day' : 'days'} × ${t.daily_rate.toFixed(2)}/day)
+            </span>
+            <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+              ${t.total_price.toFixed(2)}
+            </span>
+          </div>
+          <div className="flex justify-between text-[13px]">
+            <span style={{ color: 'var(--text-secondary, #888)' }}>Platform fee (7%)</span>
+            <span style={{ color: 'var(--red, #E63946)' }}>−${t.platform_fee.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="h-px mb-3" style={{ backgroundColor: 'var(--border, #e0e0d8)' }} />
+
+        {/* Total payout */}
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-[13px] font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+            {payoutStatus.isCancelled ? 'Refunded' : 'Your Payout'}
+          </span>
+          <span className="text-lg font-bold" style={{ color: payoutStatus.isCancelled ? 'var(--red, #E63946)' : 'var(--mint-dark, #5bb8a8)' }}>
+            ${t.host_payout.toFixed(2)}
+          </span>
+        </div>
+
+        {/* Dates */}
+        <div className="space-y-1.5 mb-4">
+          <div className="flex justify-between text-[12px]">
+            <span style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Campaign</span>
+            <span style={{ color: 'var(--text-secondary, #888)' }}>
+              {formatFullDate(t.start_date)} → {formatFullDate(t.end_date)}
+            </span>
+          </div>
+          {payoutDate && (
+            <div className="flex justify-between text-[12px]">
+              <span style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Paid on</span>
+              <span style={{ color: 'var(--text-secondary, #888)' }}>{payoutDate}</span>
+            </div>
+          )}
+        </div>
+
+        {/* View booking link */}
+        <Link
+          href={`/dashboard/bookings/${t.id}`}
+          className="inline-flex items-center gap-1.5 text-[12px] font-semibold hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--mint-dark, #5bb8a8)' }}
+        >
+          View Booking
+          <ExternalLink className="w-3 h-3" />
+        </Link>
+      </div>
+    </div>
+  )
 }
 
 // ─── Transactions Page ────────────────────────────────────────────────────────
@@ -67,6 +178,11 @@ export default function TransactionsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<TransactionRow[]>([])
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id)
+  }
 
   const fetchTransactions = useCallback(async () => {
     const supabase = createClient()
@@ -87,8 +203,9 @@ export default function TransactionsPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: TransactionRow[] = bookings.map((b: any) => {
         const total = b.total_price || 0
-        const fee = Math.round(total * 0.07)
-        const payout = total - fee
+        const fee = Math.round(total * 7) / 100
+        const payout = Math.round((total - fee) * 100) / 100
+        const days = daysBetween(b.start_date, b.end_date)
         return {
           id: b.id,
           listing_title: b.listings?.title ?? 'Untitled Listing',
@@ -101,6 +218,8 @@ export default function TransactionsPage() {
           host_payout: payout,
           status: b.status,
           end_date_raw: b.end_date,
+          num_days: days,
+          daily_rate: Math.round((total / days) * 100) / 100,
         }
       })
       setTransactions(rows)
@@ -169,36 +288,31 @@ export default function TransactionsPage() {
         >
           {/* Header row — desktop */}
           <div
-            className="hidden lg:grid grid-cols-[1fr_120px_140px_100px_90px_100px_80px_90px] items-center px-6 py-[10px] gap-3"
+            className="hidden lg:grid grid-cols-[1fr_120px_140px_100px_80px_90px_28px] items-center px-6 py-[10px] gap-3"
             style={{ backgroundColor: 'var(--light-gray, #f8f8f5)' }}
           >
             <span className="text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Listing</span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Advertiser</span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.8px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Campaign</span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.8px] text-right" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Booking</span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.8px] text-right" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Fee (7%)</span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.8px] text-right" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Payout</span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.8px] text-center" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Status</span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.8px] text-right" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>Paid On</span>
+            <span />
           </div>
 
           {/* Rows */}
           {transactions.map((t, i) => {
             const payoutStatus = getPayoutStatus(t.status, t.end_date_raw)
             const payoutDate = getPayoutDate(t.status, t.end_date_raw)
-
-            const statusPill = payoutStatus.label === 'Paid'
-              ? { bg: 'var(--green-light, #e8f5ec)', color: 'var(--green, #16a34a)', dot: 'var(--green, #16a34a)' }
-              : payoutStatus.label === 'Cancelled'
-              ? { bg: '#fce8ea', color: 'var(--red, #E63946)', dot: 'var(--red, #E63946)' }
-              : { bg: 'var(--gold-light, #f5edda)', color: 'var(--gold-dark, #c9a54e)', dot: 'var(--gold-dark, #c9a54e)' }
+            const isExpanded = expandedId === t.id
 
             return (
               <div key={t.id}>
                 {/* ── Desktop row ───────────────────────────────────────── */}
                 <div
-                  className={`hidden lg:grid grid-cols-[1fr_120px_140px_100px_90px_100px_80px_90px] items-center px-6 py-4 gap-3 transition-colors hover:bg-[var(--light-gray)]${i < transactions.length - 1 ? ' border-b' : ''}`}
+                  className={`hidden lg:grid grid-cols-[1fr_120px_140px_100px_80px_90px_28px] items-center px-6 py-4 gap-3 transition-colors cursor-pointer select-none hover:bg-[var(--light-gray)]${i < transactions.length - 1 && !isExpanded ? ' border-b' : ''}`}
                   style={{ borderColor: 'var(--light-gray, #f8f8f5)' }}
+                  onClick={() => toggleExpand(t.id)}
                 >
                   {/* Listing */}
                   <div className="flex items-center gap-3 min-w-0">
@@ -223,77 +337,90 @@ export default function TransactionsPage() {
                     {formatShortDate(t.start_date)} → {formatShortDate(t.end_date)}
                   </span>
 
-                  {/* Booking total */}
-                  <span className="text-sm font-medium text-right">
-                    ${t.total_price.toLocaleString()}
-                  </span>
-
-                  {/* Platform fee */}
-                  <span className="text-[13px] font-normal text-right" style={{ color: 'var(--text-secondary, #888)' }}>
-                    −${t.platform_fee.toLocaleString()}
-                  </span>
-
-                  {/* Host payout */}
+                  {/* Payout */}
                   <span className="text-sm font-bold text-right" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-                    ${t.host_payout.toLocaleString()}
+                    ${t.host_payout.toFixed(2)}
                   </span>
 
                   {/* Status */}
-                  <span
-                    className="inline-flex items-center gap-[4px] px-2.5 py-1 rounded-full text-[11px] font-semibold justify-center whitespace-nowrap"
-                    style={{ backgroundColor: statusPill.bg, color: statusPill.color }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusPill.dot }} />
-                    {payoutStatus.label}
-                  </span>
+                  <div className="flex justify-center">
+                    <StatusPill label={payoutStatus.label} />
+                  </div>
 
                   {/* Payout date */}
                   <span className="text-[12px] font-normal text-right" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
                     {payoutDate ?? '—'}
                   </span>
+
+                  {/* Chevron */}
+                  <ChevronDown
+                    className="w-4 h-4 transition-transform duration-200"
+                    style={{
+                      color: 'var(--text-tertiary, #9a9a90)',
+                      transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}
+                  />
                 </div>
+
+                {/* ── Desktop expanded receipt ─────────────────────────── */}
+                {isExpanded && (
+                  <div className={`hidden lg:block${i < transactions.length - 1 ? ' border-b' : ''}`} style={{ borderColor: 'var(--light-gray, #f8f8f5)' }}>
+                    <ReceiptPanel t={t} payoutStatus={payoutStatus} payoutDate={payoutDate} />
+                  </div>
+                )}
 
                 {/* ── Mobile card ───────────────────────────────────────── */}
                 <div
-                  className={`lg:hidden px-5 py-4${i < transactions.length - 1 ? ' border-b' : ''}`}
+                  className={`lg:hidden${i < transactions.length - 1 && !isExpanded ? ' border-b' : ''}`}
                   style={{ borderColor: 'var(--light-gray, #f8f8f5)' }}
                 >
-                  <div className="flex items-start gap-3 mb-3">
-                    {t.listing_image ? (
-                      <div className="w-11 h-11 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${t.listing_image})` }} />
-                    ) : (
-                      <div className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
-                        <ImageIcon className="w-4 h-4" style={{ color: '#ccc' }} />
+                  <div
+                    className="px-5 py-4 cursor-pointer select-none active:bg-[var(--light-gray)]"
+                    onClick={() => toggleExpand(t.id)}
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      {t.listing_image ? (
+                        <div className="w-11 h-11 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${t.listing_image})` }} />
+                      ) : (
+                        <div className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
+                          <ImageIcon className="w-4 h-4" style={{ color: '#ccc' }} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate mb-0.5">{t.listing_title}</div>
+                        <div className="text-[12px]" style={{ color: 'var(--text-secondary, #888)' }}>
+                          {t.advertiser_name} · {formatShortDate(t.start_date)} → {formatShortDate(t.end_date)}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <StatusPill label={payoutStatus.label} />
+                        <ChevronDown
+                          className="w-4 h-4 transition-transform duration-200"
+                          style={{
+                            color: 'var(--text-tertiary, #9a9a90)',
+                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-[13px] px-1">
+                      <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Payout</span>
+                      <span className="font-bold" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
+                        ${t.host_payout.toFixed(2)}
+                      </span>
+                    </div>
+                    {payoutDate && (
+                      <div className="text-[11px] mt-1.5 px-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                        Paid on {payoutDate}
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-semibold truncate mb-0.5">{t.listing_title}</div>
-                      <div className="text-[12px]" style={{ color: 'var(--text-secondary, #888)' }}>
-                        {t.advertiser_name} · {formatShortDate(t.start_date)} → {formatShortDate(t.end_date)}
-                      </div>
-                    </div>
-                    <span
-                      className="inline-flex items-center gap-[4px] px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap flex-shrink-0"
-                      style={{ backgroundColor: statusPill.bg, color: statusPill.color }}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusPill.dot }} />
-                      {payoutStatus.label}
-                    </span>
                   </div>
-                  <div className="flex items-center justify-between text-[13px] px-1">
-                    <div style={{ color: 'var(--text-secondary, #888)' }}>
-                      <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>${t.total_price.toLocaleString()}</span>
-                      <span> − </span>
-                      <span>${t.platform_fee.toLocaleString()} fee</span>
-                    </div>
-                    <span className="font-bold" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-                      ${t.host_payout.toLocaleString()}
-                    </span>
-                  </div>
-                  {payoutDate && (
-                    <div className="text-[11px] mt-1.5 px-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
-                      Paid on {payoutDate}
+
+                  {/* Mobile expanded receipt */}
+                  {isExpanded && (
+                    <div className={`${i < transactions.length - 1 ? 'border-b' : ''}`} style={{ borderColor: 'var(--light-gray, #f8f8f5)' }}>
+                      <ReceiptPanel t={t} payoutStatus={payoutStatus} payoutDate={payoutDate} />
                     </div>
                   )}
                 </div>
@@ -313,7 +440,7 @@ export default function TransactionsPage() {
               </span>
             </div>
             <span className="text-xl font-extrabold tracking-[-0.5px]" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-              ${totalEarnings.toLocaleString()}
+              ${totalEarnings.toFixed(2)}
             </span>
           </div>
         </div>
@@ -326,7 +453,7 @@ export default function TransactionsPage() {
       >
         <Calendar className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--text-tertiary, #9a9a90)' }} />
         <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary, #888)' }}>
-          Payouts are processed within 3 business days after a campaign ends. A 7% platform fee is deducted from each booking total.
+          Payouts are processed within 3 business days after proof of posting. A 7% platform fee is deducted from each booking total.
         </p>
       </div>
     </>
