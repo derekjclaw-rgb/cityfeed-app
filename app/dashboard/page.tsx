@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   Calendar, FilePlus, MessageSquare, Activity, Bookmark, CheckCircle2,
   ChevronRight, DollarSign, FileText, RotateCcw, Loader2,
-  CheckCircle, X, Image as ImageIcon,
+  CheckCircle, X, Image as ImageIcon, Search,
 } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -495,6 +495,14 @@ function DashboardContent() {
         <p className="text-[15px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>
           {formatFullDate()} — Las Vegas, NV
         </p>
+        <Link
+          href="/marketplace"
+          className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full text-[13px] font-semibold transition-all hover:shadow-md hover:-translate-y-px"
+          style={{ backgroundColor: 'var(--charcoal, #2b2b2b)', color: 'var(--cream, #f0f0ec)' }}
+        >
+          <Search className="w-4 h-4" />
+          Browse Marketplace
+        </Link>
       </div>
 
       {dataLoading && (

@@ -13,6 +13,7 @@ import {
 
 interface TransactionRow {
   id: string
+  ref_code: string
   listing_title: string
   listing_image?: string
   advertiser_name: string
@@ -52,17 +53,24 @@ function daysBetween(start: string, end: string): number {
   return Math.max(1, Math.round((e.getTime() - s.getTime()) / 86400000) + 1)
 }
 
-function getPayoutStatus(bookingStatus: string, endDate: string): { label: string; isPaid: boolean; isCancelled: boolean } {
+function getPayoutStatus(bookingStatus: string, startDate: string, endDate: string): { label: string; isPaid: boolean; isCancelled: boolean } {
   const now = new Date()
+  const start = startDate ? new Date(startDate + 'T00:00:00') : null
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
 
   if (bookingStatus === 'cancelled') return { label: 'Cancelled', isPaid: false, isCancelled: true }
   if (bookingStatus === 'completed' && end && now > end) return { label: 'Paid', isPaid: true, isCancelled: false }
+  // Campaign ended but POP not yet uploaded
+  if (end && now > end) return { label: 'Awaiting POP', isPaid: false, isCancelled: false }
+  // Campaign currently running
+  if (start && end && now >= start && now <= end) return { label: 'Active', isPaid: false, isCancelled: false }
+  // Campaign hasn't started yet
+  if (start && now < start) return { label: 'Scheduled', isPaid: false, isCancelled: false }
   return { label: 'Pending', isPaid: false, isCancelled: false }
 }
 
-function getPayoutDate(bookingStatus: string, endDate: string): string | null {
-  const { isPaid } = getPayoutStatus(bookingStatus, endDate)
+function getPayoutDate(bookingStatus: string, startDate: string, endDate: string): string | null {
+  const { isPaid } = getPayoutStatus(bookingStatus, startDate, endDate)
   if (!isPaid || !endDate) return null
   const payoutDate = new Date(endDate + 'T00:00:00')
   payoutDate.setDate(payoutDate.getDate() + 3)
@@ -74,8 +82,14 @@ function getPayoutDate(bookingStatus: string, endDate: string): string | null {
 function StatusPill({ label }: { label: string }) {
   const styles = label === 'Paid'
     ? { bg: 'var(--green-light, #e8f5ec)', color: 'var(--green, #16a34a)', dot: 'var(--green, #16a34a)' }
+    : label === 'Active'
+    ? { bg: 'var(--green-light, #e8f5ec)', color: 'var(--green, #16a34a)', dot: 'var(--green, #16a34a)' }
     : label === 'Cancelled'
     ? { bg: '#fce8ea', color: 'var(--red, #E63946)', dot: 'var(--red, #E63946)' }
+    : label === 'Awaiting POP'
+    ? { bg: '#fef3e2', color: '#d97706', dot: '#d97706' }
+    : label === 'Scheduled'
+    ? { bg: 'var(--mint-light, #e8f6f3)', color: 'var(--mint-dark, #5bb8a8)', dot: 'var(--mint-dark, #5bb8a8)' }
     : { bg: 'var(--gold-light, #f5edda)', color: 'var(--gold-dark, #c9a54e)', dot: 'var(--gold-dark, #c9a54e)' }
 
   return (
@@ -106,11 +120,14 @@ function ReceiptPanel({ t, payoutStatus, payoutDate }: {
         style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}
       >
         {/* Receipt header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-1">
           <span className="text-[13px] font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
             Payout Receipt
           </span>
           <StatusPill label={payoutStatus.label} />
+        </div>
+        <div className="text-[11px] font-mono tracking-[0.3px] mb-4" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+          {t.ref_code}
         </div>
 
         {/* Line items */}
@@ -208,6 +225,7 @@ export default function TransactionsPage() {
         const days = daysBetween(b.start_date, b.end_date)
         return {
           id: b.id,
+          ref_code: 'CF-' + b.id.replace(/-/g, '').substring(0, 6).toUpperCase(),
           listing_title: b.listings?.title ?? 'Untitled Listing',
           listing_image: b.listings?.images?.[0] ?? undefined,
           advertiser_name: formatName(b.profiles?.full_name),
@@ -234,7 +252,7 @@ export default function TransactionsPage() {
 
   const totalEarnings = transactions
     .filter(t => {
-      const { isPaid } = getPayoutStatus(t.status, t.end_date_raw)
+      const { isPaid } = getPayoutStatus(t.status, t.start_date, t.end_date_raw)
       return isPaid || ['confirmed', 'completed', 'active'].includes(t.status)
     })
     .reduce((sum, t) => sum + t.host_payout, 0)
@@ -302,8 +320,8 @@ export default function TransactionsPage() {
 
           {/* Rows */}
           {transactions.map((t, i) => {
-            const payoutStatus = getPayoutStatus(t.status, t.end_date_raw)
-            const payoutDate = getPayoutDate(t.status, t.end_date_raw)
+            const payoutStatus = getPayoutStatus(t.status, t.start_date, t.end_date_raw)
+            const payoutDate = getPayoutDate(t.status, t.start_date, t.end_date_raw)
             const isExpanded = expandedId === t.id
 
             return (
@@ -324,7 +342,10 @@ export default function TransactionsPage() {
                         <ImageIcon className="w-4 h-4" style={{ color: '#ccc' }} />
                       </div>
                     )}
-                    <span className="text-sm font-semibold truncate">{t.listing_title}</span>
+                    <div className="min-w-0">
+                      <span className="text-sm font-semibold truncate block">{t.listing_title}</span>
+                      <span className="text-[11px] font-mono tracking-[0.3px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>{t.ref_code}</span>
+                    </div>
                   </div>
 
                   {/* Advertiser */}
