@@ -327,7 +327,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
   }
 
   const hasFiles = files.length > 0
-  const canUpload = !isHost && ['confirmed'].includes(bookingStatus)
+  const canUpload = !isHost && ['confirmed', 'active'].includes(bookingStatus)
   // For requires_print listings: only show upload when delivery_mode is host_prints (or not yet set for non-print listings)
   const isSelfDeliver = listing?.requires_print && booking?.delivery_mode === 'self_deliver'
   const needsChoice = listing?.requires_print && !booking?.delivery_mode
@@ -347,10 +347,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             <CheckCircle className="w-3 h-3" />
             Creative Files Uploaded ✅
           </span>
+        ) : bookingStatus === 'completed' ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', color: '#888' }}>
+            No Creative Files
+          </span>
         ) : (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
             <Clock className="w-3 h-3" />
-            Awaiting Creative Files
+            {isHost ? 'Awaiting Creative Files' : 'Upload Required'}
           </span>
         )}
       </div>
@@ -373,7 +377,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               <Truck className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
               <div>
                 <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>I&apos;ll provide my own printed materials</span>
-                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Ship or deliver prints to the host&apos;s address</p>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Ship or deliver prints to the delivery address</p>
               </div>
             </button>
             {listing.offers_printing && (
@@ -389,8 +393,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               >
                 <Upload className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
                 <div>
-                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Have the host print for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
-                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>Upload your digital files and the host will print them</p>
+                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Have them printed for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
+                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>Upload your digital files and your host will print them</p>
                 </div>
               </button>
             )}
@@ -402,19 +406,26 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       {!isHost && !showSuccessState && (!listing?.requires_print || booking?.delivery_mode === 'host_prints') && (
         <p className="text-sm mb-5 leading-relaxed" style={{ color: '#555' }}>
           Please deliver your creative files within the production window listed on this placement.
-          The host will begin setup once received.
+          Your host will begin setup once received.
         </p>
       )}
 
       {/* Host note — no files yet */}
-      {isHost && !hasFiles && (
+      {isHost && !hasFiles && bookingStatus !== 'completed' && (
         <p className="text-sm mb-5" style={{ color: '#888' }}>
-          The advertiser hasn&apos;t uploaded creative files yet. You&apos;ll be notified when files arrive.
+          Creative files haven&apos;t been uploaded yet. You&apos;ll be notified when they arrive.
+        </p>
+      )}
+
+      {/* Advertiser note — no files, can't upload (booking already completed) */}
+      {!isHost && !hasFiles && bookingStatus === 'completed' && (
+        <p className="text-sm mb-5" style={{ color: '#888' }}>
+          No creative files were uploaded for this booking.
         </p>
       )}
 
       {/* ── SELF-DELIVER VIEW — show host address + shipping actions ── */}
-      {canUpload && isSelfDeliver && listing?.delivery_address && (
+      {isSelfDeliver && listing?.delivery_address && ['confirmed', 'active', 'completed'].includes(bookingStatus) && (
         <ShippingSection
           bookingId={bookingId}
           isHost={isHost}
@@ -512,7 +523,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             </div>
             <div>
               <p className="text-sm font-semibold" style={{ color: '#16a34a' }}>Creative Submitted ✅</p>
-              <p className="text-xs mt-0.5" style={{ color: '#555' }}>The host will review your files, begin setup, and send you proof of posting</p>
+              <p className="text-xs mt-0.5" style={{ color: '#555' }}>Your host will review your files, begin setup, and send you proof of posting</p>
             </div>
           </div>
         </div>
@@ -711,7 +722,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         booking_id: bookingId,
         sender_id: hostId ?? advertiserId,
         recipient_id: advertiserId,
-        content: `✅ Your printed materials have been received! The host will proceed with installation and submit proof of posting once your ad is live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
+        content: `✅ Your printed materials have been received! Your host will proceed with installation and submit proof of posting once your ad is live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
     }
     setSaving(false)
@@ -742,7 +753,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
               <div className="flex items-center gap-2 mt-2 ml-6">
                 <CheckCircle className="w-3.5 h-3.5" style={{ color: '#16a34a' }} />
                 <p className="text-xs" style={{ color: '#16a34a' }}>
-                  Host confirmed receipt on {new Date(booking.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  Your host confirmed receipt on {new Date(booking.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </p>
               </div>
             ) : (
@@ -786,7 +797,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Material Delivery</p>
       </div>
       {!booking.shipped_at ? (
-        <p className="text-sm" style={{ color: '#888' }}>The advertiser is preparing their printed materials for delivery.</p>
+        <p className="text-sm" style={{ color: '#888' }}>Printed materials are being prepared for delivery.</p>
       ) : !booking.received_at ? (
         <>
           <div className="flex items-center gap-2 mb-3">
@@ -830,9 +841,10 @@ interface POPSectionProps {
   advertiserId?: string
   hostId?: string
   listingTitle?: string
+  hasCreativeFiles?: boolean
 }
 
-function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle }: POPSectionProps) {
+function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle, hasCreativeFiles }: POPSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -1025,8 +1037,23 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   const showStatuses = ['confirmed', 'completed']
   if (!showStatuses.includes(bookingStatus)) return null
 
-  // Advertiser view: show POP photos if they exist
+  // Advertiser view: show POP photos if they exist, or "awaiting proof" message
   if (!isHost) {
+    if (files.length === 0 && ['confirmed', 'active'].includes(bookingStatus)) {
+      return (
+        <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'rgba(126,207,192,0.08)' }}>
+              <Camera className="w-5 h-5" style={{ color: 'var(--mint, #7ecfc0)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Proof of Posting</p>
+              <p className="text-xs mt-0.5" style={{ color: '#888' }}>Your host will submit proof of posting once your ad is live.</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
     if (files.length === 0) return null
     return (
       <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
@@ -1110,9 +1137,11 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           <Camera className="w-5 h-5" style={{ color: 'var(--mint, #7ecfc0)' }} />
         </div>
         <div>
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Creative received — mark your ad as live</h2>
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{hasCreativeFiles ? 'Creative received — mark your ad as live' : 'Submit proof of posting'}</h2>
           <p className="text-sm mt-1 leading-relaxed" style={{ color: '#555' }}>
-            Submit proof of posting to complete this campaign and unlock your payout.
+            {hasCreativeFiles
+              ? 'Submit proof of posting to complete this campaign and unlock your payout.'
+              : 'Upload photos showing the ad placement is live to complete the campaign and unlock your payout.'}
           </p>
         </div>
       </div>
@@ -1275,7 +1304,7 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
     } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
       message = 'Upload proof of posting to confirm placement'
     } else if (status === 'confirmed') {
-      message = 'Awaiting creative files from the advertiser'
+      message = 'Awaiting creative files'
     }
   } else {
     if (status === 'completed' && campaignLive) {
@@ -1285,7 +1314,7 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
     } else if (status === 'pop_pending') {
       message = 'Proof of posting submitted \u2014 under review'
     } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
-      message = 'Your campaign is live \u2014 proof of posting coming soon'
+      message = 'Creative submitted \u2014 awaiting proof of posting from your host'
     } else if (status === 'confirmed') {
       message = 'Upload your creative file to get started'
     }
@@ -1421,7 +1450,10 @@ export default function BookingDetailPage() {
     )
   }
 
-  const isHost = currentUserId === booking.host_id
+  // Respect the dashboard mode toggle when user is both host and advertiser on this booking
+  const isBothParties = currentUserId === booking.host_id && currentUserId === booking.advertiser_id
+  const dashMode = typeof window !== 'undefined' ? localStorage.getItem('cf_dash_mode') : null
+  const isHost = isBothParties ? dashMode === 'host' : currentUserId === booking.host_id
   const statusCfg = STATUS_CONFIG[booking.status] ?? { bg: 'var(--light-gray, #f8f8f5)', text: '#888', label: booking.status }
   const now = new Date()
   const startD = booking.start_date ? new Date(booking.start_date + 'T00:00:00') : null
@@ -1531,7 +1563,7 @@ export default function BookingDetailPage() {
                 { label: 'Start date', value: fmt(booking.start_date) },
                 { label: 'End date', value: fmt(booking.end_date) },
                 { label: 'Duration', value: days > 0 ? `${days} day${days !== 1 ? 's' : ''}` : '—' },
-                { label: 'Total paid', value: booking.total_price ? `$${booking.total_price.toLocaleString()}` : '—' },
+                { label: isHost ? 'Booking value' : 'Total paid', value: booking.total_price ? `$${booking.total_price.toLocaleString()}` : '—' },
               ].map(item => (
                 <div key={item.label} className="flex flex-col gap-0.5">
                   <span style={{ color: '#aaa' }}>{item.label}</span>
@@ -1648,51 +1680,6 @@ export default function BookingDetailPage() {
             </div>
           )}
 
-          {/* Creative Specs from Listing */}
-          {listing && (listing.creative_formats || listing.creative_dimensions || listing.creative_max_file_size) && (
-            <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Specs</h2>
-              <div className="space-y-3 text-sm">
-                {listing.creative_formats && listing.creative_formats.length > 0 && (
-                  <div className="flex flex-col gap-0.5">
-                    <span style={{ color: '#aaa' }}>Accepted formats</span>
-                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_formats.join(', ')}</span>
-                  </div>
-                )}
-                {listing.creative_dimensions && (
-                  <div className="flex flex-col gap-0.5">
-                    <span style={{ color: '#aaa' }}>Dimensions</span>
-                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_dimensions}</span>
-                  </div>
-                )}
-                {listing.creative_max_file_size && (
-                  <div className="flex flex-col gap-0.5">
-                    <span style={{ color: '#aaa' }}>Max file size</span>
-                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_max_file_size}</span>
-                  </div>
-                )}
-                {listing.creative_video_duration && (
-                  <div className="flex flex-col gap-0.5">
-                    <span style={{ color: '#aaa' }}>Video duration</span>
-                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_video_duration}</span>
-                  </div>
-                )}
-                {listing.creative_audio_allowed !== undefined && (
-                  <div className="flex flex-col gap-0.5">
-                    <span style={{ color: '#aaa' }}>Audio</span>
-                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</span>
-                  </div>
-                )}
-                {listing.dimensions && (
-                  <div className="flex flex-col gap-0.5">
-                    <span style={{ color: '#aaa' }}>Physical dimensions</span>
-                    <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.dimensions}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Collateral upload / view */}
           {showCollateralSection && (
             <CollateralSection
@@ -1717,6 +1704,7 @@ export default function BookingDetailPage() {
               advertiserId={booking.advertiser_id}
               hostId={booking.host_id}
               listingTitle={listing?.title}
+              hasCreativeFiles={hasCreativeFiles}
             />
           )}
 

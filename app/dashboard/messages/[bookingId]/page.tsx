@@ -284,8 +284,11 @@ function ChatPageInner() {
         setBuyNowEnabled(b.listings?.buy_now_enabled ?? false)
         setHostId(b.host_id)
 
-        const isHost = uid === b.host_id
-        setIsAdvertiser(uid === b.advertiser_id)
+        // Respect dashboard mode toggle when user is both host and advertiser
+        const isBothParties = uid === b.host_id && uid === b.advertiser_id
+        const dashMode = typeof window !== 'undefined' ? localStorage.getItem('cf_dash_mode') : null
+        const isHost = isBothParties ? dashMode === 'host' : uid === b.host_id
+        setIsAdvertiser(isBothParties ? dashMode !== 'host' : uid === b.advertiser_id)
         const recipient = isHost ? b.advertiser_id : b.host_id
         setRecipientId(recipient)
 

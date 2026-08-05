@@ -617,7 +617,7 @@ function DashboardContent() {
                     <Calendar className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
                   </div>
                   <span className="text-base font-extrabold tracking-[-0.3px]">{hostTotalPlacements}</span>
-                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Placements</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Hosted Campaigns</span>
                 </div>
               </>
             ) : (
@@ -655,7 +655,7 @@ function DashboardContent() {
                     <CheckCircle2 className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
                   </div>
                   <span className="text-base font-extrabold tracking-[-0.3px]">{placementsThisMonth}</span>
-                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Placements This Month</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Campaigns</span>
                 </div>
               </>
             )}
@@ -667,7 +667,7 @@ function DashboardContent() {
           {campaignCards.length > 0 && (
             <>
               <div className="flex items-baseline justify-between mb-[18px] flex-wrap gap-2">
-                <h2 className="text-xl font-bold tracking-[-0.3px]">Active Campaigns</h2>
+                <h2 className="text-xl font-bold tracking-[-0.3px]">{mode === 'host' ? 'Hosted Campaigns' : 'Active Campaigns'}</h2>
                 <Link href="/dashboard/bookings" className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>View all →</Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-[14px] mb-9">

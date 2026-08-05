@@ -333,32 +333,34 @@ export default function Navbar() {
                 )}
               </div>
 
-              {/* Role Toggle */}
-              <div
-                className="hidden lg:flex items-center rounded-full p-[2px] text-xs font-semibold"
-                style={{ backgroundColor: 'var(--light-gray)', border: '1px solid var(--border)' }}
-              >
-                <button
-                  onClick={() => { if (dashMode !== 'advertiser') handleSwitchMode() }}
-                  className="px-3 py-1 rounded-full transition-all"
-                  style={dashMode === 'advertiser'
-                    ? { backgroundColor: 'var(--gold)', color: 'var(--charcoal)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
-                    : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
-                  }
+              {/* Role Toggle — only on dashboard pages */}
+              {pathname.startsWith('/dashboard') && (
+                <div
+                  className="hidden lg:flex items-center rounded-full p-[2px] text-xs font-semibold"
+                  style={{ backgroundColor: 'var(--light-gray)', border: '1px solid var(--border)' }}
                 >
-                  Advertiser
-                </button>
-                <button
-                  onClick={() => { if (dashMode !== 'host') handleSwitchMode() }}
-                  className="px-3 py-1 rounded-full transition-all"
-                  style={dashMode === 'host'
-                    ? { backgroundColor: 'var(--gold)', color: 'var(--charcoal)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
-                    : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
-                  }
-                >
-                  Host
-                </button>
-              </div>
+                  <button
+                    onClick={() => { if (dashMode !== 'advertiser') handleSwitchMode() }}
+                    className="px-3 py-1 rounded-full transition-all"
+                    style={dashMode === 'advertiser'
+                      ? { backgroundColor: 'var(--gold)', color: 'var(--charcoal)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                      : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
+                    }
+                  >
+                    Advertiser
+                  </button>
+                  <button
+                    onClick={() => { if (dashMode !== 'host') handleSwitchMode() }}
+                    className="px-3 py-1 rounded-full transition-all"
+                    style={dashMode === 'host'
+                      ? { backgroundColor: 'var(--gold)', color: 'var(--charcoal)', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+                      : { backgroundColor: 'transparent', color: 'var(--text-secondary)' }
+                    }
+                  >
+                    Host
+                  </button>
+                </div>
+              )}
 
               {/* User dropdown */}
               <div className="relative" ref={dropdownRef}>
@@ -543,9 +545,11 @@ export default function Navbar() {
                 <Link href="/dashboard/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 py-2.5 text-sm hover:opacity-70" style={{ color: 'var(--charcoal)' }}>
                   <Settings className="w-4 h-4" style={{ color: 'var(--mint-dark)' }} /> Settings
                 </Link>
-                <button onClick={() => { handleSwitchMode(); setMobileOpen(false) }} className="flex items-center gap-3 py-2.5 text-sm w-full hover:opacity-70" style={{ color: 'var(--gold-dark)' }}>
-                  <ArrowLeftRight className="w-4 h-4" /> {dashMode === 'host' ? 'Switch to Advertiser' : 'Switch to Host'}
-                </button>
+                {pathname.startsWith('/dashboard') && (
+                  <button onClick={() => { handleSwitchMode(); setMobileOpen(false) }} className="flex items-center gap-3 py-2.5 text-sm w-full hover:opacity-70" style={{ color: 'var(--gold-dark)' }}>
+                    <ArrowLeftRight className="w-4 h-4" /> {dashMode === 'host' ? 'Switch to Advertiser' : 'Switch to Host'}
+                  </button>
+                )}
                 <button onClick={handleLogout} className="flex items-center gap-3 py-2.5 text-sm w-full hover:opacity-70" style={{ color: 'var(--red)' }}>
                   <LogOut className="w-4 h-4" /> Log Out
                 </button>
