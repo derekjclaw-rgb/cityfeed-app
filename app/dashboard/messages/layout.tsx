@@ -47,13 +47,30 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
   const [threads, setThreads] = useState<Thread[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [dashMode, setDashMode] = useState<string | null>(null)
 
+  // Listen for dashboard mode toggle changes
   useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('cf_dash_mode') : null
+    setDashMode(saved)
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string
+      if (detail === 'host' || detail === 'advertiser') setDashMode(detail)
+    }
+    window.addEventListener('cf_mode_change', handler)
+    return () => window.removeEventListener('cf_mode_change', handler)
+  }, [])
+
+  // Fetch threads filtered by current dashboard role
+  useEffect(() => {
+    if (dashMode === null) return // wait for mode to load
     const supabase = createClient()
+    setLoading(true)
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.push('/login?redirect=/dashboard/messages'); return }
       const userId = data.user.id
 
+      const roleFilter = dashMode === 'host' ? 'host_id' : 'advertiser_id'
       const { data: bookings } = await supabase
         .from('bookings')
         .select(`
@@ -61,9 +78,9 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
           listings(title),
           host:profiles!bookings_host_id_fkey(full_name),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name),
-          messages(content, created_at, sender_id, read)
+          messages(content, created_at, sender_id, read, sent_as_role)
         `)
-        .or(`advertiser_id.eq.${userId},host_id.eq.${userId}`)
+        .eq(roleFilter, userId)
         .order('created_at', { ascending: false })
 
       if (bookings) {
@@ -92,7 +109,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
       }
       setLoading(false)
     })
-  }, [router])
+  }, [dashMode, router])
 
   const filtered = search
     ? threads.filter(t =>

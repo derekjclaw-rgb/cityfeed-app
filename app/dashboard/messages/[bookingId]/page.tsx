@@ -180,6 +180,7 @@ interface Message {
   image_url?: string
   created_at: string
   is_system?: boolean
+  sent_as_role?: string  // 'host' | 'advertiser' — for self-booking role distinction
 }
 
 const SYSTEM_PREFIXES = [
@@ -228,6 +229,7 @@ function ChatPageInner() {
   const [otherPartyName, setOtherPartyName] = useState('Other party')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isBothParties, setIsBothParties] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const messageInputRef = useRef<HTMLInputElement>(null)
@@ -286,15 +288,18 @@ function ChatPageInner() {
 
         // Respect dashboard mode toggle when user is both host and advertiser
         const isBothParties = uid === b.host_id && uid === b.advertiser_id
+        setIsBothParties(isBothParties)
         const dashMode = typeof window !== 'undefined' ? localStorage.getItem('cf_dash_mode') : null
         const isHost = isBothParties ? dashMode === 'host' : uid === b.host_id
         setIsAdvertiser(isBothParties ? dashMode !== 'host' : uid === b.advertiser_id)
         const recipient = isHost ? b.advertiser_id : b.host_id
         setRecipientId(recipient)
 
-        const otherName = isHost
-          ? formatName(b.advertiser?.full_name ?? 'Advertiser')
-          : formatName(b.host?.full_name ?? 'Host')
+        const otherName = isBothParties
+          ? (isHost ? 'Advertiser (You)' : 'Host (You)')
+          : (isHost
+            ? formatName(b.advertiser?.full_name ?? 'Advertiser')
+            : formatName(b.host?.full_name ?? 'Host'))
         setOtherPartyName(otherName)
       }
 
@@ -383,6 +388,7 @@ function ChatPageInner() {
       recipient_id: recipientId,
       content: msgContent,
       image_url: imageUrl,
+      sent_as_role: isAdvertiser ? 'advertiser' : 'host',
     }).select().single()
 
     // Optimistically add to local state if realtime doesn't fire for the sender
@@ -449,7 +455,11 @@ function ChatPageInner() {
           </div>
         ) : (
           messages.map(msg => {
-            const isMe = msg.sender_id === userId
+            // Self-booking: align by role, not sender_id (since both are the same user)
+            const currentViewRole = isAdvertiser ? 'advertiser' : 'host'
+            const isMe = isBothParties
+              ? (msg.sent_as_role || 'advertiser') === currentViewRole
+              : msg.sender_id === userId
             const isSystem = isSystemMessage(msg)
             const { text, extraImageUrls, linkUrls } = parseMessageContent(msg.content)
 
