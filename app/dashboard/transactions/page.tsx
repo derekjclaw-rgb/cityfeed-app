@@ -59,7 +59,8 @@ function getPayoutStatus(bookingStatus: string, startDate: string, endDate: stri
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
 
   if (bookingStatus === 'cancelled') return { label: 'Cancelled', isPaid: false, isCancelled: true }
-  if (bookingStatus === 'completed' && end && now > end) return { label: 'Paid', isPaid: true, isCancelled: false }
+  // Completed (POP submitted) = payout released, regardless of dates
+  if (bookingStatus === 'completed') return { label: 'Paid', isPaid: true, isCancelled: false }
   // Campaign ended but POP not yet uploaded
   if (end && now > end) return { label: 'Awaiting POP', isPaid: false, isCancelled: false }
   // Campaign currently running

@@ -172,9 +172,11 @@ export default function MyListingsPage() {
     const now = new Date()
     const start = new Date(startDate + 'T00:00:00')
     const end = new Date(endDate + 'T00:00:00')
-    if (['confirmed', 'completed'].includes(status) && now >= start && now < end) return '#16a34a'
+    // Completed (POP submitted) = live/green until end date
+    if (status === 'completed' && now <= end) return '#16a34a'
+    if (['confirmed', 'active'].includes(status) && now >= start && now < end) return '#16a34a'
+    if (status === 'completed' && now > end) return '#888'
     if (now < start) return '#1d4ed8'
-    if (status === 'completed') return '#888'
     if (status === 'pending') return '#b45309'
     return '#7ecfc0'
   }

@@ -128,7 +128,8 @@ export default function ReceiptPage() {
   const now = new Date()
   const campStart = new Date(receipt.start_date)
   const campEnd = new Date(receipt.end_date)
-  const isLive = receipt.status === 'completed' && now >= campStart && now <= campEnd
+  // Completed (POP submitted) = live until end date, even if before start (early POP)
+  const isLive = receipt.status === 'completed' && now <= campEnd
 
   // Host view: payout = total - seller fee (7%)
   const sellerFee = Math.round(receipt.subtotal * 0.07 * 100) / 100

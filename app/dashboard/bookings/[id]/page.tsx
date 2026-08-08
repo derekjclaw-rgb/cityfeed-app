@@ -1468,9 +1468,10 @@ export default function BookingDetailPage() {
   const now = new Date()
   const startD = booking.start_date ? new Date(booking.start_date + 'T00:00:00') : null
   const endD = booking.end_date ? new Date(booking.end_date + 'T00:00:00') : null
-  const isLive = ['confirmed', 'active', 'completed'].includes(booking.status) &&
-    !!startD && !!endD && now >= startD && now < endD
-  const isConfirmedFuture = ['confirmed', 'completed'].includes(booking.status) &&
+  // Completed (POP submitted) = live until end date, even if before start (early POP)
+  const isLive = (booking.status === 'completed' && !!endD && now <= endD) ||
+    (['confirmed', 'active'].includes(booking.status) && !!startD && !!endD && now >= startD && now < endD)
+  const isConfirmedFuture = ['confirmed', 'active'].includes(booking.status) &&
     !!startD && now < startD
   const isPastComplete = booking.status === 'completed' && !!endD && now >= endD
   const days = booking.start_date && booking.end_date
