@@ -75,13 +75,18 @@ function getSimpleStatusBadge(status: string, startDate?: string, endDate?: stri
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
 
-  // Check if currently live (within date range)
-  if (['confirmed', 'active', 'completed'].includes(status) && start && end && now >= start && now < end) {
+  // Completed (POP submitted) = live until end date, even if before start date
+  if (status === 'completed' && end && now <= end) {
     return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
   }
 
-  // Check if future (not started yet)
-  if (['confirmed', 'completed', 'active', 'pending'].includes(status) && start && now < start) {
+  // Check if currently live (within date range, non-completed statuses)
+  if (['confirmed', 'active'].includes(status) && start && end && now >= start && now < end) {
+    return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
+  }
+
+  // Check if future (not started yet) — excludes completed
+  if (['confirmed', 'active', 'pending'].includes(status) && start && now < start) {
     return { label: 'Confirmed', emoji: '📋', bg: '#eff6ff', text: '#1d4ed8' }
   }
 
@@ -327,15 +332,18 @@ export default function BookingsPage() {
 
   // Helper: is a booking currently live (within date range)?
   function isBookingLive(b: Booking): boolean {
-    if (!['confirmed', 'active', 'completed'].includes(b.status)) return false
     const now = new Date()
     const start = b.start_date ? new Date(b.start_date + 'T00:00:00') : null
-    const end = b.end_date ? new Date(b.end_date + 'T00:00:00') : null
-    return !!(start && end && now >= start && now < end)
+    const end = b.end_date ? new Date(b.end_date + 'T23:59:59') : null
+    // Completed (POP submitted) = live until end date, even if before start
+    if (b.status === 'completed') return !!(end && now <= end)
+    // Other statuses: live only within date range
+    if (['confirmed', 'active'].includes(b.status)) return !!(start && end && now >= start && now < end)
+    return false
   }
 
   function isBookingConfirmed(b: Booking): boolean {
-    if (!['confirmed', 'pending', 'completed', 'active'].includes(b.status)) return false
+    if (!['confirmed', 'pending', 'active'].includes(b.status)) return false
     const now = new Date()
     const start = b.start_date ? new Date(b.start_date + 'T00:00:00') : null
     return !!(start && now < start)
