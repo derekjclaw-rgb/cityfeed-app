@@ -121,8 +121,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Redirect when current page doesn't apply to the new mode
     if (newMode === 'advertiser' && pathname.startsWith('/dashboard/listings')) {
       router.push('/dashboard/bookings')
-    } else if (newMode === 'host' && pathname.startsWith('/dashboard/bookings')) {
-      router.push('/dashboard/listings')
     }
   }, [pathname, router])
 
@@ -212,8 +210,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Menu
           </span>
           {MENU_ITEMS.filter((item) => {
-            // Bookings visible only for advertisers, Listings only for hosts
-            if (item.label === 'Bookings' && mode === 'host') return false
+            // Listings only for hosts, Bookings visible for both modes
             if (item.label === 'Listings' && mode === 'advertiser') return false
             if (item.label === 'Transactions' && mode === 'advertiser') return false
             return true

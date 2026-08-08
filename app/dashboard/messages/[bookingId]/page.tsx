@@ -328,8 +328,17 @@ function ChatPageInner() {
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'messages', filter: `booking_id=eq.${bookingId}` },
-          (payload) => {
-            setMessages(prev => [...prev, payload.new as Message])
+          async (payload) => {
+            const newMsg = payload.new as Message
+            setMessages(prev => [...prev, newMsg])
+            // Mark incoming messages from other party as read immediately
+            if (newMsg.sender_id !== uid) {
+              await supabase
+                .from('messages')
+                .update({ read: true })
+                .eq('id', newMsg.id)
+                .eq('read', false)
+            }
           }
         )
         .subscribe()

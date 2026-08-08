@@ -62,11 +62,11 @@ export type EmailEvent =
   | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser'; bookingId?: string }
   | { type: 'booking_request_submitted'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
-  | { type: 'creative_submitted_advertiser'; advertiserEmail: string; listingTitle: string; bookingId: string }
-  | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string }
-  | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string }
-  | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number; bookingId?: string }
-  | { type: 'pop_submitted_host'; hostEmail: string; listingTitle: string; bookingId: string }
+  | { type: 'creative_submitted_advertiser'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string }
+  | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string; dates?: string }
+  | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string }
+  | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number; bookingId?: string; dates?: string }
+  | { type: 'pop_submitted_host'; hostEmail: string; listingTitle: string; bookingId: string; dates?: string }
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
   | { type: 'pop_reminder_morning'; hostEmail: string; listingTitle: string; bookingId: string }
 
@@ -240,6 +240,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <p style="color:#555;margin:0 0 12px">Your creative files have been submitted successfully.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              ${event.dates ? `<p style="margin:0;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
             </div>
             <p style="color:#555;margin:0 0 8px"><strong>What happens next:</strong></p>
             <ol style="color:#555;margin:0 0 20px;padding-left:20px">
@@ -262,6 +263,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <p style="color:#555;margin:0 0 12px"><strong>${formatNamePrivacy(event.advertiserName)}</strong> has uploaded their creative files.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              ${event.dates ? `<p style="margin:4px 0 0;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
             </div>
             <p style="color:#555;margin:0 0 20px">Review the files and begin setup when ready.</p>
             <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Files →</a>
@@ -279,9 +281,10 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <p style="color:#555;margin:0 0 12px">The host has submitted proof that your ad is live.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              ${event.dates ? `<p style="margin:4px 0 0;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
             </div>
-            <p style="color:#555;margin:0 0 20px">Please review and approve within 72 hours. If no action is taken, it will be auto-approved.</p>
-            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review POP →</a>
+            <p style="color:#555;margin:0 0 20px">Your campaign is now active. You can view the proof photos in your booking dashboard.</p>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Campaign →</a>
           `),
         })
         break
@@ -296,6 +299,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <p style="color:#555;margin:0 0 12px">The advertiser has approved your proof of posting.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              ${event.dates ? `<p style="margin:0 0 4px;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
               <p style="margin:0;color:#888">Payout amount: <strong style="color:#16a34a">$${event.amount.toLocaleString()}</strong></p>
             </div>
             <p style="color:#555;margin:0 0 20px">Your payout is being processed via Stripe.</p>
@@ -315,7 +319,8 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <p style="color:#555;margin:0 0 12px">Your proof of posting for <strong>${event.listingTitle}</strong> has been submitted successfully.</p>
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
-              <p style="margin:0;color:#888">Status: <strong style="color:#16a34a">Completed</strong></p>
+              ${event.dates ? `<p style="margin:0 0 4px;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
+              <p style="margin:0;color:#888">Status: <strong style="color:#16a34a">Live</strong></p>
             </div>
             <p style="color:#555;margin:0 0 8px"><strong>What happens next:</strong></p>
             <ol style="color:#555;margin:0 0 20px;padding-left:20px">

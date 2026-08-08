@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
-  Calendar, FilePlus, MessageSquare, Activity, Bookmark, CheckCircle2,
+  Calendar, Camera, FilePlus, MessageSquare, Activity, Bookmark, CheckCircle2,
   ChevronRight, DollarSign, FileText, RotateCcw, Loader2,
   CheckCircle, X, Image as ImageIcon, Search,
 } from 'lucide-react'
@@ -110,9 +110,10 @@ function getStatusPill(status: string): { label: string; bg: string; color: stri
   }
 }
 
-function campaignStep(status: string, startDate: string, endDate: string): { step: number; label: string; percent: number; displayStatus: string } {
+function campaignStep(status: string, startDate: string, endDate: string, hasCreative?: boolean): { step: number; label: string; percent: number; displayStatus: string } {
   if (isCampaignLive(status, startDate, endDate)) return { step: 5, label: 'Live', percent: 83, displayStatus: 'live' }
   if (isCampaignComplete(status, endDate)) return { step: 6, label: 'Complete', percent: 100, displayStatus: 'completed' }
+  if (status === 'confirmed' && hasCreative) return { step: 4, label: 'Awaiting Posting', percent: 67, displayStatus: 'confirmed' }
   if (isCampaignConfirmed(status, startDate)) {
     if (status === 'pending') return { step: 2, label: 'Awaiting Approval', percent: 33, displayStatus: 'pending' }
     return { step: 3, label: 'Creative Upload', percent: 50, displayStatus: 'confirmed' }
@@ -191,6 +192,7 @@ function DashboardContent() {
   const [campaignCards, setCampaignCards] = useState<CampaignCard[]>([])
   const [recentBookings, setRecentBookings] = useState<Booking[]>([])
   const [timeline, setTimeline] = useState<Notification[]>([])
+  const [hostAction, setHostAction] = useState<{ message: string; href: string } | null>(null)
 
   // Finance
   const [totalSpent, setTotalSpent] = useState(0)
@@ -296,16 +298,22 @@ function DashboardContent() {
       const needAttention = bookings.filter(b => attentionStatuses.includes(b.status)).length
       setBookingsNeedAttention(needAttention)
 
-      // ── Creatives to upload (confirmed bookings without collateral files) ─
+      // ── Check creative files for all confirmed bookings ─
       const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
+      const hasCreativeMap = new Map<string, boolean>()
       let creativesNeeded = 0
-      for (const bk of confirmedBookings.slice(0, 5)) {
+      for (const bk of confirmedBookings) {
         try {
           const { data: files } = await supabase.storage
             .from('booking-collateral')
             .list(`bookings/${bk.id}`, { limit: 1 })
-          if (!files || files.length === 0) creativesNeeded++
-        } catch { /* ignore */ }
+          const hasFiles = !!(files && files.length > 0)
+          hasCreativeMap.set(bk.id, hasFiles)
+          if (!hasFiles) creativesNeeded++
+        } catch {
+          hasCreativeMap.set(bk.id, false)
+          creativesNeeded++
+        }
       }
       setCreativesToUpload(creativesNeeded)
 
@@ -338,6 +346,24 @@ function DashboardContent() {
 
       // ── Host-specific status chips ────────────────────────────────────────
       if (isHost) {
+        // ── Host priority action ──────────────────────────────────────────
+        const bookingsWithCreative = confirmedBookings.filter(b => hasCreativeMap.get(b.id))
+        if (bookingsWithCreative.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const firstBk = bookingsWithCreative[0] as any
+          setHostAction({
+            message: `Creative files received for "${firstBk.listings?.title ?? 'a booking'}" — upload proof of posting`,
+            href: `/dashboard/bookings/${firstBk.id}`,
+          })
+        } else if (needAttention > 0) {
+          setHostAction({
+            message: `You have ${needAttention} booking${needAttention > 1 ? 's' : ''} to review`,
+            href: '/dashboard/bookings',
+          })
+        } else {
+          setHostAction(null)
+        }
+
         const confirmedCt = bookings.filter(b => b.status === 'confirmed').length
         setHostConfirmedCount(confirmedCt)
 
@@ -359,7 +385,8 @@ function DashboardContent() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setCampaignCards(activeBkgs.map((b: any) => {
-        const cs = campaignStep(b.status, b.start_date, b.end_date)
+        const hasCreative = hasCreativeMap.get(b.id) ?? false
+        const cs = campaignStep(b.status, b.start_date, b.end_date, hasCreative)
         return {
           id: b.id,
           listing_title: b.listings?.title ?? 'Listing',
@@ -514,6 +541,29 @@ function DashboardContent() {
       {!dataLoading && (
         <>
           {/* ═══════════════════════════════════════
+               HOST PRIORITY ACTION BAR
+               ═══════════════════════════════════════ */}
+          {mode === 'host' && hostAction && (
+            <Link href={hostAction.href}>
+              <div
+                className="rounded-2xl px-5 py-4 mb-6 flex items-center justify-between gap-4 cursor-pointer transition-all hover:shadow-md hover:-translate-y-px"
+                style={{ backgroundColor: 'var(--gold-light, #f5edda)', borderLeft: '4px solid var(--gold, #debb73)' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-[38px] h-[38px] rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: 'var(--gold, #debb73)' }}>
+                    <Camera className="w-[18px] h-[18px]" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                    {hostAction.message}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--gold-dark, #c9a54e)' }} />
+              </div>
+            </Link>
+          )}
+
+          {/* ═══════════════════════════════════════
                QUICK ACTION CARDS
                ═══════════════════════════════════════ */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-[14px] mb-9">
@@ -617,7 +667,7 @@ function DashboardContent() {
                     <Calendar className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
                   </div>
                   <span className="text-base font-extrabold tracking-[-0.3px]">{hostTotalPlacements}</span>
-                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Hosted Campaigns</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Hosted Bookings</span>
                 </div>
               </>
             ) : (
@@ -633,7 +683,7 @@ function DashboardContent() {
                     <span className="inline-block w-[7px] h-[7px] rounded-full animate-pulse" style={{ backgroundColor: 'var(--green, #16a34a)' }} />
                     {activeCampaigns}
                   </span>
-                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Active Campaigns</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Active Bookings</span>
                 </div>
 
                 {/* Saved Listings */}
@@ -655,7 +705,7 @@ function DashboardContent() {
                     <CheckCircle2 className="w-[14px] h-[14px]" style={{ color: 'var(--blue, #5b8def)' }} />
                   </div>
                   <span className="text-base font-extrabold tracking-[-0.3px]">{placementsThisMonth}</span>
-                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Campaigns</span>
+                  <span className="text-[13px] font-normal" style={{ color: 'var(--text-secondary, #888)' }}>Total Bookings</span>
                 </div>
               </>
             )}
@@ -667,7 +717,7 @@ function DashboardContent() {
           {campaignCards.length > 0 && (
             <>
               <div className="flex items-baseline justify-between mb-[18px] flex-wrap gap-2">
-                <h2 className="text-xl font-bold tracking-[-0.3px]">{mode === 'host' ? 'Hosted Campaigns' : 'Active Campaigns'}</h2>
+                <h2 className="text-xl font-bold tracking-[-0.3px]">{mode === 'host' ? 'Hosted Bookings' : 'Active Bookings'}</h2>
                 <Link href="/dashboard/bookings" className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>View all →</Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-[14px] mb-9">
@@ -770,6 +820,11 @@ function DashboardContent() {
                           <div className="min-w-0">
                             <div className="text-sm font-semibold truncate">{b.listing_title}</div>
                             <div className="text-[11px] font-mono tracking-[0.3px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>{b.confirmation_code}</div>
+                            {bookingDisplayStatus(b) === 'completed' && (
+                              <div className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
+                                Book again →
+                              </div>
+                            )}
                           </div>
                         </div>
                         {/* Dates — hidden on mobile */}

@@ -284,6 +284,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 listingTitle: listingTitle ?? 'your listing',
                 advertiserName: advProfile?.full_name ?? 'The advertiser',
                 bookingId,
+                dates: booking?.start_date && booking?.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
               }),
             })
           }
@@ -297,6 +298,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 advertiserEmail: advProfile.email,
                 listingTitle: listingTitle ?? 'your listing',
                 bookingId,
+                dates: booking?.start_date && booking?.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
               }),
             })
           }
@@ -550,7 +552,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               className="flex items-center gap-3 px-4 py-3 rounded-xl"
               style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}
             >
-              <FileIcon type={file.type} name={file.name} />
+              {(file.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name)) && file.url ? (
+                <img src={file.url} alt={file.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <FileIcon type={file.type} name={file.name} />
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{file.name}</p>
                 {file.size > 0 && (
@@ -842,9 +848,11 @@ interface POPSectionProps {
   hostId?: string
   listingTitle?: string
   hasCreativeFiles?: boolean
+  startDate?: string
+  endDate?: string
 }
 
-function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle, hasCreativeFiles }: POPSectionProps) {
+function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, listingTitle, hasCreativeFiles, startDate, endDate }: POPSectionProps) {
   const [files, setFiles] = useState<CollateralFile[]>([])
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -1001,6 +1009,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
               listingTitle: listingTitle ?? 'your listing',
               bookingId,
               bookingUrl: `${window.location.origin}/dashboard/bookings/${bookingId}`,
+              dates: startDate && endDate ? `${startDate} → ${endDate}` : undefined,
             }),
           })
         }
@@ -1026,6 +1035,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
               hostEmail: hostProfile.email,
               listingTitle: listingTitle ?? 'your listing',
               bookingId,
+              dates: startDate && endDate ? `${startDate} → ${endDate}` : undefined,
             }),
           })
         }
@@ -1705,6 +1715,8 @@ export default function BookingDetailPage() {
               hostId={booking.host_id}
               listingTitle={listing?.title}
               hasCreativeFiles={hasCreativeFiles}
+              startDate={booking.start_date}
+              endDate={booking.end_date}
             />
           )}
 
