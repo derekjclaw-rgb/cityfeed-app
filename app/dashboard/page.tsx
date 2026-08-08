@@ -78,12 +78,13 @@ function formatFullDate(): string {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
-function isCampaignLive(status: string, startDate: string, endDate: string): boolean {
+function isCampaignLive(status: string, _startDate: string, endDate: string): boolean {
   if (status !== 'completed') return false
   const now = new Date()
-  const start = startDate ? new Date(startDate + 'T00:00:00') : null
-  const end = endDate ? new Date(endDate + 'T00:00:00') : null
-  return !!(start && end && now >= start && now <= end)
+  const end = endDate ? new Date(endDate + 'T23:59:59') : null
+  // Live = POP submitted (status completed) and campaign hasn't ended yet
+  // Covers early POP (before start date) — host went live early
+  return !!(end && now <= end)
 }
 
 function isCampaignComplete(status: string, endDate: string): boolean {
@@ -94,7 +95,7 @@ function isCampaignComplete(status: string, endDate: string): boolean {
 }
 
 function isCampaignConfirmed(status: string, startDate: string): boolean {
-  if (!['confirmed', 'pending', 'completed', 'active'].includes(status)) return false
+  if (!['confirmed', 'pending', 'active'].includes(status)) return false
   const now = new Date()
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
   return !!(start && now < start)
@@ -193,6 +194,7 @@ function DashboardContent() {
   const [recentBookings, setRecentBookings] = useState<Booking[]>([])
   const [timeline, setTimeline] = useState<Notification[]>([])
   const [hostAction, setHostAction] = useState<{ message: string; href: string } | null>(null)
+  const [popNeeded, setPopNeeded] = useState(0)
 
   // Finance
   const [totalSpent, setTotalSpent] = useState(0)
@@ -328,10 +330,10 @@ function DashboardContent() {
       const now = new Date()
       const activeCount = bookings.filter(b => {
         if (b.status === 'confirmed' || b.status === 'pending') return true
+        // Completed = POP submitted. Live until end date (even if started early)
         if (b.status === 'completed') {
-          const start = b.start_date ? new Date(b.start_date) : null
-          const end = b.end_date ? new Date(b.end_date) : null
-          return !!(start && end && now >= start && now <= end)
+          const end = b.end_date ? new Date(b.end_date + 'T23:59:59') : null
+          return !!(end && now <= end)
         }
         return false
       }).length
@@ -348,6 +350,7 @@ function DashboardContent() {
       if (isHost) {
         // ── Host priority action ──────────────────────────────────────────
         const bookingsWithCreative = confirmedBookings.filter(b => hasCreativeMap.get(b.id))
+        setPopNeeded(bookingsWithCreative.length)
         if (bookingsWithCreative.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const firstBk = bookingsWithCreative[0] as any
@@ -587,7 +590,7 @@ function DashboardContent() {
               </div>
             </Link>
 
-            {/* Creative files to upload */}
+            {/* Creative files to upload (advertiser) / Proof of posting needed (host) */}
             <Link href="/dashboard/bookings" className="group">
               <div
                 className="rounded-2xl p-5 flex items-start gap-[14px] transition-all hover:shadow-md hover:-translate-y-px cursor-pointer"
@@ -595,13 +598,17 @@ function DashboardContent() {
               >
                 <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: 'var(--mint-light, #e8f6f3)' }}>
-                  <FilePlus className="w-5 h-5" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
+                  {mode === 'host' ? (
+                    <Camera className="w-5 h-5" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
+                  ) : (
+                    <FilePlus className="w-5 h-5" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[22px] font-extrabold leading-tight tracking-[-0.5px] mb-[2px]">{creativesToUpload}</div>
-                  <div className="text-[13px] font-medium leading-snug" style={{ color: 'var(--text-secondary, #888)' }}>Creative files to upload</div>
+                  <div className="text-[22px] font-extrabold leading-tight tracking-[-0.5px] mb-[2px]">{mode === 'host' ? popNeeded : creativesToUpload}</div>
+                  <div className="text-[13px] font-medium leading-snug" style={{ color: 'var(--text-secondary, #888)' }}>{mode === 'host' ? 'Proof of posting needed' : 'Creative files to upload'}</div>
                   <div className="text-xs font-semibold mt-1.5 flex items-center gap-1" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-                    Upload now <ChevronRight className="w-3 h-3" />
+                    {mode === 'host' ? 'Upload POP' : 'Upload now'} <ChevronRight className="w-3 h-3" />
                   </div>
                 </div>
               </div>
