@@ -13,6 +13,13 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+/** Format a full name as 'First L.' for privacy */
+function formatNamePrivacy(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length < 2) return parts[0] || fullName
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`
+}
+
 interface Booking {
   id: string
   status: string
@@ -356,11 +363,20 @@ export default function BookingsPage() {
     return !!(end && now >= end)
   }
 
+  function isBookingExpired(b: Booking): boolean {
+    // Confirmed/pending bookings past their end date — never completed
+    if (!['confirmed', 'pending'].includes(b.status)) return false
+    const now = new Date()
+    const end = b.end_date ? new Date(b.end_date + 'T23:59:59') : null
+    return !!(end && now > end)
+  }
+
   // Mutually exclusive buckets
   const live = bookings.filter(b => isBookingLive(b))
   const confirmed = bookings.filter(b => !isBookingLive(b) && isBookingConfirmed(b))
   const completed = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && isBookingComplete(b))
-  const active = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !['cancelled', 'disputed'].includes(b.status))
+  const expired = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && isBookingExpired(b))
+  const active = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !isBookingExpired(b) && !['cancelled', 'disputed'].includes(b.status))
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
   const totalEarnings = isHost
@@ -466,8 +482,8 @@ export default function BookingsPage() {
             {/* Active bookings (pending etc) */}
             {active.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
-                  ACTIVE ({active.length})
+                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#b45309' }}>
+                  NEEDS ACTION ({active.length})
                 </h2>
                 <div className="space-y-4">
                   {active.map(booking => (
@@ -491,6 +507,26 @@ export default function BookingsPage() {
                 </h2>
                 <div className="space-y-4">
                   {completed.map(booking => (
+                    <BookingCard
+                      key={booking.id}
+                      booking={booking}
+                      isHost={isHost}
+                      onHostAction={handleHostAction}
+                      actionLoading={actionLoading}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Expired bookings (past dates, never completed) */}
+            {expired.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
+                  EXPIRED ({expired.length})
+                </h2>
+                <div className="space-y-4">
+                  {expired.map(booking => (
                     <BookingCard
                       key={booking.id}
                       booking={booking}
@@ -575,7 +611,7 @@ function BookingCard({
 
   return (
     <div
-      className="rounded-2xl p-5 cursor-pointer hover:shadow-md transition-all"
+      className="rounded-2xl p-5 cursor-pointer hover:shadow-md transition-all min-w-0"
       style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
       onClick={navigateToBooking}
     >
@@ -584,7 +620,7 @@ function BookingCard({
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{booking.listing_title}</h3>
           <p className="text-xs mt-0.5" style={{ color: '#888' }}>
-            {isHost ? `Advertiser: ${booking.other_party_name}` : `Host: ${booking.other_party_name}`}
+            {isHost ? `Advertiser: ${formatNamePrivacy(booking.other_party_name)}` : `Host: ${formatNamePrivacy(booking.other_party_name)}`}
           </p>
           <p className="text-xs font-mono font-semibold mt-1" style={{ color: 'var(--mint, #7ecfc0)' }}>{confirmationCode(booking.id)}</p>
         </div>
@@ -651,7 +687,7 @@ function BookingCard({
       )}
 
       {/* Actions */}
-      <div className="flex items-center flex-wrap gap-2 mt-4">
+      <div className="flex items-center flex-wrap gap-2 mt-4 overflow-hidden">
         {/* Host: Accept/Decline pending bookings */}
         {showAcceptDecline && (
           <>
@@ -734,6 +770,17 @@ function BookingCard({
           >
             <Receipt className="w-3.5 h-3.5" />
             Receipt
+          </Link>
+        )}
+
+        {/* Book Again — advertiser only, completed bookings */}
+        {booking.status === 'completed' && !isHost && (
+          <Link
+            href={`/marketplace/${booking.listing_id}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--gold-light, #f5edda)', border: '1px solid var(--gold, #debb73)', color: 'var(--gold-dark, #c9a54e)' }}
+          >
+            🔁 Book Again
           </Link>
         )}
 

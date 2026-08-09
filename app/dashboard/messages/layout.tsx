@@ -165,11 +165,11 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
                   <div
                     className="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors"
                     style={{
-                      backgroundColor: isActive ? 'rgba(126,207,192,0.1)' : 'transparent',
-                      borderLeft: isActive ? '3px solid #7ecfc0' : '3px solid transparent',
+                      backgroundColor: isActive ? 'rgba(126,207,192,0.1)' : isUnread ? 'rgba(126,207,192,0.08)' : 'transparent',
+                      borderLeft: isActive ? '3px solid #7ecfc0' : isUnread ? '3px solid rgba(126,207,192,0.5)' : '3px solid transparent',
                     }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#f8f8f5' }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = isActive ? 'rgba(126,207,192,0.1)' : 'transparent' }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = isUnread ? 'rgba(126,207,192,0.14)' : '#f8f8f5' }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = isActive ? 'rgba(126,207,192,0.1)' : isUnread ? 'rgba(126,207,192,0.08)' : 'transparent' }}
                   >
                     {/* Avatar */}
                     <div

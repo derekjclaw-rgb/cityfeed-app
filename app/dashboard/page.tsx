@@ -301,7 +301,13 @@ function DashboardContent() {
       setBookingsNeedAttention(needAttention)
 
       // ── Check creative files for all confirmed bookings ─
-      const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
+      const now = new Date()
+      const confirmedBookings = bookings.filter(b => {
+        if (b.status !== 'confirmed') return false
+        // Exclude stale bookings past their end date
+        const endDate = b.end_date ? new Date(b.end_date + 'T23:59:59') : null
+        return !endDate || now <= endDate
+      })
       const hasCreativeMap = new Map<string, boolean>()
       let creativesNeeded = 0
       for (const bk of confirmedBookings) {
@@ -327,7 +333,6 @@ function DashboardContent() {
       setSavedListings(savedCount ?? 0)
 
       // ── Active campaigns count ────────────────────────────────────────────
-      const now = new Date()
       const activeCount = bookings.filter(b => {
         if (b.status === 'confirmed' || b.status === 'pending') return true
         // Completed = POP submitted. Live until end date (even if started early)
@@ -761,7 +766,6 @@ function DashboardContent() {
                                 className="inline-flex items-center gap-[5px] px-3 py-[4px] rounded-full text-xs font-semibold"
                                 style={{ backgroundColor: pill.bg, color: pill.color }}
                               >
-                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: pill.dotColor }} />
                                 {pill.label}
                               </span>
                             </div>
@@ -772,9 +776,13 @@ function DashboardContent() {
                           <div className="h-1 rounded-sm overflow-hidden mb-1.5" style={{ backgroundColor: 'var(--border, #e0e0d8)' }}>
                             <div className="h-full rounded-sm transition-all duration-400" style={{ width: `${c.progressPercent}%`, backgroundColor: progressColor }} />
                           </div>
-                          <div className="flex justify-between text-[11px] font-medium" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
-                            <span>Step {c.step} of 6 — {c.stepLabel}</span>
-                            <span>{c.progressPercent}%</span>
+                          <div className="text-[11px] font-medium mt-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                            {c.step === 5 ? `Ends ${formatDate(c.end_date)}` :
+                             c.step === 6 ? 'Campaign complete' :
+                             c.step === 4 ? 'Creative received — awaiting posting' :
+                             c.step === 3 ? 'Awaiting creative files' :
+                             c.step === 2 ? 'Awaiting host approval' :
+                             'Booking confirmed'}
                           </div>
                         </div>
                       </div>
