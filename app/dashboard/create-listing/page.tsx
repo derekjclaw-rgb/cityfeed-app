@@ -85,7 +85,7 @@ interface UploadedPhoto {
   error?: string
 }
 
-const CREATIVE_FORMATS = ['PDF', 'JPG', 'PNG', 'MP4', 'HTML5', 'AI', 'PSD']
+const CREATIVE_FORMATS = ['PDF', 'JPG', 'PNG']
 
 interface FormData {
   title: string
