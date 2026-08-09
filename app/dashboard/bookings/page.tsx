@@ -629,7 +629,7 @@ function BookingCard({
           style={{ backgroundColor: simpleBadge.bg, color: simpleBadge.text }}
         >
           {isLiveNow && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />}
-          {simpleBadge.emoji} {simpleBadge.label}
+          {!isLiveNow && `${simpleBadge.emoji} `}{simpleBadge.label}
         </span>
       </div>
 
