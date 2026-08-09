@@ -960,6 +960,10 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       setUploading(false)
       return
     }
+    // Mark POP submitted — payout-eligible status; if the payout call below fails,
+    // the booking stays here and the daily cron retries every 24h until it succeeds
+    await supabase.from('bookings').update({ status: 'pop_pending', updated_at: new Date().toISOString() }).eq('id', bookingId)
+
     // Trigger payout immediately (escrow model — transfer from platform to host)
     // Payout route handles status transition to 'completed' after successful Stripe transfer
     try {
@@ -1670,6 +1674,36 @@ export default function BookingDetailPage() {
             </div>
           )}
 
+          {/* Collateral upload / view */}
+          {showCollateralSection && (
+            <CollateralSection
+              bookingId={bookingId}
+              isHost={isHost}
+              bookingStatus={booking.status}
+              hostId={booking.host_id}
+              advertiserId={booking.advertiser_id}
+              listingTitle={listing?.title}
+              listing={listing}
+              booking={booking}
+              onBookingUpdate={(partial) => setBooking(prev => prev ? { ...prev, ...partial } : prev)}
+            />
+          )}
+
+          {/* Host POP submission */}
+          {showCollateralSection && (
+            <POPSection
+              bookingId={bookingId}
+              bookingStatus={booking.status}
+              isHost={isHost}
+              advertiserId={booking.advertiser_id}
+              hostId={booking.host_id}
+              listingTitle={listing?.title}
+              hasCreativeFiles={hasCreativeFiles}
+              startDate={booking.start_date}
+              endDate={booking.end_date}
+            />
+          )}
+
           {/* ── Host Earnings Card ─────────────────────────────────── */}
           {isHost && booking.total_price > 0 && (
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
@@ -1710,36 +1744,6 @@ export default function BookingDetailPage() {
                 )
               })()}
             </div>
-          )}
-
-          {/* Collateral upload / view */}
-          {showCollateralSection && (
-            <CollateralSection
-              bookingId={bookingId}
-              isHost={isHost}
-              bookingStatus={booking.status}
-              hostId={booking.host_id}
-              advertiserId={booking.advertiser_id}
-              listingTitle={listing?.title}
-              listing={listing}
-              booking={booking}
-              onBookingUpdate={(partial) => setBooking(prev => prev ? { ...prev, ...partial } : prev)}
-            />
-          )}
-
-          {/* Host POP submission */}
-          {showCollateralSection && (
-            <POPSection
-              bookingId={bookingId}
-              bookingStatus={booking.status}
-              isHost={isHost}
-              advertiserId={booking.advertiser_id}
-              hostId={booking.host_id}
-              listingTitle={listing?.title}
-              hasCreativeFiles={hasCreativeFiles}
-              startDate={booking.start_date}
-              endDate={booking.end_date}
-            />
           )}
 
           {/* Quick actions */}

@@ -9,7 +9,7 @@ function getSupabase() {
 }
 
 /**
- * Auto-approve POP submissions older than 72 hours.
+ * Auto-approve POP submissions older than 24 hours (also retries failed payouts daily).
  * Also sends 48-hour collateral reminders for confirmed bookings with no collateral.
  * Called by Vercel Cron every 6 hours, or manually for MVP.
  */
@@ -24,14 +24,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const seventyTwoHoursAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-    // Find bookings in pop_pending or pop_review status older than 72 hours
+    // Find bookings in pop_pending or pop_review status older than 24 hours
+    // (cron runs daily — any stuck payout gets retried every 24h until it succeeds)
     const { data: pendingBookings, error: fetchError } = await supabase
       .from('bookings')
       .select('id, host_id, advertiser_id, updated_at, end_date')
       .in('status', ['pop_pending', 'pop_review'])
-      .lt('updated_at', seventyTwoHoursAgo)
+      .lt('updated_at', twentyFourHoursAgo)
 
     if (fetchError) {
       console.error('[AutoApprove] Fetch error:', fetchError)
@@ -65,14 +66,14 @@ export async function GET(req: NextRequest) {
               user_id: booking.advertiser_id,
               type: 'pop_auto_approved',
               title: 'POP Auto-Approved',
-              body: 'Your campaign POP was automatically approved after 72 hours. The booking is now complete.',
+              body: 'Your campaign POP was automatically approved after 24 hours. The booking is now complete.',
               href: `/dashboard/bookings/${booking.id}`,
             }),
             supabase.from('notifications').insert({
               user_id: booking.host_id,
               type: 'pop_auto_approved',
               title: 'POP Auto-Approved',
-              body: 'Your proof of posting was automatically approved after 72 hours. Payout is being processed.',
+              body: 'Your proof of posting was automatically approved after 24 hours. Payout is being processed.',
               href: `/dashboard/bookings/${booking.id}`,
             }),
           ])
