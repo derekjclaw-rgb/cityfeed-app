@@ -380,7 +380,7 @@ export default function CreateListingPage() {
     }
 
     const supabase = createClient()
-    const { error: insertError } = await supabase.from('listings').insert({
+    const { data: insertedListing, error: insertError } = await supabase.from('listings').insert({
       host_id: userId,
       title: form.title,
       description: form.description,
@@ -444,12 +444,30 @@ export default function CreateListingPage() {
       delivery_address: form.requires_print && form.delivery_address
         ? form.delivery_address
         : null,
-    })
+    }).select('id').single()
 
     if (insertError) {
       setError(insertError.message)
       setLoading(false)
     } else {
+      // Fire listing-published email to host (non-blocking)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user?.email) {
+          fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'listing_published',
+              hostEmail: user.email,
+              listingTitle: form.title,
+              listingId: insertedListing?.id ?? '',
+              listingImage: imageUrls[0],
+              pricePerDay: parseFloat(form.price_per_day) || undefined,
+            }),
+          }).catch(() => {})
+        }
+      } catch { /* non-fatal */ }
       setSuccess(true)
     }
   }

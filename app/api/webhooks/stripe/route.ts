@@ -236,6 +236,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
         total: booking.total_price,
         bookingId,
         isStatic: isStaticListing,
+        listingImage: listingPhoto ?? undefined,
       })
     }
   }

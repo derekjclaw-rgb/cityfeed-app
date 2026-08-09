@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map, Globe, Zap, Tag, ShieldCheck, Home } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map, Globe, Zap, Tag, ShieldCheck, Home, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from './marketplace/page'
 import type { Listing } from './marketplace/page'
@@ -145,6 +146,10 @@ function ListingCard({ listing }: { listing: Listing }) {
 // ─── Home Map ──────────────────────────────────────────────────────────────────
 function HomeMap({ listings }: { listings: Listing[] }) {
   const mapContainer = useRef<HTMLDivElement>(null)
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null)
+  const markerClickedRef = useRef(false)
+
   useEffect(() => {
     if (!mapContainer.current || listings.length === 0) return
     let map: any
@@ -160,25 +165,105 @@ function HomeMap({ listings }: { listings: Listing[] }) {
         center,
         zoom: 11,
       })
+      let markersAdded = false
       function addMarkers() {
+        if (markersAdded) return
+        markersAdded = true
         listings.forEach((l) => {
           if (l.lat == null || l.lng == null) return
           const el = document.createElement('div')
           el.style.cursor = 'pointer'
           el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;">$${l.price_per_day}</div>`
-          el.addEventListener('click', () => window.location.href = `/marketplace/${l.id}`)
+          const captured = l
+          el.addEventListener('click', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            markerClickedRef.current = true
+            setTimeout(() => { markerClickedRef.current = false }, 100)
+            setSelectedListing((prev) => {
+              if (prev?.id === captured.id) {
+                setPopupPos(null)
+                return null
+              }
+              if (map && captured.lat != null && captured.lng != null) {
+                const point = map.project([captured.lng, captured.lat])
+                const mapRect = mapContainer.current?.getBoundingClientRect()
+                if (mapRect) {
+                  setPopupPos({ x: mapRect.left + point.x, y: mapRect.top + point.y })
+                }
+              }
+              return captured
+            })
+          })
           new mapboxgl.Marker({ element: el }).setLngLat([l.lng, l.lat]).addTo(map)
         })
       }
+      map.on('click', () => {
+        if (markerClickedRef.current) return
+        setSelectedListing(null)
+        setPopupPos(null)
+      })
+      const updatePopupPosition = () => {
+        setSelectedListing((current) => {
+          if (current && current.lat != null && current.lng != null) {
+            const point = map.project([current.lng, current.lat])
+            const mapRect = mapContainer.current?.getBoundingClientRect()
+            if (mapRect) {
+              setPopupPos({ x: mapRect.left + point.x, y: mapRect.top + point.y })
+            }
+          }
+          return current
+        })
+      }
+      map.on('move', updatePopupPosition)
+      map.on('zoom', updatePopupPosition)
       map.on('load', addMarkers)
       map.on('style.load', addMarkers)
       setTimeout(addMarkers, 2000)
     })
     return () => { map?.remove() }
   }, [listings])
+
   return (
-    <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+    <div className="lg:w-2/3 h-[400px] lg:h-[600px] rounded-2xl overflow-hidden relative" style={{ border: '1px solid var(--border)' }}>
       <div ref={mapContainer} className="w-full h-full" />
+      {selectedListing && popupPos && typeof document !== 'undefined' && createPortal(
+        <div className="w-72 rounded-2xl shadow-xl overflow-hidden" style={{
+          position: 'fixed',
+          left: popupPos.x,
+          top: popupPos.y,
+          transform: 'translate(-50%, -110%)',
+          backgroundColor: '#fff',
+          border: '1px solid #e0e0d8',
+          zIndex: 9999,
+        }}>
+          {selectedListing.images && selectedListing.images.length > 0 && selectedListing.images[0] ? (
+            <img src={selectedListing.images[0]} alt={selectedListing.title} className="h-28 w-full object-cover" />
+          ) : (
+            <div className={`h-28 bg-gradient-to-br ${selectedListing.image_placeholder}`} />
+          )}
+          <div className="p-4">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-sm leading-snug line-clamp-2" style={{ color: '#2b2b2b' }}>{selectedListing.title}</h3>
+              <button onClick={() => { setSelectedListing(null); setPopupPos(null) }} className="flex-shrink-0 mt-0.5 hover:opacity-70" style={{ color: '#888' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center gap-1 text-xs mt-1" style={{ color: '#888' }}>
+              <MapPin className="w-3 h-3" />
+              {selectedListing.city}, {selectedListing.state}
+            </div>
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-sm font-bold" style={{ color: '#debb73' }}>${selectedListing.price_per_day}/day</span>
+              <Link href={`/marketplace/${selectedListing.id}`} className="text-xs font-semibold flex items-center gap-1 hover:opacity-70" style={{ color: '#5bb8a8' }}>
+                View details
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

@@ -58,7 +58,7 @@ function formatDateRange(dates: string): string {
 export type EmailEvent =
   | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
   | { type: 'new_booking_instant'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
-  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean }
+  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean; listingImage?: string }
   | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser'; bookingId?: string }
   | { type: 'booking_request_submitted'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
@@ -69,6 +69,7 @@ export type EmailEvent =
   | { type: 'pop_submitted_host'; hostEmail: string; listingTitle: string; bookingId: string; dates?: string }
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
   | { type: 'pop_reminder_morning'; hostEmail: string; listingTitle: string; bookingId: string }
+  | { type: 'listing_published'; hostEmail: string; listingTitle: string; listingId: string; listingImage?: string; pricePerDay?: number }
 
 export async function sendEmail(event: EmailEvent): Promise<void> {
   const mailer = getTransporter()
@@ -140,6 +141,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <h2 style="color:#2b2b2b;margin:0 0 16px">Booking Confirmed! 🎉</h2>
             ${event.bookingId ? `<p style="font-family:monospace;font-size:14px;font-weight:700;color:#7ecfc0;margin:0 0 12px;letter-spacing:0.05em">${confirmationCode(event.bookingId)}</p>` : ''}
             <p style="color:#555;margin:0 0 12px">Great news — your booking has been confirmed.</p>
+            ${event.listingImage ? `<img src="${event.listingImage}" alt="${event.listingTitle}" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:12px;margin:0 0 4px" />` : ''}
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
               <p style="margin:0 0 4px;color:#888">Dates: ${formatDateRange(event.dates)}</p>
@@ -370,6 +372,30 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             </div>
             <p style="color:#555;margin:0 0 20px">Please upload your files so the host can begin setup on time.</p>
             <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Upload Now →</a>
+          `),
+        })
+        break
+
+      case 'listing_published':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `Your listing is live — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Your Listing Is Live 🎉</h2>
+            <p style="color:#555;margin:0 0 12px">Congrats — <strong>${event.listingTitle}</strong> is now live on the City Feed marketplace and visible to advertisers.</p>
+            ${event.listingImage ? `<img src="${event.listingImage}" alt="${event.listingTitle}" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:12px;margin:0 0 16px" />` : ''}
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <p style="margin:0 0 4px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
+              ${event.pricePerDay ? `<p style="margin:0;color:#888">$${event.pricePerDay}/day</p>` : ''}
+            </div>
+            <p style="color:#555;margin:0 0 8px"><strong>What happens next:</strong></p>
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Advertisers can find and book your space instantly</li>
+              <li style="margin-bottom:6px">You'll get an email when a booking request comes in</li>
+              <li>Funds are released to you after you upload proof of posting</li>
+            </ol>
+            <a href="${BASE_URL}/dashboard/listings" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Manage Listing →</a>
           `),
         })
         break
