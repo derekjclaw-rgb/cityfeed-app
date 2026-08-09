@@ -938,9 +938,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       setUploading(false)
       return
     }
-    await supabase.from('bookings').update({ status: 'completed' }).eq('id', bookingId)
-
     // Trigger payout immediately (escrow model — transfer from platform to host)
+    // Payout route handles status transition to 'completed' after successful Stripe transfer
     try {
       const payoutRes = await fetch('/api/stripe/payout', {
         method: 'POST',

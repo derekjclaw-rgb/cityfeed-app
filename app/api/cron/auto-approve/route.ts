@@ -48,45 +48,8 @@ export async function GET(req: NextRequest) {
 
     for (const booking of pendingBookings) {
       try {
-        // Mark booking as completed
-        const { error: updateErr } = await supabase
-          .from('bookings')
-          .update({ status: 'completed' })
-          .eq('id', booking.id)
-
-        if (updateErr) {
-          console.error(`[AutoApprove] Failed to update booking ${booking.id}:`, updateErr)
-          results.push({ booking_id: booking.id, status: 'update_failed', error: updateErr.message })
-          continue
-        }
-
-        // Send notification to advertiser and host
-        await Promise.all([
-          supabase.from('notifications').insert({
-            user_id: booking.advertiser_id,
-            type: 'pop_auto_approved',
-            title: 'POP Auto-Approved',
-            body: 'Your campaign POP was automatically approved after 72 hours. The booking is now complete.',
-            href: `/dashboard/bookings/${booking.id}`,
-          }),
-          supabase.from('notifications').insert({
-            user_id: booking.host_id,
-            type: 'pop_auto_approved',
-            title: 'POP Auto-Approved',
-            body: 'Your proof of posting was automatically approved after 72 hours. Payout is being processed.',
-            href: `/dashboard/bookings/${booking.id}`,
-          }),
-        ])
-
-        // Auto-message: POP approved — campaign LIVE (not complete yet)
-        await supabase.from('messages').insert({
-          booking_id: booking.id,
-          sender_id: booking.host_id,
-          recipient_id: booking.advertiser_id,
-          content: 'POP approved! Your ad is now LIVE 🟢',
-        })
-
-        // Trigger payout
+        // Trigger payout FIRST — payout route handles status transition to 'completed'
+        // This prevents the race condition where status is set before payout fires
         const payoutRes = await fetch(`${baseUrl}/api/stripe/payout`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -94,6 +57,34 @@ export async function GET(req: NextRequest) {
         })
 
         const payoutData = await payoutRes.json()
+
+        if (payoutRes.ok) {
+          // Payout succeeded — send notifications (status already set to 'completed' by payout route)
+          await Promise.all([
+            supabase.from('notifications').insert({
+              user_id: booking.advertiser_id,
+              type: 'pop_auto_approved',
+              title: 'POP Auto-Approved',
+              body: 'Your campaign POP was automatically approved after 72 hours. The booking is now complete.',
+              href: `/dashboard/bookings/${booking.id}`,
+            }),
+            supabase.from('notifications').insert({
+              user_id: booking.host_id,
+              type: 'pop_auto_approved',
+              title: 'POP Auto-Approved',
+              body: 'Your proof of posting was automatically approved after 72 hours. Payout is being processed.',
+              href: `/dashboard/bookings/${booking.id}`,
+            }),
+          ])
+
+          await supabase.from('messages').insert({
+            booking_id: booking.id,
+            sender_id: booking.host_id,
+            recipient_id: booking.advertiser_id,
+            content: 'POP approved! Your ad is now LIVE 🟢',
+          })
+        }
+
         results.push({
           booking_id: booking.id,
           status: payoutRes.ok ? 'auto_approved_paid' : 'auto_approved_payout_failed',

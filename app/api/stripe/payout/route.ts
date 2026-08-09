@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
     }
 
     // SECURITY: Status guard — only pay out eligible bookings
-    const PAYOUT_ELIGIBLE = ['confirmed', 'active', 'pop_pending', 'pop_review']
+    // 'completed' included as safety net (idempotency guard prevents double payouts)
+    const PAYOUT_ELIGIBLE = ['confirmed', 'active', 'pop_pending', 'pop_review', 'completed']
     if (!PAYOUT_ELIGIBLE.includes(booking.status)) {
       return NextResponse.json({ error: `Booking status "${booking.status}" is not eligible for payout` }, { status: 400 })
     }
@@ -57,13 +58,13 @@ export async function POST(req: NextRequest) {
     }
 
     // SECURITY: POP guard — must have proof of posting before releasing funds
-    const { data: popCheck } = await supabase
-      .from('pop_submissions')
-      .select('id')
-      .eq('booking_id', booking_id)
-      .limit(1)
+    // Check storage bucket (where POP files actually live), not pop_submissions table
+    const { data: popFiles, error: popListError } = await supabase.storage
+      .from('booking-collateral')
+      .list(`pop/${booking_id}`, { limit: 1 })
 
-    if (!popCheck || popCheck.length === 0) {
+    const hasPOP = !popListError && popFiles && popFiles.length > 0
+    if (!hasPOP) {
       return NextResponse.json({ error: 'No proof of posting submitted — cannot release funds' }, { status: 400 })
     }
 
