@@ -321,7 +321,29 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
     setUploading(false)
     setShowAdditional(false)
     await loadFiles()
-  }, [folderPath]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Log to activity feed — additional creative uploads should be visible too
+    if (!isHost && hostId && advertiserId) {
+      try {
+        await Promise.all([
+          supabase.from('notifications').insert({
+            user_id: hostId,
+            type: 'collateral_uploaded',
+            title: 'Additional creative files uploaded',
+            body: `For "${listingTitle ?? 'booking'}"`,
+            href: `/dashboard/bookings/${bookingId}`,
+          }),
+          supabase.from('notifications').insert({
+            user_id: advertiserId,
+            type: 'creative_submitted',
+            title: 'Additional creative submitted',
+            body: `Your new files for "${listingTitle ?? 'booking'}" have been submitted`,
+            href: `/dashboard/bookings/${bookingId}`,
+          }),
+        ])
+      } catch { /* non-fatal */ }
+    }
+  }, [folderPath, isHost, hostId, advertiserId, bookingId, listingTitle]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function deleteFile(path: string) {
     const { error } = await supabase.storage.from('booking-collateral').remove([path])
@@ -1480,8 +1502,8 @@ export default function BookingDetailPage() {
   const showCollateralSection = ['confirmed', 'completed'].includes(booking.status)
 
   return (
-    <div className="min-h-screen pt-16 pb-20" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="min-h-screen pt-16 pb-20 w-full overflow-x-hidden" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 min-w-0">
         <Link href="/dashboard/bookings" className="flex items-center gap-2 text-sm mb-8 hover:opacity-70" style={{ color: '#888' }}>
           <ArrowLeft className="w-3.5 h-3.5" />
           All Bookings

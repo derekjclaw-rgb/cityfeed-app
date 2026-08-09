@@ -125,7 +125,7 @@ function SuccessPageInner() {
   const isPending = booking?.status === 'pending'
 
   return (
-    <div className="min-h-screen flex items-center justify-center pt-20 px-6" style={{ backgroundColor: '#f0f0ec' }}>
+    <div className="min-h-screen flex items-center justify-center pt-20 pb-16 px-6" style={{ backgroundColor: '#f0f0ec' }}>
       <div className="text-center max-w-md w-full">
         {loading || isProcessing ? (
           <div className="flex flex-col items-center gap-4">
@@ -304,7 +304,7 @@ function SuccessPageInner() {
 export default function BookingSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center pt-20" style={{ backgroundColor: '#f0f0ec' }}>
+      <div className="min-h-screen flex items-center justify-center pt-20 pb-16" style={{ backgroundColor: '#f0f0ec' }}>
         <Loader2 className="w-6 h-6 animate-spin" style={{ color: '#7ecfc0' }} />
       </div>
     }>

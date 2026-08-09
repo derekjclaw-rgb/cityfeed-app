@@ -32,6 +32,7 @@ interface Booking {
   end_date: string
   total_price: number
   confirmation_code: string
+  advertiser_name?: string
 }
 
 interface Notification {
@@ -150,6 +151,22 @@ function timeAgo(dateStr: string): string {
   const days = Math.floor(hrs / 24)
   if (days < 7) return `${days}d ago`
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+// Role relevance for activity timeline — keeps advertiser/host activity separated per view
+const HOST_ONLY_TYPES = new Set([
+  'new_booking', 'payout_initiated', 'pop_reminder_36h', 'pop_reminder_morning',
+  'pop_approved', 'pop_submitted_host', 'collateral_uploaded', 'booking_accepted_host',
+  'materials_shipped', 'account_onboarding', 'pop_reminder',
+])
+const ADVERTISER_ONLY_TYPES = new Set([
+  'booking_request_submitted', 'booking_confirmed', 'booking_approved_advertiser',
+  'booking_declined', 'creative_reminder_36h', 'creative_reminder', 'collateral_reminder',
+  'pop_submitted', 'creative_submitted', 'creative_submitted_advertiser', 'materials_received',
+])
+function isRelevantToMode(type: string, mode: 'advertiser' | 'host'): boolean {
+  if (mode === 'advertiser') return !HOST_ONLY_TYPES.has(type)
+  return !ADVERTISER_ONLY_TYPES.has(type)
 }
 
 function formatActivityBody(text: string): string {
@@ -280,7 +297,8 @@ function DashboardContent() {
         .from('bookings')
         .select(`
           id, total_price, status, start_date, end_date, listing_id,
-          listings(title, images)
+          listings(title, images),
+          advertiser:profiles!bookings_advertiser_id_fkey(full_name)
         `)
         .eq(isHost ? 'host_id' : 'advertiser_id', uid)
         .order('created_at', { ascending: false })
@@ -421,6 +439,12 @@ function DashboardContent() {
         end_date: b.end_date,
         total_price: b.total_price,
         confirmation_code: confirmationCode(b.id),
+        advertiser_name: (() => {
+          const full = (b.advertiser?.full_name ?? '').trim()
+          if (!full) return undefined
+          const parts = full.split(/\s+/)
+          return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0]
+        })(),
       })))
 
       // ── Financial summary ─────────────────────────────────────────────────
@@ -448,7 +472,7 @@ function DashboardContent() {
         .select('id, type, title, body, href, created_at')
         .eq('user_id', uid)
         .order('created_at', { ascending: false })
-        .limit(5)
+        .limit(15)
       setTimeline(notifs ?? [])
 
     } catch {
@@ -834,7 +858,10 @@ function DashboardContent() {
                           )}
                           <div className="min-w-0">
                             <div className="text-sm font-semibold truncate">{b.listing_title}</div>
-                            <div className="text-[11px] font-mono tracking-[0.3px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>{b.confirmation_code}</div>
+                            <div className="text-[11px] font-mono tracking-[0.3px]" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
+                              {b.confirmation_code}
+                              {mode === 'host' && b.advertiser_name ? ` · ${b.advertiser_name}` : ''}
+                            </div>
                             {bookingDisplayStatus(b) === 'completed' && (
                               <div className="text-[11px] font-semibold mt-0.5" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
                                 Book again →
@@ -869,7 +896,7 @@ function DashboardContent() {
           {/* ═══════════════════════════════════════
                ACTIVITY TIMELINE
                ═══════════════════════════════════════ */}
-          {timeline.length > 0 && (
+          {timeline.filter(n => isRelevantToMode(n.type, mode)).length > 0 && (
             <>
               <div className="flex items-baseline justify-between mb-[18px] flex-wrap gap-2">
                 <h2 className="text-xl font-bold tracking-[-0.3px]">Activity</h2>
@@ -879,7 +906,7 @@ function DashboardContent() {
                 {/* Vertical line */}
                 <div className="absolute top-2 bottom-2 left-[15px] w-[2px] rounded-sm" style={{ backgroundColor: 'var(--border, #e0e0d8)' }} />
 
-                {timeline.map(n => {
+                {timeline.filter(n => isRelevantToMode(n.type, mode)).slice(0, 5).map(n => {
                   const { Icon, dotClass } = timelineIcon(n.type)
                   const dotBg = dotClass === 'mint' ? 'var(--mint-light, #e8f6f3)'
                     : dotClass === 'gold' ? 'var(--gold-light, #f5edda)'

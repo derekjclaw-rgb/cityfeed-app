@@ -116,6 +116,31 @@ const MOCK_DETAILS: Record<string, { description: string; dimensions: string; pr
 
 // ─── Photo Carousel ───────────────────────────────────────────────────────────
 
+function TruncatedDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = (text ?? '').length > 220
+  return (
+    <div>
+      <p
+        className={`text-sm leading-relaxed ${!expanded && isLong ? 'line-clamp-4' : ''}`}
+        style={{ color: '#555' }}
+      >
+        {text}
+      </p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded(e => !e)}
+          className="text-xs font-medium mt-1.5 hover:opacity-70 transition-opacity"
+          style={{ color: '#999' }}
+        >
+          {expanded ? 'Show less' : 'More'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 interface PhotoCarouselProps {
   images: string[]
   title: string
@@ -793,7 +818,7 @@ export default function ListingDetailPage() {
             {/* Description */}
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-lg font-semibold mb-3" style={{ color: '#2b2b2b' }}>About this placement</h2>
-              <p className="text-sm leading-relaxed" style={{ color: '#555' }}>{listing.description}</p>
+              <TruncatedDescription text={listing.description} />
             </div>
 
             {/* Details */}
