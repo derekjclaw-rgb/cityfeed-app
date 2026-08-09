@@ -83,6 +83,9 @@ interface FormData {
   delivery_instructions: string
   creative_formats: string[]
   creative_dimensions: string
+  creative_width: string
+  creative_height: string
+  creative_unit: string
   creative_max_file_size: string
   accepts_video: boolean
   creative_video_duration: string
@@ -170,6 +173,9 @@ export default function EditListingPage() {
     delivery_instructions: '',
     creative_formats: [],
     creative_dimensions: '',
+    creative_width: '',
+    creative_height: '',
+    creative_unit: 'px',
     creative_max_file_size: '25MB',
     accepts_video: false,
     creative_video_duration: '15s',
@@ -226,6 +232,17 @@ export default function EditListingPage() {
         delivery_instructions: listing.delivery_instructions ?? '',
         creative_formats: listing.creative_formats ?? [],
         creative_dimensions: listing.creative_dimensions ?? '',
+        ...(() => {
+          // Parse legacy free-text dims like "1920x1080 px", "1920×1080px", "24x36 inches"
+          const m = (listing.creative_dimensions ?? '').match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*(px|in|inch|inches|ft|feet|cm|mm)?/i)
+          const unitMap: Record<string, string> = { inch: 'in', inches: 'in', feet: 'ft' }
+          const rawUnit = (m?.[3] ?? 'px').toLowerCase()
+          return {
+            creative_width: m?.[1] ?? '',
+            creative_height: m?.[2] ?? '',
+            creative_unit: unitMap[rawUnit] ?? rawUnit,
+          }
+        })(),
         creative_max_file_size: listing.creative_max_file_size ?? '25MB',
         accepts_video: !!(listing.creative_video_duration),
         creative_video_duration: listing.creative_video_duration ?? '15s',
@@ -400,7 +417,9 @@ export default function EditListingPage() {
         ? form.delivery_instructions || null
         : null,
       creative_formats: form.creative_formats.length > 0 ? form.creative_formats : null,
-      creative_dimensions: form.creative_dimensions || null,
+      creative_dimensions: (form.creative_width && form.creative_height)
+        ? `${form.creative_width}x${form.creative_height} ${form.creative_unit}`
+        : (form.creative_dimensions || null),
       creative_max_file_size: form.creative_max_file_size || null,
       ...(form.accepts_video
         ? {
@@ -764,15 +783,38 @@ export default function EditListingPage() {
                 ))}
               </div>
             </FormField>
-            <FormField label="Creative dimensions / resolution" hint="e.g. 1920×1080px, 300dpi">
-              <input
-                type="text"
-                value={form.creative_dimensions}
-                onChange={e => set('creative_dimensions', e.target.value)}
-                placeholder="1920×1080px"
-                className={inputClass}
-                style={inputStyle}
-              />
+            <FormField label="Preferred dimensions" hint="Width × height + units">
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={form.creative_width}
+                  onChange={e => set('creative_width', e.target.value)}
+                  placeholder="W"
+                  min="0"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+                <span className="text-xs flex-shrink-0" style={{ color: '#888' }}>×</span>
+                <input
+                  type="number"
+                  value={form.creative_height}
+                  onChange={e => set('creative_height', e.target.value)}
+                  placeholder="H"
+                  min="0"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+                <select
+                  value={form.creative_unit}
+                  onChange={e => set('creative_unit', e.target.value)}
+                  className={`${inputClass} cursor-pointer`}
+                  style={{ ...inputStyle, maxWidth: 72, paddingLeft: 8, paddingRight: 8 }}
+                >
+                  {['px', 'in', 'ft', 'cm', 'mm'].map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                </select>
+              </div>
             </FormField>
             <FormField label="Max file size">
               <input

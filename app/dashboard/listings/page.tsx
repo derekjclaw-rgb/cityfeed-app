@@ -77,7 +77,7 @@ export default function MyListingsPage() {
   const [error, setError] = useState('')
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [availabilityListing, setAvailabilityListing] = useState<{ id: string; title: string } | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [listingBookings, setListingBookings] = useState<Record<string, ListingBooking[]>>({})
   const [loadingBookings, setLoadingBookings] = useState<string | null>(null)
 
@@ -139,11 +139,15 @@ export default function MyListingsPage() {
   }
 
   async function toggleExpand(listingId: string) {
-    if (expandedId === listingId) {
-      setExpandedId(null)
+    if (expandedIds.has(listingId)) {
+      setExpandedIds(prev => {
+        const next = new Set(prev)
+        next.delete(listingId)
+        return next
+      })
       return
     }
-    setExpandedId(listingId)
+    setExpandedIds(prev => new Set(prev).add(listingId))
     if (!listingBookings[listingId]) {
       setLoadingBookings(listingId)
       const supabase = createClient()
@@ -252,7 +256,7 @@ export default function MyListingsPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
             {listings.map(listing => (
               <div
                 key={listing.id}
@@ -361,14 +365,14 @@ export default function MyListingsPage() {
                       className="text-xs font-semibold flex items-center gap-1 hover:opacity-70"
                       style={{ color: '#7ecfc0' }}
                     >
-                      {expandedId === listing.id ? 'Hide' : 'Schedule'}
-                      {expandedId === listing.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      {expandedIds.has(listing.id) ? 'Hide' : 'Schedule'}
+                      {expandedIds.has(listing.id) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
                   </div>
                 </div>
 
                 {/* Expanded booking schedule */}
-                {expandedId === listing.id && (
+                {expandedIds.has(listing.id) && (
                   <div className="px-4 pb-4 pt-1" style={{ borderTop: '1px solid #e0e0d8' }}>
                     {loadingBookings === listing.id ? (
                       <div className="flex items-center justify-center py-4">

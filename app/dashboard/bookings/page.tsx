@@ -108,7 +108,7 @@ function getSimpleStatusBadge(status: string, startDate?: string, endDate?: stri
     confirmed: hasCreative
       ? { label: 'Creative Received', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' }
       : { label: 'Awaiting Creative', emoji: '📂', bg: '#eff6ff', text: '#1d4ed8' },
-    active: { label: 'Active', emoji: '📍', bg: '#f0fdf4', text: '#16a34a' },
+    active: { label: 'Upcoming', emoji: '📍', bg: '#f0fdf4', text: '#16a34a' },
     completed: { label: 'Complete', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' },
     cancelled: { label: 'Cancelled', emoji: '❌', bg: '#fef2f2', text: '#dc2626' },
     disputed: { label: 'Disputed', emoji: '⚠️', bg: '#fef2f2', text: '#dc2626' },

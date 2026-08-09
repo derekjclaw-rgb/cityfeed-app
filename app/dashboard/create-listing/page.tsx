@@ -109,6 +109,9 @@ interface FormData {
   // Creative specs
   creative_formats: string[]
   creative_dimensions: string
+  creative_width: string
+  creative_height: string
+  creative_unit: string
   creative_max_file_size: string
   // Video (any category when accepts_video)
   accepts_video: boolean
@@ -145,6 +148,9 @@ const INITIAL_FORM: FormData = {
   delivery_instructions: '',
   creative_formats: [],
   creative_dimensions: '',
+  creative_width: '',
+  creative_height: '',
+  creative_unit: 'px',
   creative_max_file_size: '25MB',
   accepts_video: false,
   creative_video_duration: '15s',
@@ -403,7 +409,9 @@ export default function CreateListingPage() {
         : null,
       // Creative specs
       creative_formats: form.creative_formats.length > 0 ? form.creative_formats : null,
-      creative_dimensions: form.creative_dimensions || null,
+      creative_dimensions: (form.creative_width && form.creative_height)
+        ? `${form.creative_width}x${form.creative_height} ${form.creative_unit}`
+        : null,
       creative_max_file_size: form.creative_max_file_size || null,
       // Video specs (any category when accepts_video)
       ...(form.accepts_video
@@ -1017,18 +1025,38 @@ export default function CreateListingPage() {
 
             {/* Dimensions + max file size */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Preferred dimensions"
-                hint={'e.g. "1920x1080" or "24x36 inches"'}
-              >
-                <input
-                  type="text"
-                  value={form.creative_dimensions}
-                  onChange={e => set('creative_dimensions', e.target.value)}
-                  placeholder="1920x1080"
-                  className={inputClass}
-                  style={inputStyle}
-                />
+              <FormField label="Preferred dimensions" hint="Width × height + units">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={form.creative_width}
+                    onChange={e => set('creative_width', e.target.value)}
+                    placeholder="W"
+                    min="0"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                  <span className="text-xs flex-shrink-0" style={{ color: '#888' }}>×</span>
+                  <input
+                    type="number"
+                    value={form.creative_height}
+                    onChange={e => set('creative_height', e.target.value)}
+                    placeholder="H"
+                    min="0"
+                    className={inputClass}
+                    style={inputStyle}
+                  />
+                  <select
+                    value={form.creative_unit}
+                    onChange={e => set('creative_unit', e.target.value)}
+                    className={`${inputClass} cursor-pointer`}
+                    style={{ ...inputStyle, maxWidth: 72, paddingLeft: 8, paddingRight: 8 }}
+                  >
+                    {['px', 'in', 'ft', 'cm', 'mm'].map(u => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
               </FormField>
               <FormField label="Max file size">
                 <select
