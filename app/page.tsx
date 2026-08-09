@@ -281,7 +281,7 @@ export default function HomePage() {
           HERO — Dark charcoal with radial accents
           ═══════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden pt-[100px] pb-10 px-6"
+        className="relative overflow-hidden pt-20 sm:pt-[100px] pb-5 sm:pb-10 px-6"
         style={{ backgroundColor: 'var(--charcoal)' }}
       >
         {/* Radial gradient accents */}
@@ -309,7 +309,7 @@ export default function HomePage() {
         <div className="relative z-10 max-w-[900px] mx-auto text-center">
           {/* Eyebrow pill */}
           <div
-            className="inline-flex items-center gap-2 px-5 py-2 mb-8 text-[13px] font-medium backdrop-blur-sm"
+            className="inline-flex items-center gap-2 px-5 py-2 mb-4 sm:mb-8 text-[13px] font-medium backdrop-blur-sm"
             style={{
               borderRadius: 'var(--radius-pill)',
               background: 'rgba(255,255,255,0.06)',
@@ -326,7 +326,7 @@ export default function HomePage() {
 
           {/* Headline */}
           <h1
-            className="text-4xl sm:text-5xl md:text-[56px] font-extrabold leading-[1.08] mb-5"
+            className="text-[28px] sm:text-5xl md:text-[56px] font-extrabold leading-[1.08] mb-3 sm:mb-5"
             style={{ color: 'var(--white)', letterSpacing: '-2px' }}
           >
             Advertise on<br />
@@ -335,7 +335,7 @@ export default function HomePage() {
 
           {/* Subtitle */}
           <p
-            className="text-base sm:text-lg max-w-[560px] mx-auto mb-10 leading-relaxed font-normal"
+            className="text-sm sm:text-lg max-w-[560px] mx-auto mb-6 sm:mb-10 leading-relaxed font-normal"
             style={{ color: 'rgba(255,255,255,0.55)' }}
           >
             A marketplace for local, real-world advertising. Book unique placements
@@ -343,10 +343,10 @@ export default function HomePage() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex gap-3.5 justify-center flex-wrap">
+          <div className="flex gap-2.5 sm:gap-3.5 justify-center">
             <Link
               href="/marketplace"
-              className="inline-flex items-center gap-2 px-8 py-3.5 text-[15px] font-bold transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-3.5 text-[13px] sm:text-[15px] font-bold transition-all hover:-translate-y-0.5"
               style={{
                 borderRadius: 'var(--radius-pill)',
                 backgroundColor: 'var(--gold)',
@@ -361,7 +361,7 @@ export default function HomePage() {
             </Link>
             <Link
               href={isLoggedIn ? '/dashboard/create-listing' : '/signup?role=host'}
-              className="inline-flex items-center gap-2 px-8 py-3.5 text-[15px] font-semibold transition-all hover:bg-white/5"
+              className="inline-flex items-center gap-2 px-5 sm:px-8 py-3 sm:py-3.5 text-[13px] sm:text-[15px] font-semibold transition-all hover:bg-white/5"
               style={{
                 borderRadius: 'var(--radius-pill)',
                 color: 'var(--white)',
@@ -385,11 +385,11 @@ export default function HomePage() {
         className="px-6"
         style={{ backgroundColor: 'var(--white)', borderBottom: '1px solid var(--border)' }}
       >
-        <div className="max-w-[1000px] mx-auto grid grid-cols-2 sm:grid-cols-4">
+        <div className="max-w-[1000px] mx-auto grid grid-cols-4">
           {STATS.map((stat, i) => {
             const Icon = stat.icon
             return (
-              <div key={stat.label} className="relative py-7 px-4 text-center">
+              <div key={stat.label} className="relative py-4 px-1 sm:py-7 sm:px-4 text-center">
                 {/* Divider between items */}
                 {i < STATS.length - 1 && (
                   <div
@@ -399,17 +399,17 @@ export default function HomePage() {
                 )}
                 {/* Icon box */}
                 <div
-                  className={`w-9 h-9 rounded-[10px] flex items-center justify-center mx-auto mb-2.5 ${stat.bgClass}`}
+                  className={`w-7 h-7 sm:w-9 sm:h-9 rounded-[8px] sm:rounded-[10px] flex items-center justify-center mx-auto mb-1.5 sm:mb-2.5 ${stat.bgClass}`}
                 >
-                  <Icon className="w-[18px] h-[18px]" style={{ color: stat.iconColor }} />
+                  <Icon className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px]" style={{ color: stat.iconColor }} />
                 </div>
                 <div
-                  className="text-lg font-extrabold mb-0.5"
+                  className="text-[11px] sm:text-lg font-extrabold mb-0.5 leading-tight"
                   style={{ color: 'var(--charcoal)', letterSpacing: '-0.5px' }}
                 >
                   {stat.value}
                 </div>
-                <div className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                <div className="text-[9px] sm:text-xs font-medium hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
                   {stat.label}
                 </div>
               </div>
