@@ -1,8 +1,8 @@
 /**
  * Email notification utility — nodemailer SMTP via Gmail
  * SMTP: smtp.gmail.com:465 (SSL)
- * User: derekjclaw@gmail.com
- * App Password: tgpi oqil qoeu sank
+ * User: hello@cityfeed.io
+ * App Password: sweu xtsj gktz mgqr
  */
 
 import nodemailer from 'nodemailer'
@@ -17,15 +17,15 @@ function getTransporter() {
       port: 465,
       secure: true, // SSL
       auth: {
-        user: process.env.SMTP_USER || 'derekjclaw@gmail.com',
-        pass: process.env.SMTP_PASS || 'tgpi oqil qoeu sank',
+        user: process.env.SMTP_USER || 'hello@cityfeed.io',
+        pass: process.env.SMTP_PASS || 'sweu xtsj gktz mgqr',
       },
     })
   }
   return transporter
 }
 
-const FROM = 'City Feed <derekjclaw@gmail.com>'
+const FROM = 'City Feed <hello@cityfeed.io>'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cityfeed.io'
 
 /** Derive a human-readable confirmation code from a booking UUID */

@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
       port: 465,
       secure: true,
       auth: {
-        user: process.env.SMTP_USER || 'derekjclaw@gmail.com',
-        pass: process.env.SMTP_PASS || 'tgpi oqil qoeu sank',
+        user: process.env.SMTP_USER || 'hello@cityfeed.io',
+        pass: process.env.SMTP_PASS || 'sweu xtsj gktz mgqr',
       },
     })
 
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     `.trim()
 
     await transporter.sendMail({
-      from: 'City Feed <derekjclaw@gmail.com>',
+      from: 'City Feed <hello@cityfeed.io>',
       to: email,
       subject: `Welcome to City Feed, ${firstName}! 🎉`,
       html,
