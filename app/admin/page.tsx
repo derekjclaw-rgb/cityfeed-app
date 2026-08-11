@@ -70,7 +70,7 @@ export default function AdminDashboard() {
   const totalRevenue = nonCancelled.reduce((s, b) => s + (b.total_price || 0), 0)
   const completedBookings = bookings.filter(b => b.status === 'completed')
   const platformTake = completedBookings.reduce((s, b) => {
-    const fin = calcFinancials(b.total_price, b.payout_amount)
+    const fin = calcFinancials(b)
     return s + fin.platformTake
   }, 0)
   const pendingCount = bookings.filter(b => b.status === 'pending' || b.status === 'pop_pending').length

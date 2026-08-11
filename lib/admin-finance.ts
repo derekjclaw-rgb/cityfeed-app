@@ -1,24 +1,26 @@
 /**
  * Financial calculation helpers for the admin dashboard.
- * Single source of truth for fee math.
+ * Delegates to lib/fees.ts — the SINGLE SOURCE OF TRUTH for money math.
+ * Admin queries must select: total_price, subtotal, buyer_fee, seller_fee,
+ * print_fee_charged, payout_amount (+ start_date/end_date for day counts).
  */
+import { getBookingFinancials, round2, parseBookingDate, type BookingMoneyRow } from './fees'
 
-export function calcFinancials(totalPrice: number, payoutAmount?: number | null) {
-  const subtotal = Math.round((totalPrice / 1.07) * 100) / 100
-  const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
-  const sellerFee = Math.round(subtotal * 0.07 * 100) / 100
-  const stripeFeeEstimate = Math.round((totalPrice * 0.029 + 0.30) * 100) / 100
-  const hostPayout = payoutAmount ?? Math.round((subtotal - sellerFee) * 100) / 100
-  const platformTake = Math.round((totalPrice - hostPayout) * 100) / 100
-  const netPlatformProfit = Math.round((platformTake - stripeFeeEstimate) * 100) / 100
+export function calcFinancials(booking: BookingMoneyRow) {
+  const fin = getBookingFinancials(booking)
+  const totalPrice = fin.advertiserTotal
+  const stripeFeeEstimate = round2(totalPrice * 0.029 + 0.30)
+  const platformTake = round2(totalPrice - fin.hostPayout)
+  const netPlatformProfit = round2(platformTake - stripeFeeEstimate)
 
   return {
     totalPrice,
-    subtotal,
-    buyerFee,
-    sellerFee,
+    subtotal: fin.subtotal,
+    printFee: fin.printFee,
+    buyerFee: fin.buyerFee,
+    sellerFee: fin.sellerFee,
     stripeFeeEstimate,
-    hostPayout,
+    hostPayout: fin.hostPayout,
     platformTake,
     netPlatformProfit,
   }
@@ -33,7 +35,10 @@ export function formatCurrency(amount: number): string {
 }
 
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  // Date-only strings ('YYYY-MM-DD') must parse as LOCAL midnight or they
+  // render a day early in US timezones. Timestamps parse normally.
+  const d = dateStr.includes('T') ? new Date(dateStr) : parseBookingDate(dateStr)
+  return d.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

@@ -226,6 +226,27 @@ function Toggle({
   )
 }
 
+function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--mint, #7ecfc0)' }}>
+        {title}
+      </h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  )
+}
+
+function ReviewRow({ label, value }: { label: string; value?: string | number | null }) {
+  if (!value && value !== 0) return null
+  return (
+    <div className="flex justify-between gap-4 text-sm">
+      <span className="flex-shrink-0" style={{ color: '#888' }}>{label}</span>
+      <span className="text-right" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{value}</span>
+    </div>
+  )
+}
+
 export default function CreateListingPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -244,6 +265,7 @@ export default function CreateListingPage() {
     const now = new Date()
     return { year: now.getFullYear(), month: now.getMonth() }
   })
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -340,16 +362,20 @@ export default function CreateListingPage() {
     return urls
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleReview(e: React.FormEvent) {
     e.preventDefault()
     if (!userId) return
-
-    // Validate zip
     if (!form.zip.trim()) {
       setError('ZIP code is required.')
       return
     }
+    setError('')
+    setShowReviewModal(true)
+  }
 
+  async function handlePublish() {
+    if (!userId) return
+    setShowReviewModal(false)
     setLoading(true)
     setError('')
 
@@ -568,7 +594,7 @@ export default function CreateListingPage() {
           List your space
         </h1>
         <p className="text-sm mb-8" style={{ color: '#888' }}>
-          Fill out the details below. Your listing will go live immediately.
+          Fill out the details below. You'll review everything before publishing.
         </p>
 
         {error && (
@@ -585,7 +611,7 @@ export default function CreateListingPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleReview} className="space-y-8">
           {/* Basic Info */}
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
             <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
@@ -1043,7 +1069,7 @@ export default function CreateListingPage() {
 
             {/* Dimensions + max file size */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField label="Preferred dimensions" hint="Width × height + units">
+              <FormField label="Required dimensions" hint="Width × height + units">
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -1307,9 +1333,191 @@ export default function CreateListingPage() {
             }}
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-            {loading ? 'Submitting...' : 'Publish listing'}
+            {loading ? 'Publishing...' : 'Review & publish'}
           </button>
         </form>
+
+        {/* Review Modal */}
+        {showReviewModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+            onClick={() => setShowReviewModal(false)}
+          >
+            <div
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-6"
+              style={{ backgroundColor: '#fff', boxShadow: '0 24px 48px rgba(0,0,0,0.18)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowReviewModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" style={{ color: '#888' }} />
+              </button>
+
+              <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                Review your listing
+              </h2>
+              <p className="text-sm mb-6" style={{ color: '#888' }}>
+                Make sure everything looks good before going live.
+              </p>
+
+              {photos.length > 0 ? (
+                <div className="flex gap-2 overflow-x-auto mb-6 pb-1">
+                  {photos.map((photo, i) => (
+                    <img
+                      key={i}
+                      src={photo.preview}
+                      alt=""
+                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                      style={{ border: '1px solid var(--border, #e0e0d8)' }}
+                    />
+                  ))}
+                  <span className="self-center text-xs flex-shrink-0 ml-1" style={{ color: '#aaa' }}>
+                    {photos.length} photo{photos.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  className="rounded-xl px-4 py-3 text-sm mb-6"
+                  style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a', color: '#92400e' }}
+                >
+                  No photos uploaded
+                </div>
+              )}
+
+              <div className="space-y-5">
+                <ReviewSection title="Basic information">
+                  <ReviewRow label="Title" value={form.title} />
+                  <ReviewRow label="Category" value={CATEGORIES.find(c => c.value === form.category)?.label || form.category} />
+                  {form.description && (
+                    <div className="text-sm pt-1">
+                      <span style={{ color: '#888' }}>Description</span>
+                      <p className="mt-1 leading-relaxed" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                        {form.description}
+                      </p>
+                    </div>
+                  )}
+                </ReviewSection>
+
+                <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+
+                <ReviewSection title="Location">
+                  <ReviewRow label="Address" value={form.address} />
+                  <ReviewRow label="City" value={form.city} />
+                  <ReviewRow label="State" value={form.state} />
+                  <ReviewRow label="ZIP" value={form.zip} />
+                </ReviewSection>
+
+                <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+
+                <ReviewSection title="Ad specs & performance">
+                  <ReviewRow label="Dimensions" value={form.dimensions || '—'} />
+                  <ReviewRow label="Daily impressions" value={form.daily_impressions ? parseInt(form.daily_impressions).toLocaleString() : '—'} />
+                  <ReviewRow label="Illuminated" value={form.illuminated ? 'Yes' : 'No'} />
+                  <ReviewRow label="Production time" value={form.production_time} />
+                </ReviewSection>
+
+                <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+
+                <ReviewSection title="Pricing & availability">
+                  <ReviewRow label="Price per day" value={form.price_per_day ? `$${parseFloat(form.price_per_day).toFixed(2)}` : '—'} />
+                  <ReviewRow label="Min. days" value={form.min_days} />
+                  <ReviewRow label="Max. days" value={form.max_days} />
+                  <ReviewRow label="Buy now" value={form.buy_now_enabled ? 'Enabled' : 'Disabled'} />
+                </ReviewSection>
+
+                {form.content_restrictions && (
+                  <>
+                    <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+                    <ReviewSection title="Content restrictions">
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                        {form.content_restrictions}
+                      </p>
+                    </ReviewSection>
+                  </>
+                )}
+
+                {(form.creative_formats.length > 0 || form.creative_width || form.creative_max_file_size) && (
+                  <>
+                    <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+                    <ReviewSection title="Creative specifications">
+                      {form.creative_formats.length > 0 && (
+                        <ReviewRow label="Formats" value={form.creative_formats.join(', ')} />
+                      )}
+                      {form.creative_width && form.creative_height && (
+                        <ReviewRow label="Required dimensions" value={`${form.creative_width} × ${form.creative_height} ${form.creative_unit}`} />
+                      )}
+                      <ReviewRow label="Max file size" value={form.creative_max_file_size} />
+                      {form.accepts_video && (
+                        <>
+                          <ReviewRow label="Video duration" value={form.creative_video_duration} />
+                          <ReviewRow label="Audio" value={form.creative_audio_allowed ? 'Allowed' : 'Muted'} />
+                          <ReviewRow label="Loop count" value={form.creative_loop_count || 'Continuous'} />
+                        </>
+                      )}
+                    </ReviewSection>
+                  </>
+                )}
+
+                {form.requires_print && (
+                  <>
+                    <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+                    <ReviewSection title="Printed materials">
+                      <ReviewRow label="Handling" value={form.offers_printing ? 'Host prints & installs' : 'Advertiser ships'} />
+                      {form.offers_printing && form.print_fee && (
+                        <ReviewRow label="Print fee" value={`$${parseFloat(form.print_fee).toFixed(2)}`} />
+                      )}
+                      {!form.offers_printing && form.delivery_address && (
+                        <ReviewRow label="Delivery address" value={form.delivery_address} />
+                      )}
+                    </ReviewSection>
+                  </>
+                )}
+
+                {blockedDates.length > 0 && (
+                  <>
+                    <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
+                    <ReviewSection title="Restricted dates">
+                      <ReviewRow label="Dates blocked" value={`${blockedDates.length} date${blockedDates.length !== 1 ? 's' : ''}`} />
+                    </ReviewSection>
+                  </>
+                )}
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                  className="flex-1 font-semibold py-3 rounded-xl text-sm transition-colors hover:opacity-80"
+                  style={{
+                    backgroundColor: 'var(--light-gray, #f8f8f5)',
+                    color: '#555',
+                    border: '1px solid var(--border, #e0e0d8)',
+                  }}
+                >
+                  Go back
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={loading}
+                  className="flex-1 font-semibold py-3 rounded-xl text-sm hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: 'var(--gold, #debb73)',
+                    color: 'var(--charcoal, #2b2b2b)',
+                    boxShadow: '0 4px 16px rgba(222,187,115,0.35)',
+                  }}
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {loading ? 'Publishing...' : 'Publish listing'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

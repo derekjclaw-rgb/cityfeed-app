@@ -25,6 +25,7 @@ import {
   Truck, DollarSign
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getBookingFinancials } from '@/lib/fees'
 
 /** Derive a human-readable confirmation code from a booking UUID */
 function confirmationCode(bookingId: string): string {
@@ -1712,10 +1713,9 @@ export default function BookingDetailPage() {
                 <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#888' }}>Earnings</h2>
               </div>
               {(() => {
-                const pricePerDay = days > 0 ? booking.total_price / 1.07 / days : 0
-                const subtotal = pricePerDay * days
-                const platformFee = Math.round(subtotal * 0.07 * 100) / 100
-                const payout = booking.payout_amount ?? Math.round((subtotal - platformFee) * 100) / 100
+                // Single source of truth — stored itemized amounts (lib/fees.ts)
+                const fin = getBookingFinancials(booking)
+                const payout = fin.hostPayout
                 const isPaid = !!booking.stripe_transfer_id
                 const isProcessing = !isPaid && !!booking.payout_at
                 const payoutStatus = isPaid ? 'Paid' : isProcessing ? 'Processing' : 'Pending'
@@ -1723,12 +1723,18 @@ export default function BookingDetailPage() {
                 return (
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between" style={{ color: '#555' }}>
-                      <span>Listing price: ${pricePerDay.toFixed(2)}/day × {days} day{days !== 1 ? 's' : ''}</span>
-                      <span>${subtotal.toFixed(2)}</span>
+                      <span>Listing price: ${(fin.pricePerDay ?? 0).toFixed(2)}/day × {fin.days ?? days} day{(fin.days ?? days) !== 1 ? 's' : ''}</span>
+                      <span>${fin.subtotal.toFixed(2)}</span>
                     </div>
+                    {fin.printFee > 0 && (
+                      <div className="flex justify-between" style={{ color: '#555' }}>
+                        <span>Print fee</span>
+                        <span>${fin.printFee.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between" style={{ color: '#dc2626' }}>
                       <span>City Feed fee (7%)</span>
-                      <span>-${platformFee.toFixed(2)}</span>
+                      <span>-${fin.sellerFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-bold pt-2" style={{ borderTop: '1px solid var(--border, #e0e0d8)', color: 'var(--charcoal, #2b2b2b)' }}>
                       <span>Your payout</span>

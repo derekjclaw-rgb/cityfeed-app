@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail } from '@/lib/email'
+import { getBookingFinancials } from '@/lib/fees'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
-        id, total_price, platform_fee, status, stripe_payment_intent_id, stripe_transfer_id,
+        id, total_price, platform_fee, subtotal, buyer_fee, seller_fee, print_fee_charged,
+        status, stripe_payment_intent_id, stripe_transfer_id,
         host_id, advertiser_id,
         host:profiles!bookings_host_id_fkey(stripe_account_id, full_name),
         listings(title)
@@ -76,16 +77,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Host has not connected Stripe account' }, { status: 400 })
     }
 
-    // Calculate payout: subtotal (pre-buyer-fee) - 7% seller fee
-    // total_price = subtotal + buyer_fee (both are 7% of subtotal)
-    // So subtotal = total_price - platform_fee
-    // total_price = subtotal + buyerFee (buyer fee is 7% of subtotal)
-    // platform_fee in DB = buyerFee + sellerFee (COMBINED) — do NOT use it to derive subtotal
-    // Correct derivation: subtotal = total_price / 1.07 (since total = subtotal * 1.07)
-    const totalAmount = booking.total_price ?? 0
-    const subtotal = Math.round(totalAmount / 1.07 * 100) / 100
-    const sellerFee = Math.round(subtotal * 0.07 * 100) // cents (7% of subtotal)
-    const payoutAmount = Math.round(subtotal * 100) - sellerFee // cents
+    // Payout comes from the SINGLE SOURCE OF TRUTH (lib/fees.ts):
+    // stored itemized amounts → hostPayout = (subtotal + print fee) − seller fee.
+    // Legacy bookings (no stored columns) derive under the old fee model.
+    const fin = getBookingFinancials(booking)
+    const payoutAmount = Math.round(fin.hostPayout * 100) // cents
 
     if (payoutAmount <= 0) {
       return NextResponse.json({ error: 'Payout amount too low' }, { status: 400 })
@@ -130,23 +126,10 @@ export async function POST(req: NextRequest) {
       if (error) console.warn('[Payout] Log insert failed (table may not exist yet):', error.message)
     })
 
-    // Notify host via email
-    const { data: hostProfile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', booking.host_id)
-      .single()
-
+    // NOTE: No email here — the POP submission flow already sends the
+    // "Proof of posting submitted" email (host was getting two near-identical
+    // emails: pop_submitted + pop_approved). Michael killed pop_approved 2026-08-10.
     const listingTitle = (booking as Record<string, unknown> & { listings?: { title?: string } }).listings?.title ?? 'your listing'
-
-    if (hostProfile?.email) {
-      sendEmail({
-        type: 'pop_approved',
-        hostEmail: hostProfile.email,
-        listingTitle,
-        amount: payoutAmount / 100,
-      }).catch(err => console.warn('[Payout] Email notification failed:', err))
-    }
 
     // Payout notification via dashboard
     await supabase.from('notifications').insert({

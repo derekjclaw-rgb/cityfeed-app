@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Printer, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getBookingFinancials, parseBookingDate } from '@/lib/fees'
 
 interface ReceiptData {
   id: string
@@ -19,6 +20,8 @@ interface ReceiptData {
   price_per_day: number
   subtotal: number
   buyer_fee: number
+  seller_fee: number
+  print_fee: number
   total_price: number
   payout_amount?: number
   payout_at?: string
@@ -50,6 +53,7 @@ export default function ReceiptPage() {
         .from('bookings')
         .select(`
           id, status, start_date, end_date, total_price, platform_fee,
+          subtotal, buyer_fee, seller_fee, print_fee_charged,
           payout_amount, payout_at, created_at, stripe_payment_intent_id,
           host_id, advertiser_id,
           listings(title, price_per_day),
@@ -69,23 +73,20 @@ export default function ReceiptPage() {
       const d = data as any
       const userIsHost = user.id === d.host_id
       setIsHost(userIsHost)
-      const pricePerDay = d.listings?.price_per_day ?? 0
-      const start = new Date(d.start_date)
-      const end = new Date(d.end_date)
-      const totalDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
-      const subtotal = pricePerDay * totalDays
-      // platform_fee in DB is buyer + seller combined — receipt should only show buyer's 7%
-      const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
+      // Single source of truth — stored itemized amounts (lib/fees.ts)
+      const fin = getBookingFinancials(d)
       setReceipt({
         id: d.id,
         listing_title: d.listings?.title ?? 'Listing',
         start_date: d.start_date,
         end_date: d.end_date,
-        total_days: totalDays,
-        price_per_day: pricePerDay,
-        subtotal: subtotal,
-        buyer_fee: buyerFee,
-        total_price: d.total_price,
+        total_days: fin.days ?? 1,
+        price_per_day: fin.pricePerDay ?? 0,
+        subtotal: fin.subtotal,
+        buyer_fee: fin.buyerFee,
+        seller_fee: fin.sellerFee,
+        print_fee: fin.printFee,
+        total_price: fin.advertiserTotal,
         payout_amount: d.payout_amount,
         payout_at: d.payout_at,
         created_at: d.created_at,
@@ -118,7 +119,10 @@ export default function ReceiptPage() {
     )
   }
 
-  const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  // Date-only strings ('YYYY-MM-DD') must parse as LOCAL midnight, or they
+  // render a day early in US timezones. Timestamps parse normally.
+  const fmtDate = (d: string) => (d.includes('T') ? new Date(d) : parseBookingDate(d))
+    .toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   const fmtMoney = (n: number) => `$${n.toFixed(2)}`
 
   // Confirmation code from UUID
@@ -126,14 +130,13 @@ export default function ReceiptPage() {
 
   // Is campaign currently live?
   const now = new Date()
-  const campStart = new Date(receipt.start_date)
-  const campEnd = new Date(receipt.end_date)
+  const campEnd = parseBookingDate(receipt.end_date)
   // Completed (POP submitted) = live until end date, even if before start (early POP)
   const isLive = receipt.status === 'completed' && now <= campEnd
 
-  // Host view: payout = total - seller fee (7%)
-  const sellerFee = Math.round(receipt.subtotal * 0.07 * 100) / 100
-  const hostPayout = receipt.payout_amount ?? Math.round((receipt.subtotal - sellerFee) * 100) / 100
+  // Stored values only — no re-derivation (lib/fees.ts)
+  const sellerFee = receipt.seller_fee
+  const hostPayout = receipt.payout_amount ?? Math.round((receipt.subtotal + receipt.print_fee - sellerFee) * 100) / 100
 
   return (
     <>
@@ -248,8 +251,14 @@ export default function ReceiptPage() {
                     <span style={{ color: '#888' }}>
                       {fmtMoney(receipt.price_per_day)} × {receipt.total_days} day{receipt.total_days !== 1 ? 's' : ''}
                     </span>
-                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtMoney(receipt.subtotal ?? receipt.price_per_day * receipt.total_days)}</span>
+                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtMoney(receipt.subtotal)}</span>
                   </div>
+                  {receipt.print_fee > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#888' }}>Print fee</span>
+                      <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtMoney(receipt.print_fee)}</span>
+                    </div>
+                  )}
                   {isHost ? (
                     <div className="flex justify-between text-sm">
                       <span style={{ color: '#888' }}>Seller fee (7%)</span>

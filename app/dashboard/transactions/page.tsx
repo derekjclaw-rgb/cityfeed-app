@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { getBookingFinancials } from '@/lib/fees'
 import {
   ArrowLeft, DollarSign, Loader2, Image as ImageIcon, Calendar,
   ChevronDown, ExternalLink,
@@ -19,9 +20,11 @@ interface TransactionRow {
   advertiser_name: string
   start_date: string
   end_date: string
-  total_price: number
+  subtotal: number
+  print_fee: number
   platform_fee: number
   host_payout: number
+  payout_at: string | null
   status: string
   end_date_raw: string
   num_days: number
@@ -47,11 +50,7 @@ function formatName(fullName: string | null | undefined): string {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`
 }
 
-function daysBetween(start: string, end: string): number {
-  const s = new Date(start + 'T00:00:00')
-  const e = new Date(end + 'T00:00:00')
-  return Math.max(1, Math.round((e.getTime() - s.getTime()) / 86400000) + 1)
-}
+
 
 function getPayoutStatus(bookingStatus: string, startDate: string, endDate: string): { label: string; isPaid: boolean; isCancelled: boolean } {
   const now = new Date()
@@ -70,12 +69,10 @@ function getPayoutStatus(bookingStatus: string, startDate: string, endDate: stri
   return { label: 'Pending', isPaid: false, isCancelled: false }
 }
 
-function getPayoutDate(bookingStatus: string, startDate: string, endDate: string): string | null {
-  const { isPaid } = getPayoutStatus(bookingStatus, startDate, endDate)
-  if (!isPaid || !endDate) return null
-  const payoutDate = new Date(endDate + 'T00:00:00')
-  payoutDate.setDate(payoutDate.getDate() + 3)
-  return payoutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+// Real payout date from the Stripe transfer timestamp — never an estimate.
+function getPayoutDate(t: TransactionRow): string | null {
+  if (!t.payout_at) return null
+  return new Date(t.payout_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 // ─── Status Pill ──────────────────────────────────────────────────────────────
@@ -131,16 +128,22 @@ function ReceiptPanel({ t, payoutStatus, payoutDate }: {
           {t.ref_code}
         </div>
 
-        {/* Line items */}
+        {/* Line items — stored itemized amounts (lib/fees.ts) */}
         <div className="space-y-2.5 mb-4">
           <div className="flex justify-between text-[13px]">
             <span style={{ color: 'var(--text-secondary, #888)' }}>
               Campaign ({t.num_days} {t.num_days === 1 ? 'day' : 'days'} × ${t.daily_rate.toFixed(2)}/day)
             </span>
             <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
-              ${t.total_price.toFixed(2)}
+              ${t.subtotal.toFixed(2)}
             </span>
           </div>
+          {t.print_fee > 0 && (
+            <div className="flex justify-between text-[13px]">
+              <span style={{ color: 'var(--text-secondary, #888)' }}>Print fee</span>
+              <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>${t.print_fee.toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-[13px]">
             <span style={{ color: 'var(--text-secondary, #888)' }}>Platform fee (7%)</span>
             <span style={{ color: 'var(--red, #E63946)' }}>−${t.platform_fee.toFixed(2)}</span>
@@ -210,7 +213,8 @@ export default function TransactionsPage() {
     const { data: bookings } = await supabase
       .from('bookings')
       .select(`
-        id, total_price, status, start_date, end_date,
+        id, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged,
+        payout_amount, payout_at, status, start_date, end_date,
         listings(title, images),
         profiles!bookings_advertiser_id_fkey(full_name)
       `)
@@ -220,10 +224,8 @@ export default function TransactionsPage() {
     if (bookings) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: TransactionRow[] = bookings.map((b: any) => {
-        const total = b.total_price || 0
-        const fee = Math.round(total * 7) / 100
-        const payout = Math.round((total - fee) * 100) / 100
-        const days = daysBetween(b.start_date, b.end_date)
+        // Single source of truth — stored itemized amounts (lib/fees.ts)
+        const fin = getBookingFinancials(b)
         return {
           id: b.id,
           ref_code: 'CF-' + b.id.replace(/-/g, '').substring(0, 6).toUpperCase(),
@@ -232,13 +234,15 @@ export default function TransactionsPage() {
           advertiser_name: formatName(b.profiles?.full_name),
           start_date: b.start_date,
           end_date: b.end_date,
-          total_price: total,
-          platform_fee: fee,
-          host_payout: payout,
+          subtotal: fin.subtotal,
+          print_fee: fin.printFee,
+          platform_fee: fin.sellerFee,
+          host_payout: fin.hostPayout,
+          payout_at: b.payout_at ?? null,
           status: b.status,
           end_date_raw: b.end_date,
-          num_days: days,
-          daily_rate: Math.round((total / days) * 100) / 100,
+          num_days: fin.days ?? 1,
+          daily_rate: fin.pricePerDay ?? 0,
         }
       })
       setTransactions(rows)
@@ -322,7 +326,7 @@ export default function TransactionsPage() {
           {/* Rows */}
           {transactions.map((t, i) => {
             const payoutStatus = getPayoutStatus(t.status, t.start_date, t.end_date_raw)
-            const payoutDate = getPayoutDate(t.status, t.start_date, t.end_date_raw)
+            const payoutDate = getPayoutDate(t)
             const isExpanded = expandedId === t.id
 
             return (

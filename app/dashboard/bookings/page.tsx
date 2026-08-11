@@ -12,6 +12,7 @@ import {
   CheckCircle, XCircle, Upload, Receipt, DollarSign, Clock
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
 
 /** Format a full name as 'First L.' for privacy */
 function formatNamePrivacy(fullName: string): string {
@@ -26,6 +27,10 @@ interface Booking {
   start_date: string
   end_date: string
   total_price: number
+  subtotal?: number | null
+  buyer_fee?: number | null
+  seller_fee?: number | null
+  print_fee_charged?: number | null
   payout_amount?: number
   created_at: string
   listing_id: string
@@ -152,7 +157,7 @@ export default function BookingsPage() {
       const { data } = await supabase
         .from('bookings')
         .select(`
-          id, status, start_date, end_date, total_price, payout_amount, created_at, listing_id,
+          id, status, start_date, end_date, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, created_at, listing_id,
           listings(title),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name),
           host:profiles!bookings_host_id_fkey(full_name)
@@ -166,6 +171,10 @@ export default function BookingsPage() {
         start_date: b.start_date as string,
         end_date: b.end_date as string,
         total_price: b.total_price as number,
+        subtotal: b.subtotal as number | null,
+        buyer_fee: b.buyer_fee as number | null,
+        seller_fee: b.seller_fee as number | null,
+        print_fee_charged: b.print_fee_charged as number | null,
         payout_amount: b.payout_amount as number | undefined,
         created_at: b.created_at as string,
         listing_id: b.listing_id as string,
@@ -379,8 +388,9 @@ export default function BookingsPage() {
   const active = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !isBookingExpired(b) && !['cancelled', 'disputed'].includes(b.status))
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
+  // Single source of truth — stored itemized amounts (lib/fees.ts)
   const totalEarnings = isHost
-    ? completed.reduce((sum, b) => sum + (b.payout_amount ?? b.total_price * 0.93), 0)
+    ? completed.reduce((sum, b) => sum + getBookingFinancials(b).hostPayout, 0)
     : 0
 
   return (
@@ -599,7 +609,7 @@ function BookingCard({
   const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
 
   const earnings = isHost && booking.status === 'completed'
-    ? (booking.payout_amount ?? booking.total_price * 0.93)
+    ? getBookingFinancials(booking).hostPayout
     : null
 
   function navigateToBooking(e: React.MouseEvent) {
@@ -637,9 +647,9 @@ function BookingCard({
       <div className="flex items-center gap-4 text-xs mt-3" style={{ color: '#888' }}>
         <span className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          {new Date(booking.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {formatBookingDate(booking.start_date, { month: 'short', day: 'numeric' })}
           {' — '}
-          {new Date(booking.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          {formatBookingDate(booking.end_date, { month: 'short', day: 'numeric', year: 'numeric' })}
         </span>
         <span className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
           ${booking.total_price?.toLocaleString()}

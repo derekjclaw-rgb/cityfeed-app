@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getBookingFinancials } from '@/lib/fees'
 import {
   Calendar, Camera, FilePlus, MessageSquare, Activity, Bookmark, CheckCircle2,
   ChevronRight, DollarSign, FileText, RotateCcw, Loader2,
@@ -296,7 +297,7 @@ function DashboardContent() {
       const { data: allBookings } = await supabase
         .from('bookings')
         .select(`
-          id, total_price, status, start_date, end_date, listing_id,
+          id, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, status, start_date, end_date, listing_id,
           listings(title, images),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
         `)
@@ -450,11 +451,8 @@ function DashboardContent() {
       // ── Financial summary ─────────────────────────────────────────────────
       const paidBookings = bookings.filter(b => ['confirmed', 'active', 'completed'].includes(b.status))
       if (isHost) {
-        // Host earnings: total_price minus 7% seller fee
-        const earned = paidBookings.reduce((sum, b) => {
-          const payout = Math.round((b.total_price || 0) * 0.93)
-          return sum + payout
-        }, 0)
+        // Host earnings — single source of truth (lib/fees.ts)
+        const earned = paidBookings.reduce((sum, b) => sum + getBookingFinancials(b).hostPayout, 0)
         setTotalEarned(Math.round(earned))
         setHostBookingCount(paidBookings.length)
         setAvgPerListing(paidBookings.length > 0 ? Math.round(earned / paidBookings.length) : 0)

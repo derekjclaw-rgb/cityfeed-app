@@ -783,7 +783,7 @@ export default function EditListingPage() {
                 ))}
               </div>
             </FormField>
-            <FormField label="Preferred dimensions" hint="Width × height + units">
+            <FormField label="Required dimensions" hint="Width × height + units">
               <div className="flex items-center gap-2">
                 <input
                   type="number"

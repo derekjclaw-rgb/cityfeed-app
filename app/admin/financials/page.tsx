@@ -59,8 +59,8 @@ export default function AdminFinancialsPage() {
     const totalGross = nonCancelled.reduce((s, b) => s + (b.total_price ?? 0), 0)
     const totalPayouts = completed.reduce((s, b) => s + (b.payout_amount ?? 0), 0)
     const completedOnly = nonCancelled.filter(b => b.payout_amount != null)
-    const platformRevenue = completedOnly.reduce((s, b) => s + calcFinancials(b.total_price, b.payout_amount).platformTake, 0)
-    const totalStripeFees = nonCancelled.reduce((s, b) => s + calcFinancials(b.total_price).stripeFeeEstimate, 0)
+    const platformRevenue = completedOnly.reduce((s, b) => s + calcFinancials(b).platformTake, 0)
+    const totalStripeFees = nonCancelled.reduce((s, b) => s + calcFinancials(b).stripeFeeEstimate, 0)
     const netProfit = platformRevenue - totalStripeFees
 
     // This month (always from all bookings regardless of filter)
@@ -70,7 +70,7 @@ export default function AdminFinancialsPage() {
     const monthCompleted = allBookings.filter(b => b.created_at.split('T')[0] >= monthStart && b.status === 'completed')
     const monthGross = monthNonCancelled.reduce((s, b) => s + (b.total_price ?? 0), 0)
     const monthPayouts = monthCompleted.reduce((s, b) => s + (b.payout_amount ?? 0), 0)
-    const monthStripeFees = monthNonCancelled.reduce((s, b) => s + calcFinancials(b.total_price).stripeFeeEstimate, 0)
+    const monthStripeFees = monthNonCancelled.reduce((s, b) => s + calcFinancials(b).stripeFeeEstimate, 0)
     const monthNetProfit = (monthGross - monthPayouts) - monthStripeFees
 
     return { totalGross, totalPayouts, platformRevenue, totalStripeFees, netProfit, monthGross, monthPayouts, monthStripeFees, monthNetProfit }
@@ -80,7 +80,7 @@ export default function AdminFinancialsPage() {
     const nonCancelled = bookings.filter(b => b.status !== 'cancelled')
     let runningTotal = 0
     return nonCancelled.map(b => {
-      const fin = calcFinancials(b.total_price, b.payout_amount)
+      const fin = calcFinancials(b)
       runningTotal += fin.platformTake
       return { ...b, fin, runningTotal }
     })

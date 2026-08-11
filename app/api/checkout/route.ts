@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { computeBookingFinancials } from '@/lib/fees'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
@@ -19,20 +20,13 @@ export async function POST(req: NextRequest) {
     // Check if this is a mock listing (simple numeric ID vs UUID)
     const isMockListing = /^\d+$/.test(listingId)
 
-    // Calculate fees up front
-    // subtotal = days * pricePerDay (base cost before buyer fee)
-    // buyer fee = 7% of subtotal (charged to advertiser on top of subtotal)
-    // seller fee = 7% of subtotal (deducted from host payout)
-    // City Feed keeps both fees via Stripe Connect application_fee_amount
-    const subtotal = days * pricePerDay
-    const buyerFee = Math.round(subtotal * 0.07 * 100) / 100
-    const sellerFee = Math.round(subtotal * 0.07 * 100) / 100
-    const platformFee = Math.round((buyerFee + sellerFee) * 100) / 100
+    // Fee model (see lib/fees.ts): 7% buyer + 7% seller fee, both on
+    // (subtotal + print fee). Computed ONCE here, stored on the booking,
+    // and read everywhere else. City Feed holds funds in escrow until POP.
+    let fin = computeBookingFinancials(pricePerDay, days, host_prints && print_fee ? Number(print_fee) : 0)
 
     let hostId: string | null = null
     let buyNowEnabled = false
-    let verifiedTotal = total // default to client total; overridden for real listings
-    let verifiedPlatformFee = platformFee
 
     if (!isMockListing) {
       // Check date availability BEFORE creating the Stripe session (prevents phantom blocked dates)
@@ -59,25 +53,19 @@ export async function POST(req: NextRequest) {
       hostId = listing?.host_id ?? null
       buyNowEnabled = listing?.buy_now_enabled ?? false
 
-      // SERVER-SIDE PRICE VALIDATION — never trust client-provided total
-      // Recalculate from the listing's actual price_per_day in the database
+      // SERVER-SIDE PRICE VALIDATION — never trust client-provided numbers.
+      // Recompute everything from the listing's actual DB values.
       if (listing?.price_per_day != null) {
-        const serverSubtotal = days * listing.price_per_day
         const wantsHostPrint = !!host_prints
         const serverPrintFee = (wantsHostPrint && listing.offers_printing && listing.print_fee) ? Number(listing.print_fee) : 0
-        const serverBuyerFee = Math.round(serverSubtotal * 0.07 * 100) / 100
-        const serverSellerFee = Math.round(serverSubtotal * 0.07 * 100) / 100
-        verifiedTotal = Math.round((serverSubtotal + serverPrintFee + serverBuyerFee) * 100) / 100
-        verifiedPlatformFee = Math.round((serverBuyerFee + serverSellerFee) * 100) / 100
+        fin = computeBookingFinancials(Number(listing.price_per_day), days, serverPrintFee)
       }
 
       // Note: host's Stripe account is not needed at checkout time (escrow model)
       // Payout happens later via /api/stripe/payout after POP upload
     }
 
-    // If host_prints requested, record the print fee from client (already included in total)
     const hostPrintsRequested = !!host_prints
-    const printFeeCharged = hostPrintsRequested && print_fee ? Number(print_fee) : 0
 
     // Truncate listing title to stay within Stripe metadata 500-char-per-value limit
     const safeTitleForMeta = (listingTitle ?? '').slice(0, 490)
@@ -95,7 +83,7 @@ export async function POST(req: NextRequest) {
               name: listingTitle,
               description: `Ad placement booking: ${startDate} → ${endDate} (${days} days)`,
             },
-            unit_amount: Math.round(verifiedTotal * 100), // cents — server-validated total
+            unit_amount: Math.round(fin.advertiserTotal * 100), // cents — server-computed total
           },
           quantity: 1,
         },
@@ -114,13 +102,16 @@ export async function POST(req: NextRequest) {
         end_date: endDate,
         days: String(days),
         price_per_day: String(pricePerDay),
-        total: String(verifiedTotal),
-        platform_fee: String(verifiedPlatformFee),
+        total: String(fin.advertiserTotal),
+        platform_fee: String(fin.platformRevenue),
+        subtotal: String(fin.subtotal),
+        buyer_fee: String(fin.buyerFee),
+        seller_fee: String(fin.sellerFee),
         buy_now_enabled: String(buyNowEnabled),
         listing_title: safeTitleForMeta,
         is_mock: String(isMockListing),
         host_prints: String(hostPrintsRequested),
-        print_fee: String(printFeeCharged),
+        print_fee: String(fin.printFee),
       },
     })
 

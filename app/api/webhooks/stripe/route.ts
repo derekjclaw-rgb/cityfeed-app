@@ -98,6 +98,9 @@ async function handleEvent(event: Stripe.Event) {
       end_date: endDate,
       total,
       platform_fee: platformFee,
+      subtotal: subtotalStr,
+      buyer_fee: buyerFeeStr,
+      seller_fee: sellerFeeStr,
       buy_now_enabled: buyNowEnabledStr,
       is_mock: isMockStr,
       host_prints: hostPrintsStr,
@@ -151,6 +154,9 @@ async function handleEvent(event: Stripe.Event) {
 
     const hostPrintsVal = hostPrintsStr === 'true'
     const printFeeVal = parseFloat(printFeeStr ?? '0') || 0
+    const subtotalVal = parseFloat(subtotalStr ?? '') 
+    const buyerFeeVal = parseFloat(buyerFeeStr ?? '')
+    const sellerFeeVal = parseFloat(sellerFeeStr ?? '')
 
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
@@ -162,6 +168,10 @@ async function handleEvent(event: Stripe.Event) {
         end_date: endDate,
         total_price: parseFloat(total),
         platform_fee: parseFloat(platformFee ?? '0'),
+        // Itemized amounts — single source of truth (see lib/fees.ts)
+        subtotal: Number.isFinite(subtotalVal) ? subtotalVal : null,
+        buyer_fee: Number.isFinite(buyerFeeVal) ? buyerFeeVal : null,
+        seller_fee: Number.isFinite(sellerFeeVal) ? sellerFeeVal : null,
         status: initialStatus,
         stripe_payment_intent_id: paymentIntentId || null,
         // Print / shipping fields

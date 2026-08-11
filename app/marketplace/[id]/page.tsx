@@ -194,7 +194,7 @@ function PhotoCarousel({ images, title, listingId }: PhotoCarouselProps) {
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-90"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full hidden md:flex items-center justify-center transition-opacity hover:opacity-90"
               style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
               aria-label="Previous photo"
             >
@@ -202,7 +202,7 @@ function PhotoCarousel({ images, title, listingId }: PhotoCarouselProps) {
             </button>
             <button
               onClick={next}
-              className="absolute right-14 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-90"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full hidden md:flex items-center justify-center transition-opacity hover:opacity-90"
               style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
               aria-label="Next photo"
             >
@@ -878,7 +878,7 @@ export default function ListingDetailPage() {
                   )}
                   {listing.creative_specs.dimensions && (
                     <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
-                      <span style={{ color: '#888' }}>Preferred dimensions</span>
+                      <span style={{ color: '#888' }}>Required dimensions</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.dimensions}</span>
                     </div>
                   )}

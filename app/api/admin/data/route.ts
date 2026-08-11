@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       case 'dashboard': {
         const [bookingsRes, usersRes, listingsRes] = await Promise.all([
           supabase.from('bookings').select(`
-            id, status, total_price, payout_amount, created_at, start_date, end_date,
+            id, status, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, created_at, start_date, end_date,
             listings(title),
             advertiser:profiles!bookings_advertiser_id_fkey(full_name),
             host:profiles!bookings_host_id_fkey(full_name)
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
         const { data } = await supabase
           .from('bookings')
           .select(`
-            id, status, total_price, payout_amount, created_at, start_date, end_date,
+            id, status, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, created_at, start_date, end_date,
             listings(title),
             advertiser:profiles!bookings_advertiser_id_fkey(full_name),
             host:profiles!bookings_host_id_fkey(full_name)
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
         const { data } = await supabase
           .from('bookings')
           .select(`
-            id, status, total_price, platform_fee, payout_amount, payout_at,
+            id, status, total_price, platform_fee, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, payout_at,
             stripe_transfer_id, stripe_payment_intent_id, created_at,
             start_date, end_date, delivery_mode, shipped_at, received_at, tracking_number,
             listing_id, advertiser_id, host_id,
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
         const { data } = await supabase
           .from('bookings')
           .select(`
-            id, status, total_price, payout_amount, created_at, start_date, end_date,
+            id, status, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, created_at, start_date, end_date,
             listings(title),
             advertiser:profiles!bookings_advertiser_id_fkey(full_name),
             host:profiles!bookings_host_id_fkey(full_name)

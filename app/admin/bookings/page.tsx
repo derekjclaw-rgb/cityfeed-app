@@ -114,7 +114,7 @@ export default function AdminBookingsPage() {
           </thead>
           <tbody>
             {filtered.map(b => {
-              const fin = calcFinancials(b.total_price, b.payout_amount)
+              const fin = calcFinancials(b)
               return (
                 <tr key={b.id} className="border-t hover:bg-white/5" style={{ borderColor: '#3a3a3a' }}>
                   <td className="px-4 py-3">

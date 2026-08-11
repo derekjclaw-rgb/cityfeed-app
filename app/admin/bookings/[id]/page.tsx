@@ -65,7 +65,7 @@ export default function AdminBookingDetailPage() {
     return <div className="text-center py-20" style={{ color: '#888' }}>Booking not found</div>
   }
 
-  const fin = calcFinancials(booking.total_price, booking.payout_amount)
+  const fin = calcFinancials(booking)
   const stripeDashUrl = 'https://dashboard.stripe.com'
 
   const timeline: { label: string; date: string; color: string }[] = [
