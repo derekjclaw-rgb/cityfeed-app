@@ -8,37 +8,10 @@ import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from './marketplace/page'
 import type { Listing } from './marketplace/page'
 import DateRangePicker from '@/components/DateRangePicker'
+import { getCategoryLabel, CATEGORY_OPTIONS } from '@/lib/design'
 
-const CATEGORIES = [
-  'All Types',
-  'Digital Billboard',
-  'Static Billboard',
-  'Transit',
-  'Outdoor Static',
-  'Outdoor Digital',
-  'Display On-Premise',
-  'Event-Based',
-  'Human-Based',
-  'Experiential',
-  'Street Furniture',
-  'Unique',
-  'Other',
-]
-
-const CATEGORY_MAP: Record<string, string> = {
-  digital_billboards: 'Digital Billboard',
-  static_billboards: 'Static Billboard',
-  transit: 'Transit',
-  outdoor_static: 'Outdoor Static',
-  outdoor_digital: 'Outdoor Digital',
-  display_on_premise: 'Display On-Premise',
-  event_based: 'Event-Based',
-  human_based: 'Human-Based',
-  experiential: 'Experiential',
-  street_furniture: 'Street Furniture',
-  unique: 'Unique',
-  other: 'Other',
-}
+// Derive homepage category dropdown from shared constant
+const CATEGORIES = ['All Types', ...CATEGORY_OPTIONS.map(c => c.label)]
 
 const GRADIENT_POOL = [
   'from-purple-100 to-purple-200',
@@ -329,7 +302,7 @@ export default function HomePage() {
             data.map((row, i) => ({
               id: row.id,
               title: row.title,
-              category: CATEGORY_MAP[row.category] ?? row.category,
+              category: getCategoryLabel(row.category),
               city: row.city ?? '',
               state: row.state ?? '',
               price_per_day: row.price_per_day ?? 0,

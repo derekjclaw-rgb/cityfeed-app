@@ -17,6 +17,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import FavoriteButton from '@/components/FavoriteButton'
 import { SHOW_MOCK_DATA } from '@/lib/constants'
+import { CATEGORY_LABELS, getCategoryLabel, CATEGORY_OPTIONS } from '@/lib/design'
 
 // We alias Star as StarIcon to use as a component in the category list without conflict
 const StarIcon = Star
@@ -69,48 +70,18 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGEl
   'Indoor Static': Frame,
   'Street Furniture': Lamp,
   'Unique': StarIcon,
+  'Billboard': Image,
+  'Storefront': Store,
+  'Window Display': Frame,
+  'Vehicle Wrap': Bus,
   'Other': MoreHorizontal,
 }
 
+// Derive marketplace filter from shared CATEGORY_OPTIONS (all 18 active categories)
 const CATEGORIES = [
   { value: 'all', label: 'All types' },
-  { value: 'Digital Billboard', label: 'Digital Billboard' },
-  { value: 'Static Billboard', label: 'Static Billboard' },
-  { value: 'Transit', label: 'Transit' },
-  { value: 'Outdoor Static', label: 'Outdoor Static' },
-  { value: 'Outdoor Digital', label: 'Outdoor Digital' },
-  { value: 'Display On-Premise', label: 'Display On-Premise' },
-  { value: 'Event-Based', label: 'Event-Based' },
-  { value: 'Human-Based', label: 'Human-Based' },
-  { value: 'Experiential', label: 'Experiential' },
-  { value: 'Indoor Digital', label: 'Indoor Digital' },
-  { value: 'Indoor Static', label: 'Indoor Static' },
-  { value: 'Street Furniture', label: 'Street Furniture' },
-  { value: 'Unique', label: 'Unique' },
-  { value: 'Other', label: 'Other' },
+  ...CATEGORY_OPTIONS.map(c => ({ value: c.label, label: c.label })),
 ]
-
-const CATEGORY_MAP: Record<string, string> = {
-  billboard: 'Billboard',
-  digital_screen: 'Digital Screen',
-  window: 'Window',
-  storefront: 'Storefront',
-  vehicle_wrap: 'Vehicle Wrap',
-  digital_billboards: 'Digital Billboard',
-  static_billboards: 'Static Billboard',
-  transit: 'Transit',
-  outdoor_static: 'Outdoor Static',
-  outdoor_digital: 'Outdoor Digital',
-  display_on_premise: 'Display On-Premise',
-  event_based: 'Event-Based',
-  human_based: 'Human-Based',
-  experiential: 'Experiential',
-  indoor_digital: 'Indoor Digital',
-  indoor_static: 'Indoor Static',
-  street_furniture: 'Street Furniture',
-  unique: 'Unique',
-  other: 'Other',
-}
 
 const GRADIENT_POOL = [
   'from-purple-100 to-purple-200',
@@ -130,7 +101,7 @@ function normalizeDbListing(row: Record<string, any>, index: number): Listing {
   return {
     id: row.id,
     title: row.title,
-    category: CATEGORY_MAP[row.category] ?? row.category,
+    category: getCategoryLabel(row.category),
     city: row.city ?? '',
     state: row.state ?? '',
     price_per_day: row.price_per_day ?? 0,
@@ -436,7 +407,7 @@ export default function MarketplacePage() {
 
       if (selectedCategory !== 'all') {
         // Map display category back to db value
-        const dbCategory = Object.entries(CATEGORY_MAP).find(([, v]) => v === selectedCategory)?.[0]
+        const dbCategory = Object.entries(CATEGORY_LABELS).find(([, v]) => v === selectedCategory)?.[0]
         if (dbCategory) query = query.eq('category', dbCategory)
       }
 

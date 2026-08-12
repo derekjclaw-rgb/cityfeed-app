@@ -1616,8 +1616,8 @@ export default function BookingDetailPage() {
             )}
           </div>
 
-          {/* Delivery instructions */}
-          {listing?.delivery_instructions && (
+          {/* Delivery instructions — hidden when host is printing (nothing physical ships) */}
+          {listing?.delivery_instructions && booking?.delivery_mode !== 'host_prints' && !booking?.host_prints && (
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div className="flex items-center gap-2 mb-3">
                 <Package className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />

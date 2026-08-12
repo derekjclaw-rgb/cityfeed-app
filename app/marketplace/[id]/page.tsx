@@ -15,21 +15,7 @@ import { MOCK_LISTINGS } from '../page'
 import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicker'
 import FavoriteButton from '@/components/FavoriteButton'
 import { formatNamePublic } from '@/lib/utils'
-
-const CATEGORY_MAP: Record<string, string> = {
-  digital_billboards: 'Digital Billboard',
-  static_billboards: 'Static Billboard',
-  transit: 'Transit',
-  outdoor_static: 'Outdoor Static',
-  outdoor_digital: 'Outdoor Digital',
-  display_on_premise: 'Display On-Premise',
-  event_based: 'Event-Based',
-  human_based: 'Human-Based',
-  experiential: 'Experiential',
-  street_furniture: 'Street Furniture',
-  unique: 'Unique',
-  other: 'Other',
-}
+import { getCategoryLabel } from '@/lib/design'
 
 const GRADIENT_POOL = [
   'from-purple-100 to-purple-200',
@@ -624,7 +610,7 @@ export default function ListingDetailPage() {
           id: row.id,
           title: row.title,
           description: row.description ?? '',
-          category: CATEGORY_MAP[row.category] ?? row.category,
+          category: getCategoryLabel(row.category),
           city: row.city ?? '',
           state: row.state ?? '',
           address: row.address,

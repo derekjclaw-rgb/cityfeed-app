@@ -24,27 +24,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Upload, Loader2, CheckCircle, X, AlertCircle, ImageIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-
-const CATEGORIES = [
-  { value: 'digital_billboards', label: 'Digital Billboard' },
-  { value: 'static_billboards', label: 'Static Billboard' },
-  { value: 'billboard', label: 'Billboard' },
-  { value: 'transit', label: 'Transit' },
-  { value: 'outdoor_static', label: 'Outdoor Static' },
-  { value: 'outdoor_digital', label: 'Outdoor Digital' },
-  { value: 'display_on_premise', label: 'Display On-Premise' },
-  { value: 'storefront', label: 'Storefront' },
-  { value: 'window', label: 'Window Display' },
-  { value: 'vehicle_wrap', label: 'Vehicle Wrap' },
-  { value: 'event_based', label: 'Event-Based' },
-  { value: 'human_based', label: 'Human-Based' },
-  { value: 'experiential', label: 'Experiential' },
-  { value: 'indoor_digital', label: 'Indoor Digital' },
-  { value: 'indoor_static', label: 'Indoor Static' },
-  { value: 'street_furniture', label: 'Street Furniture' },
-  { value: 'unique', label: 'Unique' },
-  { value: 'other', label: 'Other' },
-]
+import { CATEGORY_OPTIONS as CATEGORIES } from '@/lib/design'
 
 const STATIC_CATEGORIES = [
   'outdoor_static',

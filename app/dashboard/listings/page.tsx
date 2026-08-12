@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { Plus, MapPin, Edit2, Trash2, Loader2, Eye, AlertCircle, MoreVertical, CalendarOff, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AvailabilityManager from '@/components/AvailabilityManager'
+import { getCategoryLabel } from '@/lib/design'
 
 interface Listing {
   id: string
@@ -47,27 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: 'Rejected',
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  digital_billboards: 'Digital Billboard',
-  static_billboards: 'Static Billboard',
-  transit: 'Transit',
-  outdoor_static: 'Outdoor Static',
-  outdoor_digital: 'Outdoor Digital',
-  display_on_premise: 'Display On-Premise',
-  event_based: 'Event-Based',
-  human_based: 'Human-Based',
-  experiential: 'Experiential',
-  street_furniture: 'Street Furniture',
-  unique: 'Unique',
-  // legacy
-  billboard: 'Billboard',
-  digital_screen: 'Digital Screen',
-  window: 'Window Wrap',
-  storefront: 'Storefront',
-  vehicle_wrap: 'Vehicle Wrap',
-  event_space: 'Event Space',
-  other: 'Other',
-}
+// Category labels imported from shared design constants
 
 export default function MyListingsPage() {
   const router = useRouter()
@@ -352,7 +333,7 @@ export default function MyListingsPage() {
                     <MapPin className="w-3 h-3" />
                     {listing.city}, {listing.state}
                     <span className="mx-1">·</span>
-                    {CATEGORY_LABELS[listing.category] ?? listing.category}
+                    {getCategoryLabel(listing.category)}
                   </div>
 
                   <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid #f0f0ec' }}>

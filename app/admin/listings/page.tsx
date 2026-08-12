@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Loader2, Search } from 'lucide-react'
 import StatusBadge from '@/components/admin/StatusBadge'
 import { formatCurrency, formatDate } from '@/lib/admin-finance'
+import { getCategoryLabel } from '@/lib/design'
 
 interface Listing {
   id: string
@@ -135,7 +136,7 @@ export default function AdminListingsPage() {
                   <Link href={`/marketplace/${l.id}`} className="text-white hover:underline max-w-[200px] truncate block">{l.title}</Link>
                 </td>
                 <td className="px-4 py-3" style={{ color: '#ccc' }}>{l.host?.full_name ?? '—'}</td>
-                <td className="px-4 py-3" style={{ color: '#aaa' }}>{l.category}</td>
+                <td className="px-4 py-3" style={{ color: '#aaa' }}>{getCategoryLabel(l.category)}</td>
                 <td className="px-4 py-3 text-white">{formatCurrency(l.price_per_day)}</td>
                 <td className="px-4 py-3"><StatusBadge status={l.status} /></td>
                 <td className="px-4 py-3" style={{ color: '#aaa' }}>{l.city}{l.state ? `, ${l.state}` : ''}</td>

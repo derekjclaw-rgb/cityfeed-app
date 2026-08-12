@@ -96,9 +96,11 @@ export const colors = {
 
 // ─── Category Labels ────────────────────────────────────────────────────────────
 
+/** Canonical raw-value → display-label map for all listing categories */
 export const CATEGORY_LABELS: Record<string, string> = {
   digital_billboards: 'Digital Billboard',
   static_billboards: 'Static Billboard',
+  billboard: 'Billboard',
   transit: 'Transit',
   outdoor_static: 'Outdoor Static',
   outdoor_digital: 'Outdoor Digital',
@@ -106,17 +108,45 @@ export const CATEGORY_LABELS: Record<string, string> = {
   event_based: 'Event-Based',
   human_based: 'Human-Based',
   experiential: 'Experiential',
+  indoor_digital: 'Indoor Digital',
+  indoor_static: 'Indoor Static',
   street_furniture: 'Street Furniture',
   unique: 'Unique',
-  // Legacy categories
-  billboard: 'Billboard',
-  digital_screen: 'Digital Screen',
-  window: 'Window Wrap',
   storefront: 'Storefront',
+  window: 'Window Display',
   vehicle_wrap: 'Vehicle Wrap',
-  event_space: 'Event Space',
   other: 'Other',
+  // Legacy (no longer in create forms but may exist in DB)
+  digital_screen: 'Digital Screen',
+  event_space: 'Event Space',
 }
+
+/** Get human-readable label for a category value. Falls back to title-casing the raw value. */
+export function getCategoryLabel(raw: string): string {
+  return CATEGORY_LABELS[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+/** Active category options for forms and filters (value = raw DB key, label = display) */
+export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'digital_billboards', label: 'Digital Billboard' },
+  { value: 'static_billboards', label: 'Static Billboard' },
+  { value: 'billboard', label: 'Billboard' },
+  { value: 'transit', label: 'Transit' },
+  { value: 'outdoor_static', label: 'Outdoor Static' },
+  { value: 'outdoor_digital', label: 'Outdoor Digital' },
+  { value: 'display_on_premise', label: 'Display On-Premise' },
+  { value: 'event_based', label: 'Event-Based' },
+  { value: 'human_based', label: 'Human-Based' },
+  { value: 'experiential', label: 'Experiential' },
+  { value: 'indoor_digital', label: 'Indoor Digital' },
+  { value: 'indoor_static', label: 'Indoor Static' },
+  { value: 'street_furniture', label: 'Street Furniture' },
+  { value: 'unique', label: 'Unique' },
+  { value: 'storefront', label: 'Storefront' },
+  { value: 'window', label: 'Window Display' },
+  { value: 'vehicle_wrap', label: 'Vehicle Wrap' },
+  { value: 'other', label: 'Other' },
+]
 
 // ─── Notification Icons ─────────────────────────────────────────────────────────
 

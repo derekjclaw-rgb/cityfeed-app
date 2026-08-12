@@ -267,12 +267,12 @@ function SuccessPageInner() {
             <div className="flex gap-3 justify-center">
               {resolvedBookingId ? (
                 <Link
-                  href={isPending ? '/dashboard/bookings' : `/dashboard/bookings/${resolvedBookingId}`}
+                  href={`/dashboard/bookings/${resolvedBookingId}`}
                   className="flex items-center gap-2 font-semibold px-5 py-3 rounded-xl hover:opacity-90 text-sm"
                   style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
                 >
                   {isPending ? null : <Upload className="w-4 h-4" />}
-                  {isPending ? 'View Bookings' : 'Upload Creative'}
+                  {isPending ? 'View Booking' : 'Upload Creative'}
                 </Link>
               ) : (
                 <Link
