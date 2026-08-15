@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, ClipboardList, Loader2, MessageSquare, Star, ExternalLink,
-  CheckCircle, XCircle, Upload, Receipt, DollarSign, Clock
+  CheckCircle, XCircle, Upload, Receipt, DollarSign, Clock, Zap
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
@@ -83,6 +83,29 @@ function confirmationCode(bookingId: string): string {
   return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
 }
 
+/** Human timeline line — "Starts in 2 days", "Ends in 3 days", "Wrapped Aug 13" */
+function humanTimeline(b: Booking): string {
+  if (['cancelled', 'disputed', 'pending_payment'].includes(b.status)) return ''
+  const now = new Date()
+  const start = b.start_date ? new Date(b.start_date + 'T00:00:00') : null
+  const end = b.end_date ? new Date(b.end_date + 'T23:59:59') : null
+  const endDay = b.end_date ? new Date(b.end_date + 'T00:00:00') : null
+  const daysUntil = (d: Date) => Math.ceil((d.getTime() - now.getTime()) / 86400000)
+
+  if (b.status === 'completed' && end && now > end) {
+    return `Wrapped ${formatBookingDate(b.end_date, { month: 'short', day: 'numeric' })}`
+  }
+  if (start && end && now >= start && now <= end && ['confirmed', 'active', 'completed', 'pop_pending', 'pop_review'].includes(b.status)) {
+    const d = endDay ? daysUntil(endDay) : 0
+    return d <= 0 ? 'Ends today' : `Ends in ${d} day${d === 1 ? '' : 's'}`
+  }
+  if (start && now < start) {
+    const d = daysUntil(start)
+    return d <= 0 ? 'Starts today' : `Starts in ${d} day${d === 1 ? '' : 's'}`
+  }
+  return ''
+}
+
 function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string, hasCreative?: boolean): { label: string; emoji: string; bg: string; text: string } {
   const now = new Date()
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
@@ -128,6 +151,8 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true)
   const [isHost, setIsHost] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'all' | 'action' | 'live' | 'upcoming' | 'completed' | 'cancelled'>('all')
+  const [creativeMap, setCreativeMap] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const supabase = createClient()
@@ -187,6 +212,21 @@ export default function BookingsPage() {
 
       setBookings(mapped)
       setLoading(false)
+
+      // Fetch creative presence for bookings where it drives action state / labels
+      // (non-blocking — tiles/cards update when it resolves)
+      const checkIds = mapped.filter(b => ['confirmed', 'active'].includes(b.status)).map(b => b.id)
+      if (checkIds.length > 0) {
+        Promise.all(checkIds.map(async id => {
+          try {
+            const r = await fetch(`/api/collateral/list?bookingId=${id}`)
+            const j = await r.json()
+            return [id, !!(j.files && j.files.length > 0)] as const
+          } catch {
+            return [id, false] as const
+          }
+        })).then(entries => setCreativeMap(Object.fromEntries(entries)))
+      }
     }
 
     load()
@@ -386,13 +426,53 @@ export default function BookingsPage() {
   const confirmed = bookings.filter(b => !isBookingLive(b) && isBookingConfirmed(b))
   const completed = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && isBookingComplete(b))
   const expired = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && isBookingExpired(b))
-  const active = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !isBookingExpired(b) && !['cancelled', 'disputed'].includes(b.status))
+  const inProgress = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !isBookingExpired(b) && !['cancelled', 'disputed'].includes(b.status))
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
-  // Single source of truth — stored itemized amounts (lib/fees.ts)
-  const totalEarnings = isHost
-    ? completed.reduce((sum, b) => sum + getBookingFinancials(b).hostPayout, 0)
-    : 0
+  // ── Needs Action — role-aware "what do YOU owe right now" ──────────────────
+  const needsAction = bookings.filter(b => {
+    if (['cancelled', 'disputed'].includes(b.status)) return false
+    if (isBookingExpired(b)) return false
+    if (isHost) {
+      // Requests waiting on your accept/decline
+      if (b.status === 'pending') return true
+      // Campaign window open, creative in hand, POP not submitted → post the ad
+      if (['confirmed', 'active'].includes(b.status) && isBookingLive(b) && (creativeMap[b.id] ?? false)) return true
+      return false
+    }
+    // Advertiser: creative not uploaded yet on an accepted booking
+    if (['confirmed', 'active'].includes(b.status) && !(creativeMap[b.id] ?? false)) return true
+    // POP submitted — review window open
+    if (['pop_pending', 'pop_review'].includes(b.status)) return true
+    return false
+  })
+  const naIds = new Set(needsAction.map(b => b.id))
+
+  const filterLists: Record<string, Booking[]> = {
+    action: needsAction,
+    live,
+    upcoming: confirmed,
+    completed,
+    cancelled,
+  }
+  const FILTER_TITLES: Record<string, string> = {
+    action: 'Needs Action',
+    live: 'Live',
+    upcoming: 'Upcoming',
+    completed: 'Completed',
+    cancelled: 'Cancelled / Disputed',
+  }
+  const EMPTY_COPY: Record<string, { title: string; body: string }> = {
+    action: { title: "You're all caught up", body: 'Nothing needs your attention right now.' },
+    live: isHost
+      ? { title: 'No campaigns live yet', body: 'Share your listing to land your next booking.' }
+      : { title: 'No live campaigns', body: 'Your next campaign is one booking away.' },
+    upcoming: isHost
+      ? { title: 'Nothing scheduled yet', body: 'Confirmed bookings will appear here before they go live.' }
+      : { title: 'Nothing scheduled yet', body: 'Book a placement and it will appear here before it goes live.' },
+    completed: { title: 'No completed campaigns yet', body: 'Wrapped campaigns and receipts will live here.' },
+    cancelled: { title: 'No cancelled bookings', body: 'Nothing here — that\u2019s a good thing.' },
+  }
 
   return (
     <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12" style={{ backgroundColor: 'var(--cream, #f0f0ec)' }}>
@@ -412,19 +492,40 @@ export default function BookingsPage() {
           </div>
         </div>
 
-        {/* Host earnings summary */}
-        {isHost && completed.length > 0 && (
-          <div className="rounded-2xl p-5 mb-6 flex items-center gap-4"
-            style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <div className="p-3 rounded-xl" style={{ backgroundColor: '#f0fdf4' }}>
-              <DollarSign className="w-6 h-6" style={{ color: '#16a34a' }} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
-                ${totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="text-sm" style={{ color: '#888' }}>Total earnings from {completed.length} completed booking{completed.length !== 1 ? 's' : ''}</p>
-            </div>
+        {/* Command Center tiles — stat counts that double as filters */}
+        {bookings.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {([
+              { key: 'action', label: 'Needs Action', count: needsAction.length },
+              { key: 'live', label: 'Live', count: live.length },
+              { key: 'upcoming', label: 'Upcoming', count: confirmed.length },
+              { key: 'completed', label: 'Completed', count: completed.length },
+            ] as const).map(t => {
+              const selected = filter === t.key
+              const hot = t.key === 'action' && t.count > 0
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setFilter(selected ? 'all' : t.key)}
+                  className="rounded-2xl p-4 text-left transition-all hover:shadow-md"
+                  style={{
+                    backgroundColor: hot ? 'var(--gold-light, #f5edda)' : '#fff',
+                    border: selected
+                      ? `2px solid ${hot ? 'var(--gold, #debb73)' : 'var(--mint, #7ecfc0)'}`
+                      : `1px solid ${hot ? 'var(--gold, #debb73)' : 'var(--border, #e0e0d8)'}`,
+                    boxShadow: hot ? '0 2px 12px rgba(222,187,115,0.35)' : '0 1px 4px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-2xl font-bold" style={{ color: hot ? 'var(--gold-dark, #c9a54e)' : 'var(--charcoal, #2b2b2b)' }}>{t.count}</p>
+                    {t.key === 'live' && t.count > 0 && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />}
+                    {hot && <Zap className="w-4 h-4" style={{ color: 'var(--gold-dark, #c9a54e)' }} />}
+                  </div>
+                  <p className="text-xs font-semibold mt-1" style={{ color: hot ? 'var(--gold-dark, #c9a54e)' : '#888' }}>{t.label}</p>
+                </button>
+              )
+            })}
           </div>
         )}
 
@@ -447,127 +548,95 @@ export default function BookingsPage() {
               {isHost ? 'Create a Listing' : 'Browse Marketplace'}
             </Link>
           </div>
+        ) : filter !== 'all' ? (
+          (() => {
+            const list = filterLists[filter] ?? []
+            const empty = EMPTY_COPY[filter]
+            return (
+              <section>
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <h2 className="text-sm font-semibold" style={{ color: '#555' }}>
+                    {FILTER_TITLES[filter]} ({list.length})
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setFilter('all')}
+                    className="text-xs hover:underline underline-offset-2"
+                    style={{ color: '#888' }}
+                  >
+                    ← All bookings
+                  </button>
+                </div>
+                {list.length === 0 ? (
+                  <div className="rounded-2xl p-10 text-center" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                    {filter === 'action' ? (
+                      <CheckCircle className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--mint, #7ecfc0)' }} />
+                    ) : (
+                      <ClipboardList className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--border, #e0e0d8)' }} />
+                    )}
+                    <p className="text-sm font-semibold mb-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{empty.title}</p>
+                    <p className="text-xs" style={{ color: '#888' }}>{empty.body}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {list.map(booking => (
+                      <BookingCard
+                        key={booking.id}
+                        booking={booking}
+                        isHost={isHost}
+                        hasCreative={creativeMap[booking.id] ?? false}
+                        onHostAction={handleHostAction}
+                        actionLoading={actionLoading}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )
+          })()
         ) : (
           <div className="space-y-8">
-            {/* LIVE bookings — top priority */}
-            {live.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-3 px-1 flex items-center gap-2" style={{ color: '#15803d' }}>
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
-                  LIVE ({live.length})
+            {[
+              { title: 'NEEDS ACTION', list: needsAction, color: 'var(--gold-dark, #c9a54e)', zap: true, pulse: false },
+              { title: 'LIVE', list: live.filter(b => !naIds.has(b.id)), color: '#15803d', zap: false, pulse: true },
+              { title: 'UPCOMING', list: confirmed.filter(b => !naIds.has(b.id)), color: '#1d4ed8', zap: false, pulse: false },
+              { title: 'IN PROGRESS', list: inProgress.filter(b => !naIds.has(b.id)), color: '#b45309', zap: false, pulse: false },
+              { title: 'COMPLETED', list: completed, color: '#888', zap: false, pulse: false },
+              { title: 'EXPIRED', list: expired, color: '#888', zap: false, pulse: false },
+            ].map(sec => sec.list.length > 0 && (
+              <section key={sec.title}>
+                <h2 className="text-sm font-semibold mb-3 px-1 flex items-center gap-2" style={{ color: sec.color }}>
+                  {sec.pulse && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />}
+                  {sec.zap && <Zap className="w-3.5 h-3.5" />}
+                  {sec.title} ({sec.list.length})
                 </h2>
                 <div className="space-y-4">
-                  {live.map(booking => (
+                  {sec.list.map(booking => (
                     <BookingCard
                       key={booking.id}
                       booking={booking}
                       isHost={isHost}
+                      hasCreative={creativeMap[booking.id] ?? false}
                       onHostAction={handleHostAction}
                       actionLoading={actionLoading}
                     />
                   ))}
                 </div>
               </section>
-            )}
+            ))}
 
-            {/* Confirmed bookings (future) */}
-            {confirmed.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#1d4ed8' }}>
-                  CONFIRMED ({confirmed.length})
-                </h2>
-                <div className="space-y-4">
-                  {confirmed.map(booking => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      isHost={isHost}
-                      onHostAction={handleHostAction}
-                      actionLoading={actionLoading}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Active bookings (pending etc) */}
-            {active.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#b45309' }}>
-                  NEEDS ACTION ({active.length})
-                </h2>
-                <div className="space-y-4">
-                  {active.map(booking => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      isHost={isHost}
-                      onHostAction={handleHostAction}
-                      actionLoading={actionLoading}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Completed bookings */}
-            {completed.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
-                  COMPLETED ({completed.length})
-                </h2>
-                <div className="space-y-4">
-                  {completed.map(booking => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      isHost={isHost}
-                      onHostAction={handleHostAction}
-                      actionLoading={actionLoading}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Expired bookings (past dates, never completed) */}
-            {expired.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
-                  EXPIRED ({expired.length})
-                </h2>
-                <div className="space-y-4">
-                  {expired.map(booking => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      isHost={isHost}
-                      onHostAction={handleHostAction}
-                      actionLoading={actionLoading}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Cancelled/Disputed */}
+            {/* Cancelled — quiet link, no tile for dead inventory */}
             {cancelled.length > 0 && (
-              <section>
-                <h2 className="text-sm font-semibold mb-3 px-1" style={{ color: '#888' }}>
-                  CANCELLED / DISPUTED ({cancelled.length})
-                </h2>
-                <div className="space-y-4">
-                  {cancelled.map(booking => (
-                    <BookingCard
-                      key={booking.id}
-                      booking={booking}
-                      isHost={isHost}
-                      onHostAction={handleHostAction}
-                      actionLoading={actionLoading}
-                    />
-                  ))}
-                </div>
-              </section>
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setFilter('cancelled')}
+                  className="text-xs hover:underline underline-offset-2"
+                  style={{ color: '#aaa' }}
+                >
+                  Cancelled / disputed ({cancelled.length})
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -579,27 +648,17 @@ export default function BookingsPage() {
 function BookingCard({
   booking,
   isHost,
+  hasCreative = false,
   onHostAction,
   actionLoading,
 }: {
   booking: Booking
   isHost: boolean
+  hasCreative?: boolean
   onHostAction: (id: string, status: 'confirmed' | 'cancelled') => void
   actionLoading: string | null
 }) {
-  const [hasCreative, setHasCreative] = useState(false)
-
-  useEffect(() => {
-    if (booking.status === 'confirmed') {
-      fetch(`/api/collateral/list?bookingId=${booking.id}`)
-        .then(r => r.json())
-        .then(json => {
-          if (json.files && json.files.length > 0) setHasCreative(true)
-        })
-        .catch(() => {})
-    }
-  }, [booking.id, booking.status])
-
+  const timeline = humanTimeline(booking)
   const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date, hasCreative)
   const isLiveNow = simpleBadge.label === 'LIVE'
   const canReview = booking.status === 'completed'
@@ -655,6 +714,9 @@ function BookingCard({
         <span className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
           ${booking.total_price?.toLocaleString()}
         </span>
+        {timeline && (
+          <span className="font-medium" style={{ color: '#555' }}>{timeline}</span>
+        )}
         {earnings !== null && (
           <span className="font-semibold flex items-center gap-1" style={{ color: '#16a34a' }}>
             <DollarSign className="w-3 h-3" />
