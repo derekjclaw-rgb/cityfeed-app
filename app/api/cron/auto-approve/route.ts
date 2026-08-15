@@ -257,11 +257,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2) Host reminder: completed status (post-creative), start_date within 36h, no POP files
+    // 2) Host reminder: campaign starts within 36h, no POP files yet.
+    // BUG FIX (2026-08-15): this previously queried status = 'completed', which is the
+    // terminal post-payout status — impossible before a campaign starts, so the host
+    // pre-campaign reminder NEVER fired (Michael caught it on CF-F85AA1).
+    // Pre-campaign bookings live in 'confirmed' or 'active'.
     const { data: upcomingCompleted } = await supabase
       .from('bookings')
       .select('id, host_id, advertiser_id, start_date, listing_id, listings(title)')
-      .eq('status', 'completed')
+      .in('status', ['confirmed', 'active'])
       .gt('start_date', nowISO.split('T')[0])
       .lte('start_date', thirtyySixHoursFromNow.split('T')[0])
 

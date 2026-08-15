@@ -126,10 +126,32 @@ export async function POST(req: NextRequest) {
       if (error) console.warn('[Payout] Log insert failed (table may not exist yet):', error.message)
     })
 
-    // NOTE: No email here — the POP submission flow already sends the
-    // "Proof of posting submitted" email (host was getting two near-identical
-    // emails: pop_submitted + pop_approved). Michael killed pop_approved 2026-08-10.
     const listingTitle = (booking as Record<string, unknown> & { listings?: { title?: string } }).listings?.title ?? 'your listing'
+
+    // Host confirmation email — sent SERVER-SIDE here (2026-08-15) because the old
+    // client-side send from the POP upload flow was unreliable (never arrived).
+    // Includes the exact NET payout amount from the Stripe transfer — no fee itemization.
+    // Single email: pop_approved stays dead (Michael killed it 2026-08-10).
+    try {
+      const { data: hostProfile } = await supabase
+        .from('profiles').select('email').eq('id', booking.host_id).single()
+      if (hostProfile?.email) {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://www.cityfeed.io'
+        await fetch(`${baseUrl}/api/email/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'pop_submitted_host',
+            hostEmail: hostProfile.email,
+            listingTitle,
+            bookingId: booking_id,
+            amount: transfer.amount / 100,
+          }),
+        }).catch(err => console.warn('[Payout] Host POP email failed:', err))
+      }
+    } catch (err) {
+      console.warn('[Payout] Host POP email error (non-fatal):', err)
+    }
 
     // Payout notification via dashboard
     await supabase.from('notifications').insert({

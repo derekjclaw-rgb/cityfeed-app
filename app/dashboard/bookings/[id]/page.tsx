@@ -26,10 +26,49 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials } from '@/lib/fees'
+import { notify } from '@/lib/notify'
 
 /** Derive a human-readable confirmation code from a booking UUID */
 function confirmationCode(bookingId: string): string {
   return 'CF-' + bookingId.replace(/-/g, '').substring(0, 6).toUpperCase()
+}
+
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+
+function Lightbox({ url, name, onClose }: { url: string; name?: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [onClose])
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+      style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full transition-opacity hover:opacity-80"
+        style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
+        aria-label="Close preview"
+      >
+        <X className="w-5 h-5" style={{ color: '#fff' }} />
+      </button>
+      <div className="max-w-[92vw] max-h-[86vh]" onClick={e => e.stopPropagation()}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt={name ?? 'Preview'}
+          className="max-w-full max-h-[80vh] rounded-xl object-contain"
+          style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+        />
+        {name && <p className="text-center text-sm mt-3 truncate" style={{ color: 'rgba(255,255,255,0.8)' }}>{name}</p>}
+      </div>
+    </div>
+  )
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -166,6 +205,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
   const [isDraggingAdditional, setIsDraggingAdditional] = useState(false)
   const [uploadComplete, setUploadComplete] = useState(false)
   const [showAdditional, setShowAdditional] = useState(false)
+  const [lightboxFile, setLightboxFile] = useState<{ url: string; name: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const additionalInputRef = useRef<HTMLInputElement>(null)
 
@@ -254,17 +294,17 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             recipient_id: user.id,
             content: `✅ Creative files submitted for "${listingTitle ?? 'your listing'}"\n\nThe host will review your files and begin setup. You'll receive proof of posting when your ad goes live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
           })
-          // Notification to host
-          await supabase.from('notifications').insert({
-            user_id: hostId,
+          // Notification to host — via /api/notify (RLS blocks cross-user inserts from client)
+          await notify({
+            user_id: hostId!,
             type: 'collateral_uploaded',
             title: `Creative files uploaded`,
             body: `For "${listingTitle ?? 'booking'}"`,
             href: `/dashboard/bookings/${bookingId}`,
           })
           // Notification to advertiser confirming submission
-          await supabase.from('notifications').insert({
-            user_id: advertiserId,
+          await notify({
+            user_id: advertiserId!,
             type: 'creative_submitted',
             title: `Creative submitted`,
             body: `Your files for "${listingTitle ?? 'booking'}" have been submitted`,
@@ -327,14 +367,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
     if (!isHost && hostId && advertiserId) {
       try {
         await Promise.all([
-          supabase.from('notifications').insert({
+          notify({
             user_id: hostId,
             type: 'collateral_uploaded',
             title: 'Additional creative files uploaded',
             body: `For "${listingTitle ?? 'booking'}"`,
             href: `/dashboard/bookings/${bookingId}`,
           }),
-          supabase.from('notifications').insert({
+          notify({
             user_id: advertiserId,
             type: 'creative_submitted',
             title: 'Additional creative submitted',
@@ -576,12 +616,27 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}
             >
               {(file.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name)) && file.url ? (
-                <img src={file.url} alt={file.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                <button
+                  type="button"
+                  onClick={() => setLightboxFile({ url: file.url!, name: file.name })}
+                  className="flex-shrink-0 cursor-zoom-in rounded-lg overflow-hidden"
+                  title="Preview"
+                >
+                  <img src={file.url} alt={file.name} className="w-12 h-12 rounded-lg object-cover block" />
+                </button>
               ) : (
                 <FileIcon type={file.type} name={file.name} />
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{file.name}</p>
+                <p
+                  className={`text-sm font-medium truncate${(file.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name)) && file.url ? ' cursor-pointer hover:underline underline-offset-2' : ''}`}
+                  style={{ color: 'var(--charcoal, #2b2b2b)' }}
+                  onClick={() => {
+                    if ((file.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(file.name)) && file.url) {
+                      setLightboxFile({ url: file.url, name: file.name })
+                    }
+                  }}
+                >{file.name}</p>
                 {file.size > 0 && (
                   <p className="text-xs" style={{ color: '#aaa' }}>{formatBytes(file.size)}</p>
                 )}
@@ -622,6 +677,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
           ))}
         </div>
       ) : null}
+
+      {/* Lightbox preview for creative image files */}
+      {lightboxFile && (
+        <Lightbox url={lightboxFile.url} name={lightboxFile.name} onClose={() => setLightboxFile(null)} />
+      )}
 
       {/* "Forget something?" — subtle link after success state */}
       {showSuccessState && (
@@ -713,9 +773,9 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
     }).eq('id', bookingId)
     onBookingUpdate?.({ shipped_at: now, tracking_number: trackingNumber || null })
 
-    // Notify host
+    // Notify host — via /api/notify (RLS blocks cross-user inserts from client)
     if (hostId) {
-      await supabase.from('notifications').insert({
+      await notify({
         user_id: hostId,
         type: 'materials_shipped',
         title: 'Materials shipped',
@@ -738,9 +798,9 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
     await supabase.from('bookings').update({ received_at: now }).eq('id', bookingId)
     onBookingUpdate?.({ received_at: now })
 
-    // Notify advertiser
+    // Notify advertiser — via /api/notify (RLS blocks cross-user inserts from client)
     if (advertiserId) {
-      await supabase.from('notifications').insert({
+      await notify({
         user_id: advertiserId,
         type: 'materials_received',
         title: 'Materials received',
@@ -882,6 +942,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [popLightbox, setPopLightbox] = useState<{ url: string; name: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const folderPath = `pop/${bookingId}`
@@ -1010,8 +1071,8 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
           })
           // Note: self-message (host → host) removed — host receives the pop_submitted notification instead
 
-          // Notify advertiser
-          await supabase.from('notifications').insert({
+          // Notify advertiser — via /api/notify (RLS blocks cross-user inserts from client)
+          await notify({
             user_id: advertiserId,
             type: 'pop_submitted',
             title: 'Your ad is live 🟢',
@@ -1036,35 +1097,24 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
               bookingId,
               bookingUrl: `${window.location.origin}/dashboard/bookings/${bookingId}`,
               dates: startDate && endDate ? `${startDate} → ${endDate}` : undefined,
+              popPhotoUrl: uploadedUrls[0] ?? undefined,
             }),
           })
         }
       } catch { /* email failure non-fatal */ }
 
-      // Notify host — POP submitted + payout incoming
+      // Notify host — POP submitted + payout incoming.
+      // NOTE (2026-08-15): host confirmation EMAIL now sends server-side from
+      // /api/stripe/payout with the exact net payout amount — the old client-side
+      // send was unreliable and never arrived. Only the in-app notification fires here.
       try {
-        await supabase.from('notifications').insert({
+        await notify({
           user_id: hostId,
           type: 'pop_submitted',
           title: 'Proof of posting submitted',
           body: `Your POP for "${listingTitle ?? 'your booking'}" is confirmed — payout incoming.`,
           href: `/dashboard/bookings/${bookingId}`,
         })
-        const { data: hostProfile } = await supabase
-          .from('profiles').select('email').eq('id', hostId).single()
-        if (hostProfile?.email) {
-          await fetch('/api/email/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'pop_submitted_host',
-              hostEmail: hostProfile.email,
-              listingTitle: listingTitle ?? 'your listing',
-              bookingId,
-              dates: startDate && endDate ? `${startDate} → ${endDate}` : undefined,
-            }),
-          })
-        }
       } catch { /* host notification non-fatal */ }
     }
   }
@@ -1104,11 +1154,21 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           {files.filter(f => f.type?.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(f.name)).map(f => (
-            <div key={f.path} className="rounded-xl overflow-hidden aspect-video" style={{ border: '1px solid var(--border, #e0e0d8)' }}>
+            <button
+              type="button"
+              key={f.path}
+              onClick={() => f.url && setPopLightbox({ url: f.url, name: f.name })}
+              className="rounded-xl overflow-hidden aspect-video cursor-zoom-in"
+              style={{ border: '1px solid var(--border, #e0e0d8)' }}
+              title="Preview"
+            >
               <img src={f.url} alt={f.name} className="w-full h-full object-cover" />
-            </div>
+            </button>
           ))}
         </div>
+        {popLightbox && (
+          <Lightbox url={popLightbox.url} name={popLightbox.name} onClose={() => setPopLightbox(null)} />
+        )}
         <div className="space-y-2">
           {files.map(f => (
             <div key={f.path} className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>

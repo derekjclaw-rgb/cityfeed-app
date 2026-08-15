@@ -64,9 +64,9 @@ export type EmailEvent =
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
   | { type: 'creative_submitted_advertiser'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string }
   | { type: 'collateral_uploaded'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string; dates?: string }
-  | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string }
+  | { type: 'pop_submitted'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string; popPhotoUrl?: string }
   | { type: 'pop_approved'; hostEmail: string; listingTitle: string; amount: number; bookingId?: string; dates?: string }
-  | { type: 'pop_submitted_host'; hostEmail: string; listingTitle: string; bookingId: string; dates?: string }
+  | { type: 'pop_submitted_host'; hostEmail: string; listingTitle: string; bookingId: string; dates?: string; amount?: number }
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
   | { type: 'pop_reminder_morning'; hostEmail: string; listingTitle: string; bookingId: string }
   | { type: 'listing_published'; hostEmail: string; listingTitle: string; listingId: string; listingImage?: string; pricePerDay?: number }
@@ -281,6 +281,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
           html: emailTemplate(`
             <h2 style="color:#2b2b2b;margin:0 0 16px">Proof of Posting Submitted 📸</h2>
             <p style="color:#555;margin:0 0 12px">The host has submitted proof that your ad is live.</p>
+            ${event.popPhotoUrl ? `<img src="${event.popPhotoUrl}" alt="Proof of posting" style="width:100%;max-width:520px;border-radius:12px;display:block;margin:0 0 16px" />` : ''}
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
               ${event.dates ? `<p style="margin:4px 0 0;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
@@ -322,7 +323,8 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
               <p style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></p>
               ${event.dates ? `<p style="margin:0 0 4px;color:#888">Dates: ${formatDateRange(event.dates)}</p>` : ''}
-              <p style="margin:0;color:#888">Status: <strong style="color:#16a34a">Live</strong></p>
+              <p style="margin:0 0 4px;color:#888">Status: <strong style="color:#16a34a">Live</strong></p>
+              ${event.amount != null ? `<p style="margin:0;color:#888">Your payout: <strong style="color:#16a34a">$${event.amount.toFixed(2)}</strong></p>` : ''}
             </div>
             <p style="color:#555;margin:0 0 8px"><strong>What happens next:</strong></p>
             <ol style="color:#555;margin:0 0 20px;padding-left:20px">

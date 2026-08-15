@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
+import { notify } from '@/lib/notify'
 
 /** Format a full name as 'First L.' for privacy */
 function formatNamePrivacy(fullName: string): string {
@@ -228,8 +229,8 @@ export default function BookingsPage() {
       }
 
       if (b) {
-        // Notify advertiser of decline
-        await supabase.from('notifications').insert({
+        // Notify advertiser of decline — via /api/notify (RLS blocks cross-user inserts from client)
+        await notify({
           user_id: b.advertiser_id,
           type: 'booking_declined',
           title: 'Booking request declined',
@@ -295,8 +296,8 @@ export default function BookingsPage() {
           content: `✅ You accepted the booking for "${listingTitle}"\n\n📅 ${b.start_date} → ${b.end_date}\n\nThe advertiser has been notified and will upload their creative files. You'll be notified when materials arrive.`,
         })
 
-        // Notification for advertiser
-        await supabase.from('notifications').insert({
+        // Notification for advertiser — via /api/notify (RLS blocks cross-user inserts from client)
+        await notify({
           user_id: b.advertiser_id,
           type: 'booking_approved',
           title: `Your booking was accepted!`,
@@ -305,7 +306,7 @@ export default function BookingsPage() {
         })
 
         // Notification for host confirming their action
-        await supabase.from('notifications').insert({
+        await notify({
           user_id: user.id,
           type: 'booking_accepted_host',
           title: `Booking accepted`,
