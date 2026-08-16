@@ -738,8 +738,8 @@ export default function EditListingPage() {
             <Toggle
               value={form.buy_now_enabled}
               onChange={v => set('buy_now_enabled', v)}
-              label="Allow instant booking"
-              hint="Advertisers can book without prior approval"
+              label="Instant booking"
+              hint="Bookings are confirmed automatically. Turn off to review and approve each request first."
             />
           </div>
 

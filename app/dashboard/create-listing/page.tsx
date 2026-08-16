@@ -123,7 +123,7 @@ const INITIAL_FORM: FormData = {
   price_per_day: '',
   min_days: '7',
   max_days: '90',
-  buy_now_enabled: false,
+  buy_now_enabled: true,
   content_restrictions: '',
   delivery_instructions: '',
   creative_formats: [],
@@ -895,8 +895,8 @@ export default function CreateListingPage() {
             <Toggle
               value={form.buy_now_enabled}
               onChange={v => set('buy_now_enabled', v)}
-              label="Enable Buy Now"
-              hint="Allow instant booking without approval"
+              label="Instant booking"
+              hint="Bookings are confirmed automatically. Turn off to review and approve each request first."
             />
           </div>
 
