@@ -34,7 +34,7 @@ const PRODUCTION_TIMES = [
 
 const isStaticCat = (cat: string) => STATIC_CATEGORIES.includes(cat)
 
-const CREATIVE_FORMATS = ['PDF', 'JPG', 'PNG']
+const CREATIVE_FORMATS = ['PDF', 'JPG', 'PNG', 'MP4']
 
 interface UploadedPhoto {
   file?: File

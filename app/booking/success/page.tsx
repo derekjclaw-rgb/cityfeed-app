@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, Clock, Loader2, Upload, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { formatBookingDate } from '@/lib/fees'
 
 /** Derive a human-readable confirmation code from a booking UUID */
 function confirmationCode(bookingId: string): string {
@@ -163,9 +164,9 @@ function SuccessPageInner() {
                   <div className="flex justify-between">
                     <span>Dates</span>
                     <span style={{ color: '#2b2b2b' }}>
-                      {new Date(booking.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {formatBookingDate(booking.start_date, { year: 'numeric', month: 'long', day: 'numeric' })}
                       {' → '}
-                      {new Date(booking.end_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      {formatBookingDate(booking.end_date, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
                   <div className="flex justify-between">

@@ -25,7 +25,7 @@ import {
   Truck, DollarSign
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getBookingFinancials } from '@/lib/fees'
+import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
 import { notify } from '@/lib/notify'
 
 /** Derive a human-readable confirmation code from a booking UUID */
@@ -1448,6 +1448,9 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
 
 function fmt(dateStr: string): string {
   if (!dateStr) return '—'
+  // Date-only strings (YYYY-MM-DD) parse as UTC midnight and render a day early
+  // in US timezones. Use formatBookingDate which appends T00:00:00 for local parsing.
+  if (!dateStr.includes('T')) return formatBookingDate(dateStr)
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
