@@ -38,7 +38,7 @@ export default function Footer() {
               <Link href="/how-it-works#pricing" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 Pricing
               </Link>
-              <Link href="/signup?role=host" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <Link href="/hosts" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 For Hosts
               </Link>
             </div>

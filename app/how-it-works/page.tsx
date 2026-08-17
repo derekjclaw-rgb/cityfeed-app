@@ -1,195 +1,317 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { MapPin, CheckCircle, TrendingUp, Users, Shield, Zap, ArrowRight } from 'lucide-react'
+import HowItWorksClient from '@/components/HowItWorksClient'
 
-/**
- * How It Works Page — detailed steps, host section, trust blocks, CTAs
- */
+export const metadata: Metadata = {
+  title: 'How It Works — City Feed',
+  description:
+    'See exactly how it works — every step, every dollar. Browse verified placements, book securely, and get photo proof your ad went live.',
+}
+
+/* ── Money-flow node SVG icons (gold on charcoal) ── */
+function IconCreditCard() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="#debb73" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, marginBottom: 10, display: 'block', margin: '0 auto 10px' }}>
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+      <line x1="1" y1="10" x2="23" y2="10" />
+    </svg>
+  )
+}
+
+function IconLock() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="#debb73" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, display: 'block', margin: '0 auto 10px' }}>
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  )
+}
+
+function IconCamera() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="#debb73" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, display: 'block', margin: '0 auto 10px' }}>
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  )
+}
+
+function IconDollar() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="#debb73" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28, display: 'block', margin: '0 auto 10px' }}>
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  )
+}
+
+/* ── FAQ item ── */
+function QA({ q, children }: { q: string; children: React.ReactNode }) {
+  return (
+    <div style={{ borderBottom: '1px solid #f0f0ea', padding: '22px 4px' }}>
+      <h4 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.2px', marginBottom: 8, display: 'flex', gap: 10, color: '#2b2b2b' }}>
+        <span style={{ color: '#c9a54e' }}>Q</span>
+        {q}
+      </h4>
+      <p style={{ fontSize: 14.5, color: '#555', paddingLeft: 26 }}>{children}</p>
+    </div>
+  )
+}
+
 export default function HowItWorksPage() {
   return (
     <div style={{ backgroundColor: '#f0f0ec' }}>
-      {/* Hero */}
-      <section className="pt-32 pb-16 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6" style={{ color: '#2b2b2b' }}>
-            How City Feed works
+
+      {/* ── 1 · HERO ── */}
+      <section className="px-6" style={{ paddingTop: 96, paddingBottom: 0, textAlign: 'center' }}>
+        <div className="mx-auto" style={{ maxWidth: 1060 }}>
+          <div style={{
+            fontSize: 12, fontWeight: 700, letterSpacing: '2.5px',
+            textTransform: 'uppercase', color: '#4aa99a', marginBottom: 14,
+          }}>How It Works</div>
+          <h1 style={{
+            fontSize: 'clamp(36px, 5.6vw, 58px)', lineHeight: 1.1,
+            letterSpacing: '-1.4px', fontWeight: 800,
+            maxWidth: 780, margin: '0 auto 20px', color: '#2b2b2b',
+          }}>
+            See exactly how it works. Every step, every dollar.
           </h1>
-          <p className="text-xl leading-relaxed" style={{ color: '#555' }}>
-            Whether you&apos;re an advertiser looking to get your brand out in the real world, or a host ready to monetize your space — this is how it works.
+          <p style={{ fontSize: 19, color: '#555', maxWidth: 560, margin: '0 auto 40px' }}>
+            No black boxes here — pick your side and walk the whole journey.
           </p>
         </div>
       </section>
 
-      {/* For Advertisers */}
-      <section className="py-20 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-4" style={{ backgroundColor: 'rgba(126,207,192,0.12)', color: '#7ecfc0' }}>
-              For Advertisers
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: '#2b2b2b' }}>Book a placement in minutes</h2>
-            <p className="text-lg" style={{ color: '#555' }}>From discovery to live in three steps</p>
-          </div>
+      {/* ── 2 · TOGGLE + JOURNEY (client) ── */}
+      <HowItWorksClient />
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                step: '01',
-                icon: MapPin,
-                title: 'Find your spot',
-                desc: 'Browse verified ad placements filtered by location, format, budget, and audience. Every listing includes real traffic data, dimensions, photos, and host reviews.',
-                detail: 'Search Digital Billboards, Transit, Storefront, Event-Based, and more across Las Vegas.',
-              },
-              {
-                step: '02',
-                icon: CheckCircle,
-                title: 'Book instantly',
-                desc: 'Select your campaign dates, upload your creative files, and pay securely through Stripe. No phone calls, no RFPs, no agency markup.',
-                detail: 'Funds are held in escrow and only released to the host after proof of posting.',
-              },
-              {
-                step: '03',
-                icon: TrendingUp,
-                title: 'Go live',
-                desc: 'Your host installs the ad and submits photo/video proof. You track everything from your dashboard — no guesswork, no chasing.',
-                detail: 'Campaigns typically go live within 1–7 business days depending on production requirements.',
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="relative p-8 rounded-2xl"
-                style={{ backgroundColor: '#f0f0ec', border: '1px solid #e0e0d8' }}
-              >
-                <div className="text-6xl font-black absolute top-6 right-6 leading-none select-none" style={{ color: '#ddddd4' }}>
-                  {item.step}
-                </div>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-5" style={{ backgroundColor: 'rgba(126,207,192,0.15)' }}>
-                  <item.icon className="w-5 h-5" style={{ color: '#7ecfc0' }} />
-                </div>
-                <h3 className="text-lg font-semibold mb-3" style={{ color: '#2b2b2b' }}>{item.title}</h3>
-                <p className="text-sm leading-relaxed mb-3" style={{ color: '#555' }}>{item.desc}</p>
-                <p className="text-xs" style={{ color: '#888' }}>{item.detail}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link
-              href="/marketplace"
-              className="inline-flex items-center gap-2 font-semibold px-8 py-4 rounded-xl text-base hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
-            >
-              Browse placements
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* For Hosts */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full mb-6" style={{ backgroundColor: 'rgba(126,207,192,0.12)', color: '#7ecfc0' }}>
-              <Users className="w-3 h-3" />
-              For Hosts
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight" style={{ color: '#2b2b2b' }}>
-              Turn empty walls into passive income
-            </h2>
-            <p className="mb-8 leading-relaxed" style={{ color: '#555' }}>
-              Own a storefront, parking lot, vehicle fleet, or event space? List it on City Feed and start earning from advertisers looking for exactly what you have. Free to list, you set your price.
+      {/* ── 3 · FOLLOW THE MONEY ── */}
+      <section className="px-6" style={{ backgroundColor: '#2b2b2b', paddingTop: 90, paddingBottom: 90 }}>
+        <div className="mx-auto" style={{ maxWidth: 1060 }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', color: '#debb73', marginBottom: 14 }}>Financial Transparency</div>
+            <h2 style={{ fontSize: 34, letterSpacing: '-0.8px', fontWeight: 800, marginBottom: 14, color: '#fff' }}>Follow the money</h2>
+            <p style={{ color: 'rgba(240,240,236,0.65)', fontSize: 17, maxWidth: 540, margin: '0 auto' }}>
+              Most ad platforms hide this part. We think it&apos;s the most important thing on the page.
             </p>
-            <ul className="space-y-4">
-              {[
-                'Free to list — no upfront costs',
-                'You set the price and availability',
-                'Stripe payouts directly to your account',
-                'Verified advertisers only',
-                'Submit proof of posting through the dashboard',
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm" style={{ color: '#555' }}>
-                  <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: '#7ecfc0' }} />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/signup?role=host"
-              className="mt-10 inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-colors"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b', boxShadow: '0 4px 16px rgba(222,187,115,0.35)' }}
-            >
-              Start listing today
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
 
-          {/* Visual */}
-          <div className="relative">
-            <div className="aspect-square rounded-2xl flex items-center justify-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-              <div className="text-center">
-                <div className="text-7xl font-black mb-4" style={{ color: '#f0f0ec' }}>$$$</div>
-                <div className="text-sm" style={{ color: '#888' }}>Your space, earning for you</div>
-              </div>
+          {/* Flow nodes */}
+          <div className="flex flex-col md:flex-row items-center justify-center" style={{ gap: 0 }}>
+            {/* Node 1 */}
+            <div style={{
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(240,240,236,0.14)',
+              borderRadius: 18, padding: '26px 22px', width: 210, textAlign: 'center',
+            }}>
+              <IconCreditCard />
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Advertiser pays</h4>
+              <p style={{ fontSize: 12.5, color: 'rgba(240,240,236,0.6)', lineHeight: 1.5 }}>
+                Secure checkout via Stripe. Total shown upfront — subtotal plus a flat <strong style={{ color: '#debb73' }}>7% service fee</strong>.
+              </p>
+            </div>
+            {/* Arrow */}
+            <div className="rotate-90 md:rotate-0" style={{ padding: '14px', color: '#debb73', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>→</div>
+            {/* Node 2 — highlighted */}
+            <div style={{
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              border: '1px solid #debb73',
+              boxShadow: '0 0 24px rgba(222,187,115,0.18)',
+              borderRadius: 18, padding: '26px 22px', width: 210, textAlign: 'center',
+            }}>
+              <IconLock />
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>City Feed holds it</h4>
+              <p style={{ fontSize: 12.5, color: 'rgba(240,240,236,0.6)', lineHeight: 1.5 }}>
+                Money sits in <strong style={{ color: '#debb73' }}>escrow</strong> — the host can&apos;t touch it, and neither can anyone else.
+              </p>
+            </div>
+            {/* Arrow */}
+            <div className="rotate-90 md:rotate-0" style={{ padding: '14px', color: '#debb73', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>→</div>
+            {/* Node 3 */}
+            <div style={{
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(240,240,236,0.14)',
+              borderRadius: 18, padding: '26px 22px', width: 210, textAlign: 'center',
+            }}>
+              <IconCamera />
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Proof verified</h4>
+              <p style={{ fontSize: 12.5, color: 'rgba(240,240,236,0.6)', lineHeight: 1.5 }}>
+                The host submits photo proof that your ad is live in the real world.
+              </p>
+            </div>
+            {/* Arrow */}
+            <div className="rotate-90 md:rotate-0" style={{ padding: '14px', color: '#debb73', fontSize: 22, fontWeight: 700, flexShrink: 0 }}>→</div>
+            {/* Node 4 */}
+            <div style={{
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(240,240,236,0.14)',
+              borderRadius: 18, padding: '26px 22px', width: 210, textAlign: 'center',
+            }}>
+              <IconDollar />
+              <h4 style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Host gets paid</h4>
+              <p style={{ fontSize: 12.5, color: 'rgba(240,240,236,0.6)', lineHeight: 1.5 }}>
+                Payout releases automatically to the host&apos;s account — <strong style={{ color: '#debb73' }}>within 2 business days</strong>.
+              </p>
             </div>
           </div>
+
+          <p style={{ textAlign: 'center', marginTop: 40, fontSize: 13.5, color: 'rgba(240,240,236,0.55)' }}>
+            Flat <strong style={{ color: '#debb73' }}>7% service fee</strong> on each side. That&apos;s the whole business model — no markups, no spreads, no surprises.
+          </p>
         </div>
       </section>
 
-      {/* Trust Blocks */}
-      <section className="py-16 px-6" style={{ backgroundColor: '#fff', borderTop: '1px solid #e0e0d8', borderBottom: '1px solid #e0e0d8' }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold" style={{ color: '#2b2b2b' }}>Built on trust</h2>
+      {/* ── 4 · THE INVENTORY ── */}
+      <section className="px-6" style={{ paddingTop: 90, paddingBottom: 90, textAlign: 'center' }}>
+        <div className="mx-auto" style={{ maxWidth: 1060 }}>
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', color: '#4aa99a', marginBottom: 14 }}>The Inventory</div>
+            <h2 style={{ fontSize: 34, letterSpacing: '-0.8px', fontWeight: 800, marginBottom: 14, color: '#2b2b2b' }}>If people see it, it&apos;s ad space</h2>
+            <p style={{ color: '#555', fontSize: 17, maxWidth: 560, margin: '0 auto' }}>
+              From highway billboards to storefront windows — the marketplace covers every format the real world has to offer.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            {[
-              { icon: Shield, title: 'Secure payments', desc: 'Stripe-powered escrow. Funds release only after proof of posting is confirmed.' },
-              { icon: CheckCircle, title: 'Verified hosts', desc: 'Every listing goes through manual review before going live on the marketplace.' },
-              { icon: Zap, title: 'Instant booking', desc: 'No back-and-forth. Book a placement in under 5 minutes, any time of day.' },
-            ].map((item) => (
-              <div key={item.title} className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(126,207,192,0.12)' }}>
-                  <item.icon className="w-6 h-6" style={{ color: '#7ecfc0' }} />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>{item.title}</h3>
-                  <p className="text-sm" style={{ color: '#555' }}>{item.desc}</p>
-                </div>
-              </div>
+          <div className="flex flex-wrap justify-center" style={{ gap: 10, maxWidth: 860, margin: '0 auto' }}>
+            {([
+              { label: 'Digital Billboard', variant: 'hot' },
+              { label: 'Static Billboard', variant: 'plain' },
+              { label: 'Transit', variant: 'mint' },
+              { label: 'Outdoor Digital', variant: 'plain' },
+              { label: 'Outdoor Static', variant: 'plain' },
+              { label: 'Storefront', variant: 'hot' },
+              { label: 'Window Display', variant: 'plain' },
+              { label: 'Vehicle Wrap', variant: 'mint' },
+              { label: 'Display On-Premise', variant: 'plain' },
+              { label: 'Indoor Digital', variant: 'plain' },
+              { label: 'Indoor Static', variant: 'plain' },
+              { label: 'Event-Based', variant: 'hot' },
+              { label: 'Experiential', variant: 'plain' },
+              { label: 'Human-Based', variant: 'mint' },
+              { label: 'Street Furniture', variant: 'plain' },
+              { label: 'Unique', variant: 'plain' },
+            ] as const).map((pill) => (
+              <span
+                key={pill.label}
+                style={{
+                  borderRadius: 999, padding: '10px 20px',
+                  fontSize: 14, fontWeight: 600,
+                  backgroundColor:
+                    pill.variant === 'hot' ? '#f5edda' :
+                    pill.variant === 'mint' ? 'rgba(126,207,192,0.1)' :
+                    '#fff',
+                  border:
+                    pill.variant === 'hot' ? '1px solid #debb73' :
+                    pill.variant === 'mint' ? '1px solid #7ecfc0' :
+                    '1px solid #e0e0d8',
+                  color:
+                    pill.variant === 'hot' ? '#c9a54e' :
+                    pill.variant === 'mint' ? '#4aa99a' :
+                    '#555',
+                }}
+              >
+                {pill.label}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Dual CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-          <div className="p-8 rounded-2xl text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-            <h3 className="text-xl font-bold mb-3" style={{ color: '#2b2b2b' }}>I want to advertise</h3>
-            <p className="text-sm mb-6" style={{ color: '#555' }}>Browse thousands of real-world ad placements and book in minutes.</p>
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
-            >
-              Create account
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* ── 5 · FAQ ── */}
+      <section className="px-6" style={{
+        backgroundColor: '#fff',
+        borderTop: '1px solid #e0e0d8',
+        borderBottom: '1px solid #e0e0d8',
+        paddingTop: 90, paddingBottom: 90,
+      }}>
+        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', color: '#4aa99a', marginBottom: 14 }}>Straight Answers</div>
+            <h2 style={{ fontSize: 34, letterSpacing: '-0.8px', fontWeight: 800, marginBottom: 8, color: '#2b2b2b' }}>Questions everyone asks</h2>
+            <p style={{ fontSize: 17, color: '#555' }}>The stuff other platforms bury in the fine print.</p>
           </div>
-          <div className="p-8 rounded-2xl text-center" style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8' }}>
-            <h3 className="text-xl font-bold mb-3" style={{ color: '#2b2b2b' }}>I have space to list</h3>
-            <p className="text-sm mb-6" style={{ color: '#555' }}>Start earning from your storefront, parking lot, fleet, or event space.</p>
-            <Link
-              href="/signup?role=host"
-              className="inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all"
-              style={{ backgroundColor: '#2b2b2b', color: '#fff' }}
-            >
-              List your space
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+
+          <QA q="What if my ad never gets posted?">
+            Your money never leaves escrow without verified photo proof. If a host doesn&apos;t deliver, the payment doesn&apos;t release — <strong style={{ color: '#2b2b2b' }}>you&apos;re protected the entire time</strong>.
+          </QA>
+          <QA q="What does City Feed cost?">
+            A flat <strong style={{ color: '#2b2b2b' }}>7% service fee</strong> — advertisers see it at checkout, hosts see it on their earnings. No hidden markups, no negotiated rates, no agency spread.
+          </QA>
+          <QA q="When do hosts get paid?">
+            The moment proof of posting is submitted, the payout fires automatically via Stripe — funds typically land <strong style={{ color: '#2b2b2b' }}>within 2 business days</strong>.
+          </QA>
+          <QA q="Can I cancel a booking?">
+            Yes. Cancel <strong style={{ color: '#2b2b2b' }}>more than 7 days</strong> before your campaign starts for a 95% refund, <strong style={{ color: '#2b2b2b' }}>within 7 days</strong> for 50%. Once a campaign begins, bookings are non-refundable.
+          </QA>
+          <QA q="Do hosts have to accept every booking?">
+            Never. Hosts review each request and <strong style={{ color: '#2b2b2b' }}>approve or decline</strong> — nothing runs on your space without your permission.
+          </QA>
+          <QA q="What creative formats can I upload?">
+            PDF, JPG, PNG, and ZIP files upload right into your booking. Physical placement? <strong style={{ color: '#2b2b2b' }}>Ship your own prints or have your host print for you</strong> where offered.
+          </QA>
+          <div style={{ padding: '22px 4px' }}>
+            <h4 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.2px', marginBottom: 8, display: 'flex', gap: 10, color: '#2b2b2b' }}>
+              <span style={{ color: '#c9a54e' }}>Q</span>
+              How do I know a placement is real?
+            </h4>
+            <p style={{ fontSize: 14.5, color: '#555', paddingLeft: 26 }}>
+              Every listing carries real photos, specs, and a booking history — and every completed campaign requires photo proof. <strong style={{ color: '#2b2b2b' }}>Fakes don&apos;t survive here.</strong>
+            </p>
           </div>
         </div>
       </section>
+
+      {/* ── 6 · DUAL CTA ── */}
+      <section className="px-6" style={{ paddingTop: 96, paddingBottom: 110 }}>
+        <div className="mx-auto" style={{ maxWidth: 1060 }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', color: '#4aa99a', marginBottom: 14 }}>Get Started</div>
+            <h2 style={{ fontSize: 34, letterSpacing: '-0.8px', fontWeight: 800, color: '#2b2b2b' }}>Pick your side</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 22, maxWidth: 860, margin: '0 auto' }}>
+            {/* Advertiser card */}
+            <div style={{
+              backgroundColor: '#fff', border: '1px solid #e0e0d8',
+              borderRadius: 20, padding: '40px 34px', textAlign: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+            }}>
+              <h3 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', marginBottom: 8, color: '#2b2b2b' }}>I want to advertise</h3>
+              <p style={{ fontSize: 14.5, color: '#555', marginBottom: 26 }}>Browse real-world placements with upfront pricing and book in minutes.</p>
+              <Link
+                href="/marketplace"
+                style={{
+                  display: 'inline-block', fontWeight: 700, fontSize: 15,
+                  padding: '14px 30px', borderRadius: 13, textDecoration: 'none',
+                  letterSpacing: '-0.2px', backgroundColor: '#debb73', color: '#2b2b2b',
+                  boxShadow: '0 4px 18px rgba(222,187,115,0.4)',
+                }}
+              >
+                Browse placements →
+              </Link>
+            </div>
+            {/* Host card */}
+            <div style={{
+              backgroundColor: '#2b2b2b', border: '1px solid #2b2b2b',
+              borderRadius: 20, padding: '40px 34px', textAlign: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+            }}>
+              <h3 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.4px', marginBottom: 8, color: '#fff' }}>I have space to list</h3>
+              <p style={{ fontSize: 14.5, color: 'rgba(240,240,236,0.6)', marginBottom: 26 }}>Turn your storefront, vehicle, or wall into income. Free to list.</p>
+              <Link
+                href="/signup?role=host"
+                style={{
+                  display: 'inline-block', fontWeight: 700, fontSize: 15,
+                  padding: '14px 30px', borderRadius: 13, textDecoration: 'none',
+                  letterSpacing: '-0.2px', backgroundColor: '#7ecfc0', color: '#fff',
+                  boxShadow: '0 4px 18px rgba(126,207,192,0.4)',
+                }}
+              >
+                List your space →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }

@@ -184,7 +184,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '/marketplace', label: 'Marketplace' },
     { href: '/how-it-works', label: 'How It Works' },
-    { href: user ? '/dashboard/create-listing' : '/signup?role=host', label: 'For Hosts' },
+    { href: '/hosts', label: 'For Hosts' },
     { href: '/about', label: 'About' },
   ]
 
