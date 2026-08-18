@@ -235,10 +235,11 @@ export async function GET(req: NextRequest) {
               .from('profiles').select('email').eq('id', bk.advertiser_id).single()
             if (advProfile?.email) {
               await sendEmail({
-                type: 'creative_reminder',
+                type: 'collateral_reminder',
                 advertiserEmail: advProfile.email,
                 listingTitle,
                 bookingId: bk.id,
+                campaignStartDate: bk.start_date ?? '',
               }).catch(err => console.warn('[Cron] Creative reminder email failed:', err))
             }
 
@@ -294,7 +295,7 @@ export async function GET(req: NextRequest) {
               .from('profiles').select('email').eq('id', bk.host_id).single()
             if (hostProfile?.email) {
               await sendEmail({
-                type: 'pop_reminder',
+                type: 'pop_reminder_morning',
                 hostEmail: hostProfile.email,
                 listingTitle,
                 bookingId: bk.id,
