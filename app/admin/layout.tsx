@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   LayoutDashboard, CalendarCheck, LayoutList, Users, DollarSign,
-  LogOut, ExternalLink,
+  LogOut, ExternalLink, Scale,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/admin/listings', label: 'Listings', icon: LayoutList },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/financials', label: 'Financials', icon: DollarSign },
+  { href: '/admin/reconciliation', label: 'Reconciliation', icon: Scale },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
