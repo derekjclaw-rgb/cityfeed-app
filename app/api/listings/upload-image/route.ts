@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSessionUser } from '@/lib/auth-guard'
 
 export async function POST(req: NextRequest) {
   try {
+    // SECURITY: Require authenticated session
+    const sessionUser = await getSessionUser()
+    if (!sessionUser) {
+      return NextResponse.json({ error: 'Unauthorized — login required' }, { status: 401 })
+    }
+
     const formData = await req.formData()
     const file = formData.get('file') as File
     const path = formData.get('path') as string
