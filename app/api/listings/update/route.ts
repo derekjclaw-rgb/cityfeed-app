@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getSessionUser } from '@/lib/auth-guard'
 
 function getSupabase() {
   return createClient(
@@ -10,15 +11,21 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { listingId, userId, updates } = await req.json()
+    const { listingId, updates } = await req.json()
 
-    if (!listingId || !userId || !updates) {
+    if (!listingId || !updates) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // SECURITY: Server-side session check — userId comes from session, not client
+    const sessionUser = await getSessionUser()
+    if (!sessionUser) {
+      return NextResponse.json({ error: 'Unauthorized — login required' }, { status: 401 })
     }
 
     const supabase = getSupabase()
 
-    // Verify the listing exists (the edit page only shows the user's own listings)
+    // Verify the listing exists
     const { data: listing } = await supabase
       .from('listings')
       .select('host_id')
@@ -30,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // SECURITY: Ownership check — only the host can update their own listing
-    if (listing.host_id !== userId) {
+    if (listing.host_id !== sessionUser.id) {
       return NextResponse.json({ error: 'Unauthorized — you can only edit your own listings' }, { status: 403 })
     }
 
