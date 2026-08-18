@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail } from '@/lib/email'
+import { processBookingPayout } from '@/lib/payout'
 
 function getSupabase() {
   return createClient(
@@ -49,17 +51,10 @@ export async function GET(req: NextRequest) {
 
     for (const booking of pendingBookings) {
       try {
-        // Trigger payout FIRST — payout route handles status transition to 'completed'
-        // This prevents the race condition where status is set before payout fires
-        const payoutRes = await fetch(`${baseUrl}/api/stripe/payout`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ booking_id: booking.id }),
-        })
+        // Direct function call — no HTTP round-trip needed from server-side
+        const payoutResult = await processBookingPayout(booking.id)
 
-        const payoutData = await payoutRes.json()
-
-        if (payoutRes.ok) {
+        if (payoutResult.success) {
           // Payout succeeded — send notifications (status already set to 'completed' by payout route)
           await Promise.all([
             supabase.from('notifications').insert({
@@ -88,11 +83,11 @@ export async function GET(req: NextRequest) {
 
         results.push({
           booking_id: booking.id,
-          status: payoutRes.ok ? 'auto_approved_paid' : 'auto_approved_payout_failed',
-          error: payoutRes.ok ? undefined : payoutData.error,
+          status: payoutResult.success ? 'auto_approved_paid' : 'auto_approved_payout_failed',
+          error: payoutResult.success ? undefined : payoutResult.error,
         })
 
-        console.log(`[AutoApprove] Booking ${booking.id}: ${payoutRes.ok ? 'auto-approved + payout triggered' : 'auto-approved, payout failed'}`)
+        console.log(`[AutoApprove] Booking ${booking.id}: ${payoutResult.success ? 'auto-approved + payout triggered' : 'auto-approved, payout failed'}`)
       } catch (err) {
         console.error(`[AutoApprove] Error for booking ${booking.id}:`, err)
         results.push({ booking_id: booking.id, status: 'error', error: String(err) })
@@ -235,19 +230,15 @@ export async function GET(req: NextRequest) {
               href: `/dashboard/bookings/${bk.id}`,
             })
 
-            // Send email reminder
+            // Send email reminder (direct import, no HTTP round-trip)
             const { data: advProfile } = await supabase
               .from('profiles').select('email').eq('id', bk.advertiser_id).single()
             if (advProfile?.email) {
-              await fetch(`${baseUrl}/api/email/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  type: 'creative_reminder',
-                  advertiserEmail: advProfile.email,
-                  listingTitle,
-                  bookingId: bk.id,
-                }),
+              await sendEmail({
+                type: 'creative_reminder',
+                advertiserEmail: advProfile.email,
+                listingTitle,
+                bookingId: bk.id,
               }).catch(err => console.warn('[Cron] Creative reminder email failed:', err))
             }
 
@@ -298,19 +289,15 @@ export async function GET(req: NextRequest) {
               href: `/dashboard/bookings/${bk.id}`,
             })
 
-            // Send email reminder
+            // Send email reminder (direct import, no HTTP round-trip)
             const { data: hostProfile } = await supabase
               .from('profiles').select('email').eq('id', bk.host_id).single()
             if (hostProfile?.email) {
-              await fetch(`${baseUrl}/api/email/send`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  type: 'pop_reminder',
-                  hostEmail: hostProfile.email,
-                  listingTitle,
-                  bookingId: bk.id,
-                }),
+              await sendEmail({
+                type: 'pop_reminder',
+                hostEmail: hostProfile.email,
+                listingTitle,
+                bookingId: bk.id,
               }).catch(err => console.warn('[Cron] POP reminder email failed:', err))
             }
 
@@ -377,19 +364,15 @@ export async function GET(req: NextRequest) {
           href: `/dashboard/bookings/${bk.id}`,
         })
 
-        // Send email reminder
+        // Send email reminder (direct import, no HTTP round-trip)
         const { data: hostProfile } = await supabase
           .from('profiles').select('email, first_name').eq('id', bk.host_id).single()
         if (hostProfile?.email) {
-          await fetch(`${baseUrl}/api/email/send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'pop_reminder_morning',
-              hostEmail: hostProfile.email,
-              listingTitle,
-              bookingId: bk.id,
-            }),
+          await sendEmail({
+            type: 'pop_reminder_morning',
+            hostEmail: hostProfile.email,
+            listingTitle,
+            bookingId: bk.id,
           }).catch(err => console.warn('[Cron] Morning POP reminder email failed:', err))
         }
 
