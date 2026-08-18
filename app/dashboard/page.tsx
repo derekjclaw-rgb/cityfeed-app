@@ -958,7 +958,12 @@ function DashboardContent() {
                ═══════════════════════════════════════ */}
           <div className="flex items-baseline justify-between mb-[18px] flex-wrap gap-2">
             <h2 className="text-xl font-bold tracking-[-0.3px]">{mode === 'host' ? 'Earnings Summary' : 'Spending Summary'}</h2>
-            <Link href={mode === 'host' ? '/dashboard/transactions' : '/dashboard/bookings'} className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>Details →</Link>
+            <div className="flex items-center gap-4">
+              {mode === 'host' && (
+                <Link href="/dashboard/payouts" className="text-[13px] font-medium" style={{ color: 'var(--gold-dark, #c9a54e)' }}>Payouts →</Link>
+              )}
+              <Link href={mode === 'host' ? '/dashboard/transactions' : '/dashboard/bookings'} className="text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>Details →</Link>
+            </div>
           </div>
           <div className="rounded-2xl p-6 mb-9"
             style={{ backgroundColor: 'var(--white, #fff)', border: '1px solid var(--border, #e0e0d8)' }}>
