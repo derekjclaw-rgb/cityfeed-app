@@ -8,38 +8,28 @@ function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_UR
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe()
-  const supabase = getSupabase()
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
 
-  if (!sig || !process.env.STRIPE_WEBHOOK_SECRET) {
-    console.warn('[Stripe Webhook] No signature or secret — processing without verification')
-    try {
-      const event = JSON.parse(body) as Stripe.Event
-      await handleEvent(event)
-      return NextResponse.json({ received: true })
-    } catch (err) {
-      console.error('[Stripe Webhook] No-sig path error:', err)
-      return NextResponse.json({ error: String(err) }, { status: 500 })
-    }
+  // ── STRICT VERIFICATION — fail closed ─────────────────────────────────────
+  // SECURITY: No fallbacks. No unverified JSON parsing. If we can't verify
+  // the signature, we reject the request entirely.
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured — rejecting request. Set this env var and register a webhook endpoint in Stripe Dashboard.')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+  }
+
+  if (!sig) {
+    console.warn('[Stripe Webhook] Missing stripe-signature header — rejecting')
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 })
   }
 
   let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
   } catch (err) {
-    // Signature verification failed — try parsing as v2 Event Destination format
-    console.warn('[Stripe Webhook] Classic signature failed, attempting v2 parse:', (err as Error).message)
-    try {
-      event = JSON.parse(body) as Stripe.Event
-      if (!event.type || !event.data) {
-        return NextResponse.json({ error: 'Invalid event payload' }, { status: 400 })
-      }
-      console.log('[Stripe Webhook] Parsed as v2 event:', event.type)
-    } catch {
-      console.error('Webhook signature verification failed and v2 parse failed')
-      return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
-    }
+    console.error('[Stripe Webhook] Signature verification failed:', (err as Error).message)
+    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
   try {
@@ -175,8 +165,6 @@ async function handleEvent(event: Stripe.Event) {
         status: initialStatus,
         stripe_payment_intent_id: paymentIntentId || null,
         // Print / shipping fields
-        // DB columns needed: host_prints boolean DEFAULT false, print_fee_charged numeric,
-        //   delivery_mode text, shipped_at timestamptz, received_at timestamptz, tracking_number text
         host_prints: hostPrintsVal,
         print_fee_charged: printFeeVal > 0 ? printFeeVal : null,
         delivery_mode: hostPrintsVal ? 'host_prints' : null,
