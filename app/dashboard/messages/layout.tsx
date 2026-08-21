@@ -78,7 +78,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
           listings(title),
           host:profiles!bookings_host_id_fkey(full_name),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name),
-          messages(content, created_at, sender_id, read, sent_as_role)
+          messages(content, created_at, sender_id, read, sent_as_role, recipient_id)
         `)
         .eq(roleFilter, userId)
         .order('created_at', { ascending: false })
@@ -91,7 +91,7 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
             (a: any, c: any) => new Date(a.created_at).getTime() - new Date(c.created_at).getTime()
           )
           const lastMsg = msgs[msgs.length - 1]
-          const unread = msgs.filter((m: { sender_id: string; read: boolean }) => m.sender_id !== userId && !m.read).length
+          const unread = msgs.filter((m: { sender_id: string; recipient_id?: string; read: boolean }) => m.sender_id !== userId && (m.recipient_id === userId || !m.recipient_id) && !m.read).length
           const otherParty = userId === b.host_id
             ? formatName(b.advertiser?.full_name ?? 'Advertiser')
             : formatName(b.host?.full_name ?? 'Host')
@@ -165,34 +165,34 @@ export default function MessagesLayout({ children }: { children: React.ReactNode
                   <div
                     className="flex items-center gap-3 px-5 py-3.5 cursor-pointer transition-colors"
                     style={{
-                      backgroundColor: isActive ? 'rgba(126,207,192,0.1)' : isUnread ? 'rgba(126,207,192,0.08)' : 'transparent',
-                      borderLeft: isActive ? '3px solid #7ecfc0' : isUnread ? '3px solid rgba(126,207,192,0.5)' : '3px solid transparent',
+                      backgroundColor: isActive ? 'rgba(126,207,192,0.12)' : isUnread ? 'rgba(126,207,192,0.06)' : 'transparent',
+                      borderLeft: isActive ? '3px solid #7ecfc0' : isUnread ? '3px solid #7ecfc0' : '3px solid transparent',
                     }}
                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = isUnread ? 'rgba(126,207,192,0.14)' : '#f8f8f5' }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = isActive ? 'rgba(126,207,192,0.1)' : isUnread ? 'rgba(126,207,192,0.08)' : 'transparent' }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = isActive ? 'rgba(126,207,192,0.12)' : isUnread ? 'rgba(126,207,192,0.06)' : 'transparent' }}
                   >
                     {/* Avatar */}
                     <div
                       className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold"
-                      style={{ backgroundColor: isActive ? '#7ecfc0' : '#e0e0d8', color: isActive ? '#fff' : '#888' }}
+                      style={{ backgroundColor: isActive ? '#7ecfc0' : isUnread ? '#5bb8a8' : '#e0e0d8', color: isActive || isUnread ? '#fff' : '#888' }}
                     >
                       {thread.other_party.charAt(0).toUpperCase()}
                     </div>
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[14px] truncate" style={{ color: '#2b2b2b', fontWeight: isUnread ? 700 : 500 }}>
+                        <span className="text-[14px] truncate" style={{ color: isUnread ? '#2b2b2b' : '#555', fontWeight: isUnread ? 700 : 500 }}>
                           {thread.other_party}
                         </span>
-                        <span className="text-[11px] flex-shrink-0 ml-2" style={{ color: '#aaa' }}>
+                        <span className="text-[11px] flex-shrink-0 ml-2" style={{ color: isUnread ? '#5bb8a8' : '#aaa' }}>
                           {smartDate(thread.last_message_at)}
                         </span>
                       </div>
                       <p className="text-[12px] truncate" style={{ color: '#888' }}>{thread.listing_title}</p>
-                      <p className="text-[13px] truncate" style={{ color: isUnread ? '#555' : '#aaa' }}>{thread.last_message}</p>
+                      <p className="text-[13px] truncate" style={{ color: isUnread ? '#2b2b2b' : '#aaa', fontWeight: isUnread ? 600 : 400 }}>{thread.last_message}</p>
                     </div>
                     {isUnread && (
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ backgroundColor: '#E63946', color: '#fff' }}>
                         {thread.unread}
                       </div>
                     )}

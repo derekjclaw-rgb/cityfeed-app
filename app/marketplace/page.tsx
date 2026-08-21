@@ -117,8 +117,55 @@ function normalizeDbListing(row: Record<string, any>, index: number): Listing {
 }
 
 // ─── Listing Card (v2 design) ──────────────────────────────────────────────────
+// ─── Card Carousel (Airbnb pattern) ────────────────────────────────────────────
+function CardCarousel({ images, placeholder, height }: { images: string[]; placeholder: string; height: string }) {
+  const [idx, setIdx] = useState(0)
+  const touchStartX = useRef(0)
+  const count = images.length
+
+  function prev(e: React.MouseEvent) { e.preventDefault(); e.stopPropagation(); setIdx(i => (i - 1 + count) % count) }
+  function next(e: React.MouseEvent) { e.preventDefault(); e.stopPropagation(); setIdx(i => (i + 1) % count) }
+  function dotClick(e: React.MouseEvent, i: number) { e.preventDefault(); e.stopPropagation(); setIdx(i) }
+
+  if (count === 0) return <div className={`w-full bg-gradient-to-br ${placeholder}`} style={{ height }} />
+
+  return (
+    <div
+      className="relative w-full overflow-hidden group/carousel"
+      style={{ height }}
+      onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
+      onTouchEnd={e => {
+        const diff = e.changedTouches[0].clientX - touchStartX.current
+        if (Math.abs(diff) > 40) { if (diff < 0) setIdx(i => Math.min(i + 1, count - 1)); else setIdx(i => Math.max(i - 1, 0)) }
+      }}
+    >
+      <img src={images[idx]} alt="" className="w-full h-full object-cover" loading={idx === 0 ? 'eager' : 'lazy'} />
+      {count > 1 && (
+        <>
+          <button type="button" onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} aria-label="Previous photo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2b2b2b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <button type="button" onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} aria-label="Next photo">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2b2b2b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </>
+      )}
+      {count > 1 && count <= 8 && (
+        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {images.map((_, i) => (
+            <button key={i} type="button" onClick={e => dotClick(e, i)} className="p-0 border-none" aria-label={`Photo ${i + 1}`}>
+              <span className="block rounded-full transition-all" style={{ width: 6, height: 6, backgroundColor: i === idx ? '#fff' : 'rgba(255,255,255,0.5)', boxShadow: '0 0 2px rgba(0,0,0,0.3)' }} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Listing Card (v2 design) ──────────────────────────────────────────────────
 function ListingCard({ listing, compact = false }: { listing: Listing; compact?: boolean }) {
-  const firstImage = listing.images?.[0]
+  const images = listing.images ?? []
 
   return (
     <Link href={`/marketplace/${listing.id}`} className="block">
@@ -133,13 +180,9 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
         onMouseEnter={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-lg, 0 12px 40px rgba(43,43,43,0.08), 0 4px 12px rgba(43,43,43,0.04))' }}
         onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '' }}
       >
-        {/* Image area */}
+        {/* Image area with carousel */}
         <div className={`relative overflow-hidden ${compact ? 'h-32' : 'h-[200px]'}`}>
-          {firstImage ? (
-            <img src={firstImage} alt={listing.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className={`w-full h-full bg-gradient-to-br ${listing.image_placeholder}`} />
-          )}
+          <CardCarousel images={images} placeholder={listing.image_placeholder} height={compact ? '128px' : '200px'} />
           {/* Category badge — top left */}
           <span
             className="absolute top-3.5 left-3.5 text-xs font-semibold px-3.5 py-1 rounded-full shadow-sm"

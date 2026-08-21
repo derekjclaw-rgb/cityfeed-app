@@ -84,6 +84,10 @@ interface FormData {
   max_days: string
   buy_now_enabled: boolean
   content_restrictions: string
+  // Physical dimensions (structured)
+  dim_width: string
+  dim_height: string
+  dim_unit: string
   // Delivery
   delivery_instructions: string
   // Creative specs
@@ -117,6 +121,9 @@ const INITIAL_FORM: FormData = {
   state: '',
   zip: '',
   dimensions: '',
+  dim_width: '',
+  dim_height: '',
+  dim_unit: 'ft',
   daily_impressions: '',
   illuminated: false,
   production_time: '3 days',
@@ -397,7 +404,12 @@ export default function CreateListingPage() {
       zip: form.zip,
       lat,
       lng,
-      dimensions: form.dimensions,
+      dimensions: (form.dim_width && form.dim_height)
+        ? `${form.dim_width} × ${form.dim_height} ${form.dim_unit}`
+        : form.dimensions || null,
+      specs: (form.dim_width && form.dim_height)
+        ? { dimensions: { width: parseFloat(form.dim_width), height: parseFloat(form.dim_height), unit: form.dim_unit } }
+        : null,
       daily_impressions: parseInt(form.daily_impressions) || 0,
       // NOTE: DB migration needed — alter table public.listings add column if not exists illuminated boolean default null;
       illuminated: form.illuminated,
@@ -793,15 +805,39 @@ export default function CreateListingPage() {
             <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Ad specs &amp; performance
             </h2>
-            <FormField label="Dimensions" hint="e.g. 14ft × 48ft or 1920×1080px">
-              <input
-                type="text"
-                value={form.dimensions}
-                onChange={e => set('dimensions', e.target.value)}
-                placeholder="14ft × 48ft"
-                className={inputClass}
-                style={inputStyle}
-              />
+            <FormField label="Physical dimensions" hint={isDigitalCat(form.category) ? 'Screen resolution in pixels' : 'Width and height of the ad placement'}>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={form.dim_width}
+                  onChange={e => set('dim_width', e.target.value)}
+                  placeholder="W"
+                  min="0"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+                <span className="text-xs flex-shrink-0" style={{ color: '#888' }}>×</span>
+                <input
+                  type="number"
+                  value={form.dim_height}
+                  onChange={e => set('dim_height', e.target.value)}
+                  placeholder="H"
+                  min="0"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+                <select
+                  value={form.dim_unit}
+                  onChange={e => set('dim_unit', e.target.value)}
+                  className={`${inputClass} cursor-pointer`}
+                  style={{ ...inputStyle, maxWidth: 72, paddingLeft: 8, paddingRight: 8 }}
+                >
+                  {isDigitalCat(form.category)
+                    ? [<option key="px" value="px">px</option>]
+                    : ['ft', 'in', 'm'].map(u => <option key={u} value={u}>{u}</option>)
+                  }
+                </select>
+              </div>
             </FormField>
             <div className="grid grid-cols-2 gap-4">
               <FormField label="Estimated daily impressions" hint="Approximate daily views">
@@ -933,36 +969,19 @@ export default function CreateListingPage() {
                 if (!v) { set('offers_printing', false); set('print_fee', ''); set('delivery_address', '') }
               }}
               label="This placement requires printed materials"
+              hint="The advertiser will need to provide physical prints for this placement"
             />
             {form.requires_print && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#555' }}>
-                    How are printed materials handled?<span className="ml-1" style={{ color: '#dc2626' }}>*</span>
-                  </label>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="print_handling"
-                        checked={form.offers_printing === true}
-                        onChange={() => { set('offers_printing', true); set('delivery_address', '') }}
-                        className="w-4 h-4 accent-[var(--mint, #7ecfc0)]"
-                      />
-                      <span className="text-sm" style={{ color: '#555' }}>Host prints &amp; installs</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="print_handling"
-                        checked={form.offers_printing === false}
-                        onChange={() => { set('offers_printing', false); set('print_fee', '') }}
-                        className="w-4 h-4 accent-[var(--mint, #7ecfc0)]"
-                      />
-                      <span className="text-sm" style={{ color: '#555' }}>Advertiser ships materials</span>
-                    </label>
-                  </div>
-                </div>
+                <Toggle
+                  value={form.offers_printing}
+                  onChange={v => {
+                    set('offers_printing', v)
+                    if (!v) set('print_fee', '')
+                  }}
+                  label="Do you offer printing?"
+                  hint={form.offers_printing ? 'Advertisers can pay you to print their materials' : 'Advertisers will print and ship their own materials'}
+                />
                 {form.offers_printing && (
                   <FormField label="Print fee ($)" hint="One-time fee charged to the advertiser for printing">
                     <div className="relative">
@@ -985,21 +1004,24 @@ export default function CreateListingPage() {
                     </div>
                   </FormField>
                 )}
-                {!form.offers_printing && (
-                  <FormField
-                    label="Delivery instructions"
-                    hint="Where and how should the advertiser ship printed materials?"
-                  >
-                    <textarea
-                      value={form.delivery_address}
-                      onChange={e => set('delivery_address', e.target.value)}
-                      placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing"
-                      rows={3}
-                      className={`${inputClass} resize-none`}
-                      style={inputStyle}
-                    />
-                  </FormField>
-                )}
+                <FormField
+                  label="Delivery instructions"
+                  hint="Where and how should the advertiser ship or deliver printed materials?"
+                  required
+                >
+                  <textarea
+                    value={form.delivery_address}
+                    onChange={e => set('delivery_address', e.target.value)}
+                    placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing. Ring buzzer at loading dock."
+                    rows={3}
+                    className={`${inputClass} resize-none`}
+                    style={inputStyle}
+                    required
+                  />
+                </FormField>
+                <p className="text-xs" style={{ color: '#aaa' }}>
+                  This address is only shown to advertisers after they book — never on the public listing.
+                </p>
               </div>
             )}
           </div>
@@ -1394,7 +1416,7 @@ export default function CreateListingPage() {
                 <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
 
                 <ReviewSection title="Ad specs & performance">
-                  <ReviewRow label="Dimensions" value={form.dimensions || '—'} />
+                  <ReviewRow label="Physical dimensions" value={(form.dim_width && form.dim_height) ? `${form.dim_width} × ${form.dim_height} ${form.dim_unit}` : form.dimensions || '—'} />
                   <ReviewRow label="Daily impressions" value={form.daily_impressions ? parseInt(form.daily_impressions).toLocaleString() : '—'} />
                   <ReviewRow label="Illuminated" value={form.illuminated ? 'Yes' : 'No'} />
                   <ReviewRow label="Production time" value={form.production_time} />
@@ -1446,7 +1468,7 @@ export default function CreateListingPage() {
                   <>
                     <div style={{ borderTop: '1px solid var(--border, #e0e0d8)' }} />
                     <ReviewSection title="Printed materials">
-                      <ReviewRow label="Handling" value={form.offers_printing ? 'Host prints & installs' : 'Advertiser ships'} />
+                      <ReviewRow label="Offers printing" value={form.offers_printing ? 'Yes' : 'No'} />
                       {form.offers_printing && form.print_fee && (
                         <ReviewRow label="Print fee" value={`$${parseFloat(form.print_fee).toFixed(2)}`} />
                       )}

@@ -93,6 +93,7 @@ interface Booking {
   delivery_mode?: 'self_deliver' | 'host_prints' | null
   shipped_at?: string | null
   received_at?: string | null
+  dropped_off_at?: string | null
   tracking_number?: string | null
   host_prints?: boolean
   print_fee_charged?: number | null
@@ -116,6 +117,10 @@ interface Listing {
   offers_printing?: boolean
   print_fee?: number | null
   delivery_address?: string | null
+  specs?: {
+    dimensions?: { width: number; height: number; unit: string }
+    [key: string]: unknown
+  } | null
 }
 
 interface CollateralFile {
@@ -416,6 +421,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', color: '#888' }}>
             No Creative Files
           </span>
+        ) : isSelfDeliver ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(126,207,192,0.1)', color: '#5bb8a8' }}>
+            <Upload className="w-3 h-3" />
+            Preview Optional
+          </span>
         ) : (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
             <Clock className="w-3 h-3" />
@@ -424,10 +434,11 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         )}
       </div>
 
-      {/* ── PRINT CHOICE — for requires_print listings, advertiser picks delivery mode ── */}
+      {/* ── DELIVERY METHOD CHOICE — for requires_print listings ── */}
       {!isHost && listing?.requires_print && !booking?.delivery_mode && canUpload && !showSuccessState && (
         <div className="mb-5 rounded-xl p-5" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
-          <p className="text-sm font-semibold mb-3" style={{ color: 'var(--charcoal, #2b2b2b)' }}>How would you like to deliver your creative?</p>
+          <p className="text-sm font-semibold mb-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>How will your materials arrive?</p>
+          <p className="text-xs mb-3" style={{ color: '#888' }}>Choose how you&apos;ll get your printed materials to the host.</p>
           <div className="space-y-2">
             <button
               type="button"
@@ -441,8 +452,24 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             >
               <Truck className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
               <div>
-                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>I&apos;ll provide my own printed materials</span>
-                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Ship or deliver prints to the delivery address</p>
+                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Ship my materials</span>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Mail your prints to the host&apos;s address</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.from('bookings').update({ delivery_mode: 'self_deliver' }).eq('id', bookingId)
+                onBookingUpdate?.({ delivery_mode: 'self_deliver' })
+              }}
+              className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
+              style={{ border: '1px solid var(--border, #e0e0d8)' }}
+            >
+              <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
+              <div>
+                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Drop off in person</span>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Deliver directly to the host</p>
               </div>
             </button>
             {listing.offers_printing && (
@@ -458,7 +485,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               >
                 <Upload className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
                 <div>
-                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Have them printed for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
+                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Print my ad for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
                   <p className="text-xs mt-0.5" style={{ color: '#888' }}>Upload your digital files and your host will print them</p>
                 </div>
               </button>
@@ -472,6 +499,13 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         <p className="text-sm mb-5 leading-relaxed" style={{ color: '#555' }}>
           Please deliver your creative files within the production window listed on this placement.
           Your host will begin setup once received.
+        </p>
+      )}
+
+      {/* Advertiser nudge for ship/drop-off: upload is optional */}
+      {!isHost && isSelfDeliver && !showSuccessState && canUpload && (
+        <p className="text-sm mb-5 leading-relaxed" style={{ color: '#888' }}>
+          Attach a preview so your host knows what&apos;s arriving (optional).
         </p>
       )}
 
@@ -761,6 +795,7 @@ interface ShippingSectionProps {
 
 function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingTitle, hostId, advertiserId, onBookingUpdate }: ShippingSectionProps) {
   const [trackingNumber, setTrackingNumber] = useState(booking.tracking_number ?? '')
+  const [deliveryMethod, setDeliveryMethod] = useState<'ship' | 'dropoff' | null>(booking.dropped_off_at ? 'dropoff' : booking.shipped_at ? 'ship' : null)
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
 
@@ -773,7 +808,7 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
     }).eq('id', bookingId)
     onBookingUpdate?.({ shipped_at: now, tracking_number: trackingNumber || null })
 
-    // Notify host — via /api/notify (RLS blocks cross-user inserts from client)
+    // Notify host
     if (hostId) {
       await notify({
         user_id: hostId,
@@ -788,6 +823,71 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         recipient_id: hostId,
         content: `📦 Printed materials have been shipped!${trackingNumber ? `\n\nTracking: ${trackingNumber}` : ''}\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
+      // Email host
+      try {
+        const { data: hostProfile } = await supabase.from('profiles').select('email, full_name').eq('id', hostId).single()
+        const { data: advProfile } = await supabase.from('profiles').select('full_name').eq('id', advertiserId ?? '').single()
+        if (hostProfile?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'materials_shipped',
+              hostEmail: hostProfile.email,
+              listingTitle: listingTitle ?? 'your listing',
+              advertiserName: advProfile?.full_name ?? 'The advertiser',
+              bookingId,
+              trackingNumber: trackingNumber || undefined,
+              isDropOff: false,
+              dates: booking.start_date && booking.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+            }),
+          })
+        }
+      } catch { /* non-fatal */ }
+    }
+    setSaving(false)
+  }
+
+  async function markDroppedOff() {
+    setSaving(true)
+    const now = new Date().toISOString()
+    await supabase.from('bookings').update({ dropped_off_at: now }).eq('id', bookingId)
+    onBookingUpdate?.({ dropped_off_at: now })
+
+    if (hostId) {
+      await notify({
+        user_id: hostId,
+        type: 'materials_shipped',
+        title: 'Materials dropped off',
+        body: `Printed materials for "${listingTitle ?? 'booking'}" have been dropped off.`,
+        href: `/dashboard/bookings/${bookingId}`,
+      })
+      await supabase.from('messages').insert({
+        booking_id: bookingId,
+        sender_id: advertiserId ?? hostId,
+        recipient_id: hostId,
+        content: `📦 Printed materials have been dropped off!\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
+      })
+      // Email host
+      try {
+        const { data: hostProfile } = await supabase.from('profiles').select('email, full_name').eq('id', hostId).single()
+        const { data: advProfile } = await supabase.from('profiles').select('full_name').eq('id', advertiserId ?? '').single()
+        if (hostProfile?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'materials_shipped',
+              hostEmail: hostProfile.email,
+              listingTitle: listingTitle ?? 'your listing',
+              advertiserName: advProfile?.full_name ?? 'The advertiser',
+              bookingId,
+              isDropOff: true,
+              dates: booking.start_date && booking.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+            }),
+          })
+        }
+      } catch { /* non-fatal */ }
     }
     setSaving(false)
   }
@@ -798,7 +898,6 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
     await supabase.from('bookings').update({ received_at: now }).eq('id', bookingId)
     onBookingUpdate?.({ received_at: now })
 
-    // Notify advertiser — via /api/notify (RLS blocks cross-user inserts from client)
     if (advertiserId) {
       await notify({
         user_id: advertiserId,
@@ -813,9 +912,28 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         recipient_id: advertiserId,
         content: `✅ Your printed materials have been received! Your host will proceed with installation and submit proof of posting once your ad is live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
+      // Email advertiser
+      try {
+        const { data: advProfile } = await supabase.from('profiles').select('email').eq('id', advertiserId).single()
+        if (advProfile?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'materials_received',
+              advertiserEmail: advProfile.email,
+              listingTitle: listingTitle ?? 'your listing',
+              bookingId,
+              dates: booking.start_date && booking.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+            }),
+          })
+        }
+      } catch { /* non-fatal */ }
     }
     setSaving(false)
   }
+
+  const alreadySent = !!(booking.shipped_at || booking.dropped_off_at)
 
   // Advertiser view
   if (!isHost) {
@@ -823,16 +941,18 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
       <div className="rounded-xl p-5 mb-4" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid var(--border, #e0e0d8)' }}>
         <div className="flex items-center gap-2 mb-3">
           <Package className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
-          <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Delivery Address</p>
+          <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Delivery Details</p>
         </div>
         <p className="text-sm mb-4 leading-relaxed" style={{ color: '#555' }}>{deliveryAddress}</p>
 
-        {booking.shipped_at ? (
+        {alreadySent ? (
           <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)' }}>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4" style={{ color: '#16a34a' }} />
               <p className="text-sm font-medium" style={{ color: '#16a34a' }}>
-                Marked as shipped on {new Date(booking.shipped_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {booking.dropped_off_at
+                  ? `Dropped off on ${new Date(booking.dropped_off_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                  : `Shipped on ${new Date(booking.shipped_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
               </p>
             </div>
             {booking.tracking_number && (
@@ -849,7 +969,36 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
               <p className="text-xs mt-2 ml-6" style={{ color: '#888' }}>Awaiting host confirmation of receipt</p>
             )}
           </div>
-        ) : (
+        ) : !deliveryMethod ? (
+          /* Choose: Ship or Drop off */
+          <div className="space-y-2">
+            <p className="text-xs font-medium mb-2" style={{ color: '#555' }}>How will your materials arrive?</p>
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod('ship')}
+              className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
+              style={{ border: '1px solid var(--border, #e0e0d8)' }}
+            >
+              <Truck className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
+              <div>
+                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Ship</span>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Mail your materials to the address above</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeliveryMethod('dropoff')}
+              className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
+              style={{ border: '1px solid var(--border, #e0e0d8)' }}
+            >
+              <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
+              <div>
+                <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Drop off in person</span>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>Deliver directly to the address above</p>
+              </div>
+            </button>
+          </div>
+        ) : deliveryMethod === 'ship' ? (
           <>
             <div className="mb-3">
               <label className="block text-xs font-medium mb-1" style={{ color: '#888' }}>Tracking number (optional)</label>
@@ -872,6 +1021,23 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
               Mark as Shipped
             </button>
+            <button type="button" onClick={() => setDeliveryMethod(null)} className="text-xs mt-2 hover:underline" style={{ color: '#aaa' }}>Back</button>
+          </>
+        ) : (
+          /* Drop-off flow */
+          <>
+            <p className="text-xs mb-3" style={{ color: '#888' }}>Coordinate timing with your host via Messages if needed.</p>
+            <button
+              type="button"
+              onClick={markDroppedOff}
+              disabled={saving}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+              style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)' }}
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+              Mark as Dropped Off
+            </button>
+            <button type="button" onClick={() => setDeliveryMethod(null)} className="text-xs mt-2 hover:underline" style={{ color: '#aaa' }}>Back</button>
           </>
         )}
       </div>
@@ -885,14 +1051,16 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         <Truck className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
         <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Material Delivery</p>
       </div>
-      {!booking.shipped_at ? (
+      {!booking.shipped_at && !booking.dropped_off_at ? (
         <p className="text-sm" style={{ color: '#888' }}>Printed materials are being prepared for delivery.</p>
       ) : !booking.received_at ? (
         <>
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
             <p className="text-sm" style={{ color: '#555' }}>
-              Materials shipped on {new Date(booking.shipped_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {booking.dropped_off_at
+                ? `Materials dropped off on ${new Date(booking.dropped_off_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : `Materials shipped on ${new Date(booking.shipped_at!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
             </p>
           </div>
           {booking.tracking_number && (
@@ -1519,7 +1687,7 @@ export default function BookingDetailPage() {
       if (bk.listing_id) {
         const { data: lst } = await supabase
           .from('listings')
-          .select('id, title, category, city, state, dimensions, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, requires_print, offers_printing, print_fee, delivery_address')
+          .select('id, title, category, city, state, dimensions, production_time, delivery_instructions, creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, requires_print, offers_printing, print_fee, delivery_address, specs')
           .eq('id', bk.listing_id)
           .single()
         if (lst) setListing(lst)
@@ -1698,22 +1866,28 @@ export default function BookingDetailPage() {
             <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <h2 className="text-sm font-semibold mb-4 uppercase tracking-wide" style={{ color: '#888' }}>Creative Requirements</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
-                {listing?.dimensions && (
+                {/* Physical size — the placement's real-world dimensions */}
+                {(listing?.dimensions || listing?.specs?.dimensions) && (
                   <div>
-                    <p style={{ color: '#aaa' }}>Listing Dimensions</p>
-                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.dimensions}</p>
+                    <p style={{ color: '#aaa' }}>Physical Size</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                      {listing?.specs?.dimensions
+                        ? `${listing.specs.dimensions.width} × ${listing.specs.dimensions.height} ${listing.specs.dimensions.unit}`
+                        : listing.dimensions}
+                    </p>
+                  </div>
+                )}
+                {/* Creative file spec — artboard / resolution for the uploaded file */}
+                {listing?.creative_dimensions && (
+                  <div>
+                    <p style={{ color: '#aaa' }}>{listing?.category && listing.category.toLowerCase().includes('digital') ? 'Resolution' : 'Creative File'}</p>
+                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_dimensions}</p>
                   </div>
                 )}
                 {listing?.creative_formats && listing.creative_formats.length > 0 && (
                   <div>
                     <p style={{ color: '#aaa' }}>Accepted Formats</p>
                     <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_formats.join(', ')}</p>
-                  </div>
-                )}
-                {listing?.creative_dimensions && (
-                  <div>
-                    <p style={{ color: '#aaa' }}>Dimensions</p>
-                    <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_dimensions}</p>
                   </div>
                 )}
                 {listing?.creative_max_file_size && (

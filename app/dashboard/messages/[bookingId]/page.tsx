@@ -312,12 +312,20 @@ function ChatPageInner() {
 
       if (msgs) setMessages(msgs)
 
-      // Mark messages from other party as read
+      // Mark ALL messages from other party as read (covers entire thread)
       await supabase
         .from('messages')
         .update({ read: true })
         .eq('booking_id', bookingId)
         .neq('sender_id', uid)
+        .eq('read', false)
+
+      // Also mark messages where current user is recipient (covers self-booking edge case)
+      await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('booking_id', bookingId)
+        .eq('recipient_id', uid)
         .eq('read', false)
 
       setLoading(false)

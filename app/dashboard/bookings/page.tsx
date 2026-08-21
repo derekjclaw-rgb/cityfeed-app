@@ -14,6 +14,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
 import { notify } from '@/lib/notify'
+import { getBookingDisplayStatus, type BookingStatusInput } from '@/lib/bookingStatus'
 
 /** Format a full name as 'First L.' for privacy */
 function formatNamePrivacy(fullName: string): string {
@@ -37,6 +38,11 @@ interface Booking {
   listing_id: string
   listing_title: string
   other_party_name: string
+  delivery_mode?: 'self_deliver' | 'host_prints' | null
+  shipped_at?: string | null
+  received_at?: string | null
+  dropped_off_at?: string | null
+  requires_print?: boolean
 }
 
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; description: string }> = {
@@ -184,7 +190,8 @@ export default function BookingsPage() {
         .from('bookings')
         .select(`
           id, status, start_date, end_date, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, created_at, listing_id,
-          listings(title),
+          delivery_mode, shipped_at, received_at, dropped_off_at,
+          listings(title, requires_print),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name),
           host:profiles!bookings_host_id_fkey(full_name)
         `)
@@ -204,6 +211,11 @@ export default function BookingsPage() {
         payout_amount: b.payout_amount as number | undefined,
         created_at: b.created_at as string,
         listing_id: b.listing_id as string,
+        delivery_mode: b.delivery_mode as Booking['delivery_mode'],
+        shipped_at: b.shipped_at as string | null,
+        received_at: b.received_at as string | null,
+        dropped_off_at: b.dropped_off_at as string | null,
+        requires_print: (b.listings as { requires_print?: boolean } | null)?.requires_print,
         listing_title: (b.listings as { title?: string } | null)?.title ?? 'Listing',
         other_party_name: host
           ? ((b.advertiser as { full_name?: string } | null)?.full_name ?? 'Advertiser')
@@ -429,22 +441,18 @@ export default function BookingsPage() {
   const inProgress = bookings.filter(b => !isBookingLive(b) && !isBookingConfirmed(b) && !isBookingComplete(b) && !isBookingExpired(b) && !['cancelled', 'disputed'].includes(b.status))
   const cancelled = bookings.filter(b => ['cancelled', 'disputed'].includes(b.status))
 
-  // ── Needs Action — role-aware "what do YOU owe right now" ──────────────────
+  // ── Needs Action — role-aware via shared status derivation ──────────────
   const needsAction = bookings.filter(b => {
     if (['cancelled', 'disputed'].includes(b.status)) return false
     if (isBookingExpired(b)) return false
-    if (isHost) {
-      // Requests waiting on your accept/decline
-      if (b.status === 'pending') return true
-      // Campaign window open, creative in hand, POP not submitted → post the ad
-      if (['confirmed', 'active'].includes(b.status) && isBookingLive(b) && (creativeMap[b.id] ?? false)) return true
-      return false
+    const statusInput: BookingStatusInput = {
+      status: b.status, start_date: b.start_date, end_date: b.end_date,
+      delivery_mode: b.delivery_mode, shipped_at: b.shipped_at, received_at: b.received_at,
+      dropped_off_at: b.dropped_off_at, hasCreativeFiles: creativeMap[b.id] ?? false,
+      requires_print: b.requires_print,
     }
-    // Advertiser: creative not uploaded yet on an accepted booking
-    if (['confirmed', 'active'].includes(b.status) && !(creativeMap[b.id] ?? false)) return true
-    // POP submitted — review window open
-    if (['pop_pending', 'pop_review'].includes(b.status)) return true
-    return false
+    const ds = getBookingDisplayStatus(statusInput, isHost)
+    return ds.group === 'needs_action'
   })
   const naIds = new Set(needsAction.map(b => b.id))
 
@@ -725,39 +733,24 @@ function BookingCard({
         )}
       </div>
 
-      {/* Next-step hint for advertisers */}
-      {!isHost && booking.status === 'pending' && (
-        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#fef9ec', color: '#b45309' }}>
-          <Clock className="w-3 h-3 flex-shrink-0" />
-          Awaiting host approval
-        </div>
-      )}
-      {!isHost && booking.status === 'confirmed' && !hasCreative && (
-        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
-          <Upload className="w-3 h-3 flex-shrink-0" />
-          Action needed: Upload your creative files
-        </div>
-      )}
-      {!isHost && booking.status === 'confirmed' && hasCreative && (
-        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
-          <CheckCircle className="w-3 h-3 flex-shrink-0" />
-          Creative submitted — awaiting host setup
-        </div>
-      )}
-
-      {/* Host status hints */}
-      {isHost && booking.status === 'confirmed' && !hasCreative && (
-        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
-          <Clock className="w-3 h-3 flex-shrink-0" />
-          Awaiting Creative Files
-        </div>
-      )}
-      {isHost && booking.status === 'confirmed' && hasCreative && (
-        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
-          <CheckCircle className="w-3 h-3 flex-shrink-0" />
-          Creative received — begin setup
-        </div>
-      )}
+      {/* Status hint — shipping-aware via shared derivation */}
+      {(() => {
+        const statusInput: BookingStatusInput = {
+          status: booking.status, start_date: booking.start_date, end_date: booking.end_date,
+          delivery_mode: booking.delivery_mode, shipped_at: booking.shipped_at,
+          received_at: booking.received_at, dropped_off_at: booking.dropped_off_at,
+          hasCreativeFiles: hasCreative, requires_print: booking.requires_print,
+        }
+        const ds = getBookingDisplayStatus(statusInput, isHost)
+        if (!ds.hint || ['cancelled', 'disputed', 'live', 'completed'].includes(ds.key)) return null
+        const Icon = ds.group === 'needs_action' ? Clock : CheckCircle
+        return (
+          <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: ds.bg, color: ds.text }}>
+            <Icon className="w-3 h-3 flex-shrink-0" />
+            {ds.hint}
+          </div>
+        )
+      })()}
 
       {/* Actions */}
       <div className="flex items-center flex-wrap gap-2 mt-4 overflow-hidden">

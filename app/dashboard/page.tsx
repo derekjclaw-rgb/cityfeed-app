@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials } from '@/lib/fees'
+import { getBookingDisplayStatus, type BookingStatusInput } from '@/lib/bookingStatus'
 import {
   Calendar, Camera, FilePlus, MessageSquare, Activity, Bookmark, CheckCircle2,
   ChevronRight, DollarSign, FileText, RotateCcw, Loader2,
@@ -113,9 +114,16 @@ function getStatusPill(status: string): { label: string; bg: string; color: stri
   }
 }
 
-function campaignStep(status: string, startDate: string, endDate: string, hasCreative?: boolean): { step: number; label: string; percent: number; displayStatus: string } {
+function campaignStep(status: string, startDate: string, endDate: string, hasCreative?: boolean, booking?: BookingStatusInput | null, isHostMode?: boolean): { step: number; label: string; percent: number; displayStatus: string } {
   if (isCampaignLive(status, startDate, endDate)) return { step: 5, label: 'Live', percent: 83, displayStatus: 'live' }
   if (isCampaignComplete(status, endDate)) return { step: 6, label: 'Complete', percent: 100, displayStatus: 'completed' }
+  // Shipping-aware steps
+  if (booking) {
+    const ds = getBookingDisplayStatus(booking, !!isHostMode)
+    if (ds.key === 'materials_received') return { step: 4, label: 'Materials Received', percent: 67, displayStatus: 'confirmed' }
+    if (ds.key === 'materials_shipped') return { step: 3, label: ds.label, percent: 55, displayStatus: 'confirmed' }
+    if (ds.key === 'awaiting_materials') return { step: 3, label: 'Ship Materials', percent: 50, displayStatus: 'confirmed' }
+  }
   if (status === 'confirmed' && hasCreative) return { step: 4, label: 'Awaiting Posting', percent: 67, displayStatus: 'confirmed' }
   if (isCampaignConfirmed(status, startDate)) {
     if (status === 'pending') return { step: 2, label: 'Awaiting Approval', percent: 33, displayStatus: 'pending' }
@@ -298,7 +306,8 @@ function DashboardContent() {
         .from('bookings')
         .select(`
           id, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, status, start_date, end_date, listing_id,
-          listings(title, images),
+          delivery_mode, shipped_at, received_at, dropped_off_at,
+          listings(title, images, requires_print),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
         `)
         .eq(isHost ? 'host_id' : 'advertiser_id', uid)
@@ -413,7 +422,13 @@ function DashboardContent() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setCampaignCards(activeBkgs.map((b: any) => {
         const hasCreative = hasCreativeMap.get(b.id) ?? false
-        const cs = campaignStep(b.status, b.start_date, b.end_date, hasCreative)
+        const statusInput: BookingStatusInput = {
+          status: b.status, start_date: b.start_date, end_date: b.end_date,
+          delivery_mode: b.delivery_mode, shipped_at: b.shipped_at, received_at: b.received_at,
+          dropped_off_at: b.dropped_off_at, hasCreativeFiles: hasCreative,
+          requires_print: b.listings?.requires_print,
+        }
+        const cs = campaignStep(b.status, b.start_date, b.end_date, hasCreative, statusInput, isHost)
         return {
           id: b.id,
           listing_title: b.listings?.title ?? 'Listing',

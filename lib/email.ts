@@ -70,6 +70,8 @@ export type EmailEvent =
   | { type: 'collateral_reminder'; advertiserEmail: string; listingTitle: string; bookingId: string; campaignStartDate: string }
   | { type: 'pop_reminder_morning'; hostEmail: string; listingTitle: string; bookingId: string }
   | { type: 'listing_published'; hostEmail: string; listingTitle: string; listingId: string; listingImage?: string; pricePerDay?: number }
+  | { type: 'materials_shipped'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string; trackingNumber?: string; isDropOff?: boolean; dates?: string }
+  | { type: 'materials_received'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string }
 
 export async function sendEmail(event: EmailEvent): Promise<void> {
   const mailer = getTransporter()
@@ -374,6 +376,51 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
             </div>
             <p style="color:#555;margin:0 0 20px">Please upload your files so the host can begin setup on time.</p>
             <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Upload Now →</a>
+          `),
+        })
+        break
+
+      case 'materials_shipped': {
+        const privacyNameShip = formatNamePrivacy(event.advertiserName)
+        const actionLabel = event.isDropOff ? 'dropped off' : 'shipped'
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `Materials ${actionLabel} for "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Materials ${event.isDropOff ? 'Dropped Off' : 'Shipped'} 📦</h2>
+            <div style="color:#555;margin:0 0 12px"><strong>${privacyNameShip}</strong> has ${actionLabel} their printed materials for your listing.</div>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <div style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></div>
+              ${event.dates ? `<div style="margin:0 0 4px;color:#888">Dates: ${formatDateRange(event.dates)}</div>` : ''}
+              ${event.trackingNumber ? `<div style="margin:0;color:#888">Tracking: <strong style="color:#2b2b2b">${event.trackingNumber}</strong></div>` : ''}
+            </div>
+            <div style="color:#555;margin:0 0 20px">${event.isDropOff ? 'Please confirm receipt once you have the materials.' : 'Please confirm receipt once the package arrives.'}</div>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+          `),
+        })
+        break
+      }
+
+      case 'materials_received':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.advertiserEmail,
+          subject: `Your materials arrived — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Materials Received ✅</h2>
+            <div style="color:#555;margin:0 0 12px">Great news — your host has confirmed receipt of your printed materials.</div>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <div style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></div>
+              ${event.dates ? `<div style="margin:0;color:#888">Dates: ${formatDateRange(event.dates)}</div>` : ''}
+            </div>
+            <div style="color:#555;margin:0 0 8px"><strong>What happens next:</strong></div>
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Your host will install your ad at the placement</li>
+              <li style="margin-bottom:6px">You'll receive proof of posting once your ad is live</li>
+              <li>Sit back — your campaign is in good hands</li>
+            </ol>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
         break
