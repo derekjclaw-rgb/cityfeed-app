@@ -45,12 +45,13 @@ export function isLive(status: string, startDate: string, endDate: string): bool
   const now = new Date()
   const end = endDate ? new Date(endDate + 'T23:59:59') : null
   const start = startDate ? new Date(startDate + 'T00:00:00') : null
-  const withinWindow = !!(start && end && now >= start && now <= end)
-  // LIVE = proof of posting exists (submitted or approved) AND campaign window active.
-  // confirmed/active without POP are NOT live — the ad may not actually be up.
-  // (Fixed 2026-08-22: previously any confirmed booking inside its date range
-  //  showed LIVE, and completed showed LIVE even before start_date.)
-  return ['completed', 'pop_pending', 'pop_review'].includes(status) && withinWindow
+  void start
+  // LIVE = proof of posting exists (submitted or approved) and campaign hasn't ended.
+  // POP before start_date still counts — the ad is physically up, so it IS live
+  // (early posting is common and a feature, not a bug).
+  // confirmed/active without POP are NEVER live — the ad may not actually be up.
+  // (Fixed 2026-08-22: previously any confirmed booking inside its date range showed LIVE.)
+  return ['completed', 'pop_pending', 'pop_review'].includes(status) && !!(end && now <= end)
 }
 
 /** Campaign window has started (start_date reached). */
@@ -89,9 +90,6 @@ export function getAdvertiserStatus(b: BookingStatusInput): DerivedStatus {
   // Date-based overrides
   if (isLive(status, start_date, end_date)) return { key: 'live', label: 'LIVE', hint: 'Your campaign is live.', bg: '#dcfce7', text: '#15803d', group: 'live' }
   if (isComplete(status, end_date)) return { key: 'completed', label: 'Complete', hint: 'Campaign complete — leave a review.', bg: '#f0fdf4', text: '#16a34a', group: 'completed' }
-
-  // POP submitted before campaign start — posted early, flips to LIVE on start date
-  if (status === 'completed') return { key: 'posted_early', label: 'Posted', hint: 'Your ad is posted — campaign goes live on the start date.', bg: '#f0fdf4', text: '#16a34a', group: 'upcoming' }
 
   // Pending host approval
   if (status === 'pending') return { key: 'pending', label: 'Pending Review', hint: 'Awaiting host approval.', bg: '#fef9ec', text: '#b45309', group: 'needs_action' }
@@ -142,9 +140,6 @@ export function getHostStatus(b: BookingStatusInput): DerivedStatus {
   // Date-based overrides
   if (isLive(status, start_date, end_date)) return { key: 'live', label: 'LIVE', hint: 'Campaign is live.', bg: '#dcfce7', text: '#15803d', group: 'live' }
   if (isComplete(status, end_date)) return { key: 'completed', label: 'Complete', hint: 'Campaign complete — payout processed.', bg: '#f0fdf4', text: '#16a34a', group: 'completed' }
-
-  // POP submitted before campaign start — posted early, flips to LIVE on start date
-  if (status === 'completed') return { key: 'posted_early', label: 'Posted', hint: 'Ad posted early — campaign goes live on the start date.', bg: '#f0fdf4', text: '#16a34a', group: 'upcoming' }
 
   // Pending host approval
   if (status === 'pending') return { key: 'pending', label: 'Review Request', hint: 'New booking request — accept or decline.', bg: '#fef9ec', text: '#b45309', group: 'needs_action' }
