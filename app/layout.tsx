@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
@@ -11,6 +11,15 @@ const geist = Geist({
 })
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'
+
+/* maximumScale: 1 disables iOS Safari's automatic zoom-on-input-focus.
+   Since iOS 10, Safari ignores this for user-initiated pinch zoom,
+   so accessibility (manual zoom) is fully preserved. */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
