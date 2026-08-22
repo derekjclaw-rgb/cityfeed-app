@@ -110,3 +110,17 @@ html {
 .animate-pulse-green {
   animation: pulse-green 2s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════
+   MOBILE: prevent iOS Safari auto-zoom on input focus
+   Safari zooms (and stays zoomed) when a focused form field
+   has font-size < 16px. Forcing 16px on mobile stops the
+   zoom + endless horizontal panning. Desktop unaffected.
+   ═══════════════════════════════════════════ */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
