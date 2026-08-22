@@ -194,20 +194,25 @@ export async function GET(req: NextRequest) {
     const reminderResults36: Array<{ booking_id: string; type: string }> = []
 
     // 1) Advertiser reminder: start_date within 36h, confirmed, no creative files
+    // NOTE (2026-08-22): .gte (not .gt) — campaigns starting the same UTC day as the
+    // cron run must still get a reminder. Previously short-lead bookings (created after
+    // the prior midnight run, starting the next day) fell through entirely (CF-E0A50C).
     const { data: upcomingConfirmed } = await supabase
       .from('bookings')
-      .select('id, advertiser_id, host_id, start_date, listing_id, listings(title)')
+      .select('id, advertiser_id, host_id, start_date, listing_id, delivery_mode, shipped_at, received_at, dropped_off_at, listings(title)')
       .eq('status', 'confirmed')
-      .gt('start_date', nowISO.split('T')[0])
+      .gte('start_date', nowISO.split('T')[0])
       .lte('start_date', thirtyySixHoursFromNow.split('T')[0])
 
     if (upcomingConfirmed && upcomingConfirmed.length > 0) {
       for (const bk of upcomingConfirmed) {
-        // Check if creative files exist
+        // Check if creative files exist — shipping-flow bookings (self_deliver) have
+        // no storage files; shipped/dropped/received materials count as creative sent.
         const { data: storageFiles } = await supabase.storage
           .from('booking-collateral')
           .list(`bookings/${bk.id}`, { limit: 1 })
-        const hasCreative = storageFiles && storageFiles.length > 0
+        const materialsSent = !!(bk.shipped_at || bk.dropped_off_at || bk.received_at)
+        const hasCreative = (storageFiles && storageFiles.length > 0) || materialsSent
 
         if (!hasCreative) {
           // Check if we already sent this reminder
@@ -258,7 +263,7 @@ export async function GET(req: NextRequest) {
       .from('bookings')
       .select('id, host_id, advertiser_id, start_date, listing_id, listings(title)')
       .in('status', ['confirmed', 'active'])
-      .gt('start_date', nowISO.split('T')[0])
+      .gte('start_date', nowISO.split('T')[0])
       .lte('start_date', thirtyySixHoursFromNow.split('T')[0])
 
     if (upcomingCompleted && upcomingCompleted.length > 0) {
@@ -320,7 +325,7 @@ export async function GET(req: NextRequest) {
     // We look for bookings starting today that have collateral but no POP
     const { data: startingTodayBookings } = await supabase
       .from('bookings')
-      .select('id, host_id, advertiser_id, start_date, listing_id, listings(title)')
+      .select('id, host_id, advertiser_id, start_date, listing_id, delivery_mode, shipped_at, received_at, dropped_off_at, listings(title)')
       .in('status', ['confirmed', 'active', 'pop_pending'])
       .eq('start_date', today)
 
@@ -330,7 +335,11 @@ export async function GET(req: NextRequest) {
         const { data: collateralFiles } = await supabase.storage
           .from('booking-collateral')
           .list(`bookings/${bk.id}`, { limit: 1 })
-        const hasCreative = collateralFiles && collateralFiles.length > 0
+        // Shipping-flow bookings have no storage files — physical materials that were
+        // shipped/dropped off/received count as creative present (fixed 2026-08-22,
+        // CF-E0A50C got no morning-of reminder because storage was empty).
+        const materialsSent = !!(bk.shipped_at || bk.dropped_off_at || bk.received_at)
+        const hasCreative = (collateralFiles && collateralFiles.length > 0) || materialsSent
 
         if (!hasCreative) continue // No creative uploaded — nothing for host to act on
 

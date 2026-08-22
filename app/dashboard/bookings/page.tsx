@@ -159,6 +159,22 @@ export default function BookingsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'action' | 'live' | 'upcoming' | 'completed' | 'cancelled'>('all')
   const [creativeMap, setCreativeMap] = useState<Record<string, boolean>>({})
+  // Bumped whenever the dashboard host/advertiser toggle changes — forces a refetch
+  // with the new mode (fixed 2026-08-22: page previously read cf_dash_mode only on
+  // mount, so toggling while on this page never updated the list).
+  const [modeVersion, setModeVersion] = useState(0)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail === 'host' || detail === 'advertiser') {
+        setLoading(true)
+        setModeVersion(v => v + 1)
+      }
+    }
+    window.addEventListener('cf_mode_change', handler)
+    return () => window.removeEventListener('cf_mode_change', handler)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -242,7 +258,7 @@ export default function BookingsPage() {
     }
 
     load()
-  }, [router])
+  }, [router, modeVersion])
 
   async function handleHostAction(bookingId: string, newStatus: 'confirmed' | 'cancelled') {
     setActionLoading(bookingId + newStatus)
