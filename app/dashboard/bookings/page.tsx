@@ -591,7 +591,7 @@ export default function BookingsPage() {
               { title: 'UPCOMING', list: confirmed.filter(b => !naIds.has(b.id)), color: '#1d4ed8', zap: false, pulse: false },
               { title: 'IN PROGRESS', list: inProgress.filter(b => !naIds.has(b.id)), color: '#b45309', zap: false, pulse: false },
               { title: 'COMPLETED', list: completed, color: '#888', zap: false, pulse: false },
-              { title: 'ENDED — NO PROOF', list: expired, color: '#888', zap: false, pulse: false },
+              { title: 'EXPIRED', list: expired, color: '#888', zap: false, pulse: false },
             ].map(sec => sec.list.length > 0 && (
               <section key={sec.title}>
                 <h2 className="text-sm font-semibold mb-3 px-1 flex items-center gap-2" style={{ color: sec.color }}>
