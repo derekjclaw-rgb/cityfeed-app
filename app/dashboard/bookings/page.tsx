@@ -659,11 +659,10 @@ function BookingCard({
   const canReview = booking.status === 'completed'
   const showAcceptDecline = isHost && booking.status === 'pending'
   const showPOPPrompt = isHost && booking.status === 'active'
-  // Advertisers can only cancel before the campaign window starts (after that the
-  // refund is $0 — the remedy is the host cancelling / support, not self-cancel).
-  // Hosts can always cancel confirmed/pending — it triggers a 100% advertiser refund.
-  const showCancelBtn = ['confirmed', 'pending'].includes(booking.status)
-    && (isHost || !windowStarted(booking.start_date))
+  // HOSTS ONLY on cards — their cancel is the remedy (100% advertiser refund).
+  // Advertiser cancel is deliberately buried: quiet link at the bottom of the
+  // booking detail page (standard marketplace practice — protects sales).
+  const showCancelBtn = isHost && ['confirmed', 'pending'].includes(booking.status)
   const showReceipt = booking.status === 'completed'
   const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
 

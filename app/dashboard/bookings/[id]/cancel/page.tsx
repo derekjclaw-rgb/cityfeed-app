@@ -287,20 +287,20 @@ export default function CancelBookingPage() {
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-3">
+          {/* Actions — Keep Booking is the hero; cancelling is the quiet secondary path */}
+          <div className="space-y-3">
             <Link
               href="/dashboard/bookings"
-              className="flex-1 text-center py-3 rounded-xl font-semibold text-sm hover:opacity-80 transition-opacity"
-              style={{ border: '1px solid var(--border, #e0e0d8)', color: '#555' }}
+              className="block w-full text-center py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: 'var(--gold, #debb73)', color: 'var(--charcoal, #2b2b2b)', boxShadow: '0 2px 8px rgba(222,187,115,0.35)' }}
             >
               Keep Booking
             </Link>
             <button
               onClick={handleCancel}
               disabled={cancelling}
-              className="flex-1 font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#dc2626', color: '#fff' }}
+              className="w-full font-medium text-sm py-3 rounded-xl hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{ border: '1px solid #fecaca', color: '#dc2626', backgroundColor: 'transparent' }}
             >
               {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
               {cancelling ? 'Cancelling...' : 'Cancel Booking'}

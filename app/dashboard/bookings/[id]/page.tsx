@@ -2023,6 +2023,22 @@ export default function BookingDetailPage() {
               </Link>
             )}
           </div>
+
+          {/* Cancel — deliberately quiet, bottom of page (Airbnb-style).
+              Advertisers: only before the campaign window starts (after that refund is $0).
+              Hosts: any pending/confirmed booking (triggers 100% advertiser refund). */}
+          {['pending', 'confirmed'].includes(booking.status) &&
+            (isHost || new Date() < new Date(booking.start_date + 'T00:00:00')) && (
+            <div className="pt-2 pb-1 text-center">
+              <Link
+                href={`/dashboard/bookings/${bookingId}/cancel`}
+                className="text-xs hover:underline"
+                style={{ color: '#aaa' }}
+              >
+                Need to cancel this booking?
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
