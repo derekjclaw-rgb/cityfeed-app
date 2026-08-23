@@ -118,34 +118,48 @@ function normalizeDbListing(row: Record<string, any>, index: number): Listing {
 
 // ─── Listing Card (v2 design) ──────────────────────────────────────────────────
 // ─── Card Carousel (Airbnb pattern) ────────────────────────────────────────────
+// Native scroll-snap carousel — real touch swipe with momentum (no JS touch math,
+// which fought the Link wrapper + page scroll on iOS and never felt swipeable).
 function CardCarousel({ images, placeholder, height }: { images: string[]; placeholder: string; height: string }) {
   const [idx, setIdx] = useState(0)
-  const touchStartX = useRef(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const count = images.length
 
-  function prev(e: React.MouseEvent) { e.preventDefault(); e.stopPropagation(); setIdx(i => (i - 1 + count) % count) }
-  function next(e: React.MouseEvent) { e.preventDefault(); e.stopPropagation(); setIdx(i => (i + 1) % count) }
-  function dotClick(e: React.MouseEvent, i: number) { e.preventDefault(); e.stopPropagation(); setIdx(i) }
+  function goTo(e: React.MouseEvent, i: number) {
+    e.preventDefault(); e.stopPropagation()
+    const el = scrollRef.current
+    if (!el) return
+    const clamped = Math.max(0, Math.min(count - 1, i))
+    el.scrollTo({ left: clamped * el.clientWidth, behavior: 'smooth' })
+  }
+
+  function onScroll() {
+    const el = scrollRef.current
+    if (!el) return
+    const i = Math.max(0, Math.min(count - 1, Math.round(el.scrollLeft / el.clientWidth)))
+    if (i !== idx) setIdx(i)
+  }
 
   if (count === 0) return <div className={`w-full bg-gradient-to-br ${placeholder}`} style={{ height }} />
 
   return (
-    <div
-      className="relative w-full overflow-hidden group/carousel"
-      style={{ height }}
-      onTouchStart={e => { touchStartX.current = e.touches[0].clientX }}
-      onTouchEnd={e => {
-        const diff = e.changedTouches[0].clientX - touchStartX.current
-        if (Math.abs(diff) > 40) { if (diff < 0) setIdx(i => Math.min(i + 1, count - 1)); else setIdx(i => Math.max(i - 1, 0)) }
-      }}
-    >
-      <img src={images[idx]} alt="" className="w-full h-full object-cover" loading={idx === 0 ? 'eager' : 'lazy'} />
+    <div className="relative w-full overflow-hidden group/carousel" style={{ height }}>
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="flex w-full h-full overflow-x-auto snap-x snap-mandatory no-scrollbar"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y', scrollbarWidth: 'none' }}
+      >
+        {images.map((src, i) => (
+          <img key={i} src={src} alt="" className="w-full h-full object-cover flex-shrink-0 snap-center" loading={i === 0 ? 'eager' : 'lazy'} draggable={false} />
+        ))}
+      </div>
       {count > 1 && (
         <>
-          <button type="button" onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} aria-label="Previous photo">
+          <button type="button" onClick={e => goTo(e, idx - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:flex" style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} aria-label="Previous photo">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2b2b2b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
-          <button type="button" onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity" style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} aria-label="Next photo">
+          <button type="button" onClick={e => goTo(e, idx + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity hidden sm:flex" style={{ backgroundColor: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} aria-label="Next photo">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2b2b2b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
           </button>
         </>
@@ -153,7 +167,7 @@ function CardCarousel({ images, placeholder, height }: { images: string[]; place
       {count > 1 && count <= 8 && (
         <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
           {images.map((_, i) => (
-            <button key={i} type="button" onClick={e => dotClick(e, i)} className="p-0 border-none" aria-label={`Photo ${i + 1}`}>
+            <button key={i} type="button" onClick={e => goTo(e, i)} className="p-1 -m-0.5 border-none" aria-label={`Photo ${i + 1}`}>
               <span className="block rounded-full transition-all" style={{ width: 6, height: 6, backgroundColor: i === idx ? '#fff' : 'rgba(255,255,255,0.5)', boxShadow: '0 0 2px rgba(0,0,0,0.3)' }} />
             </button>
           ))}
@@ -181,11 +195,11 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
         onMouseLeave={e => { if (!compact) (e.currentTarget as HTMLDivElement).style.boxShadow = '' }}
       >
         {/* Image area with carousel */}
-        <div className={`relative overflow-hidden ${compact ? 'h-32' : 'h-[200px]'}`}>
-          <CardCarousel images={images} placeholder={listing.image_placeholder} height={compact ? '128px' : '200px'} />
+        <div className={`relative overflow-hidden ${compact ? 'h-32' : 'h-[150px] sm:h-[200px]'}`}>
+          <CardCarousel images={images} placeholder={listing.image_placeholder} height={compact ? '128px' : '100%'} />
           {/* Category badge — top left */}
           <span
-            className="absolute top-3.5 left-3.5 text-xs font-semibold px-3.5 py-1 rounded-full shadow-sm"
+            className="absolute top-2 left-2 sm:top-3.5 sm:left-3.5 text-[10px] sm:text-xs font-semibold px-2.5 sm:px-3.5 py-1 rounded-full shadow-sm"
             style={{
               backgroundColor: 'rgba(255,255,255,0.92)',
               backdropFilter: 'blur(8px)',
@@ -210,7 +224,7 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
           )}
           {/* Price badge — bottom right */}
           <span
-            className="absolute bottom-3.5 right-3.5 text-xs font-bold px-3.5 py-1 rounded-full"
+            className="absolute bottom-2 right-2 sm:bottom-3.5 sm:right-3.5 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3.5 py-1 rounded-full"
             style={{
               backgroundColor: 'var(--gold, #debb73)',
               color: 'var(--charcoal, #2b2b2b)',
@@ -222,9 +236,9 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
         </div>
 
         {/* Card body */}
-        <div className={compact ? 'p-3' : 'px-[22px] pt-5 pb-[22px]'}>
+        <div className={compact ? 'p-3' : 'p-3.5 sm:px-[22px] sm:pt-5 sm:pb-[22px]'}>
           <h3
-            className={`font-bold leading-snug line-clamp-2 transition-colors ${compact ? 'text-xs mb-2' : 'text-base mb-2'}`}
+            className={`font-bold leading-snug line-clamp-2 transition-colors ${compact ? 'text-xs mb-2' : 'text-sm sm:text-base mb-2'}`}
             style={{ color: 'var(--charcoal, #2b2b2b)', letterSpacing: '-0.2px' }}
           >
             {listing.title}
@@ -689,7 +703,7 @@ export default function MarketplacePage() {
         <div className="pt-2 pb-20">
           {viewMode === 'grid' ? (
             filtered.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[22px]">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-[22px]">
                 {filtered.map(listing => <ListingCard key={listing.id} listing={listing} />)}
               </div>
             ) : (

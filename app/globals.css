@@ -71,6 +71,15 @@ html {
   overflow-x: clip;
 }
 
+/* Hide scrollbar (carousels / horizontal scrollers) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Custom scrollbar — light theme */
 ::-webkit-scrollbar {
   width: 6px;
