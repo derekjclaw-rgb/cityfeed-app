@@ -176,6 +176,7 @@ interface Message {
   id: string
   booking_id: string
   sender_id: string
+  recipient_id?: string
   content: string
   image_url?: string
   created_at: string
@@ -185,22 +186,37 @@ interface Message {
 
 const SYSTEM_PREFIXES = [
   '🎉 Your booking is confirmed',
+  '🎉 New instant booking',
+  '⏳ Your booking request has been received',
+  '📥 New booking request received',
   '📎 Creative files have been uploaded',
+  '✅ Creative files submitted',
+  '✅ Great news — your booking has been accepted',
+  '✅ You accepted the booking',
+  '✅ Your printed materials have been received',
+  '❌ Your booking request',
+  'You declined the booking request',
+  '📦 Printed materials have been',
   '📸 Proof of posting submitted',
+  '📸 Your host has confirmed',
   'POP approved! Your ad is now LIVE',
+  'Campaign complete',
   '🔄 The advertiser has requested changes',
   '🟢 Campaign is now LIVE',
   '🟢 Your ad is now live!',
   '🟢 Proof of posting approved!',
 ]
 
-function isSystemMessage(msg: Message): boolean {
+function isSystemMessage(msg: Message, isBothParties = false): boolean {
   if (msg.is_system) return true
+  // System messages are SELF-ADDRESSED (sender == recipient) — definitive marker.
+  // Skipped for self-bookings where real messages are also self-addressed.
+  if (!isBothParties && msg.recipient_id && msg.sender_id === msg.recipient_id) return true
   if (SYSTEM_PREFIXES.some(prefix => msg.content.startsWith(prefix))) return true
   // Auto-messages typically start with emojis — catch any we missed
   const firstChar = msg.content.codePointAt(0) ?? 0
   const startsWithEmoji = firstChar > 0x1F000
-  const emojiPrefixes = ['\u{1F389}', '\u{1F4CE}', '\u{1F4F8}', '\u{1F4CB}', '\u{1F7E2}', '\u{1F504}']
+  const emojiPrefixes = ['\u{1F389}', '\u{1F4CE}', '\u{1F4F8}', '\u{1F4CB}', '\u{1F7E2}', '\u{1F504}', '\u{1F4E6}', '\u{1F4E5}']
   if (startsWithEmoji && emojiPrefixes.some(e => msg.content.startsWith(e))) return true
   return false
 }
@@ -477,7 +493,7 @@ function ChatPageInner() {
             const isMe = isBothParties
               ? (msg.sent_as_role || 'advertiser') === currentViewRole
               : msg.sender_id === userId
-            const isSystem = isSystemMessage(msg)
+            const isSystem = isSystemMessage(msg, isBothParties)
             const { text, extraImageUrls, linkUrls } = parseMessageContent(msg.content)
 
             // System message — centered, no avatar, no sender name

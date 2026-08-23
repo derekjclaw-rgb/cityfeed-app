@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
-import { notify } from '@/lib/notify'
+import { notify, systemMessage } from '@/lib/notify'
 import { getBookingDisplayStatus, windowStarted, type BookingStatusInput } from '@/lib/bookingStatus'
 
 /** Format a full name as 'First L.' for privacy */
@@ -271,11 +271,12 @@ export default function BookingsPage() {
           href: `/dashboard/bookings/${bookingId}`,
         })
 
-        // Chat message to advertiser
-        await supabase.from('messages').insert({
+        // System message to advertiser — via /api/messages/system (the old client-side
+        // insert set sender_id = advertiser while the HOST was acting, so RLS silently
+        // blocked it and the advertiser never got this message)
+        await systemMessage({
           booking_id: bookingId,
-          sender_id: b.advertiser_id,
-          recipient_id: b.advertiser_id,
+          to: 'advertiser',
           content: `❌ Your booking request for "${listingTitle}" was not accepted by the host.\n\nA refund has been initiated and will appear in 5-10 business days.\n\nYou can browse other placements in the marketplace.`,
         })
 
@@ -313,11 +314,10 @@ export default function BookingsPage() {
       await supabase.from('bookings').update({ status: newStatus }).eq('id', bookingId)
 
       if (b && user) {
-        // Auto-message to advertiser with next steps
-        await supabase.from('messages').insert({
+        // System message to advertiser — neutral, advertiser-only visibility
+        await systemMessage({
           booking_id: bookingId,
-          sender_id: user.id,
-          recipient_id: b.advertiser_id,
+          to: 'advertiser',
           content: `✅ Great news — your booking has been accepted!\n\nNext steps:\n1. Upload your creative files\n2. Review the creative specs on the booking page\n3. The host will begin setup once materials are received\n\nFeel free to message with any questions!`,
         })
 

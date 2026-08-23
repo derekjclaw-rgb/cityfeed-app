@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
-import { notify } from '@/lib/notify'
+import { notify, systemMessage } from '@/lib/notify'
 
 /** Derive a human-readable confirmation code from a booking UUID */
 function confirmationCode(bookingId: string): string {
@@ -285,11 +285,10 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Message to host
-          await supabase.from('messages').insert({
+          // System message to host — via /api/messages/system (neutral, host-only visibility)
+          await systemMessage({
             booking_id: bookingId,
-            sender_id: user.id,
-            recipient_id: hostId,
+            to: 'host',
             content: `📎 Creative files have been uploaded for "${listingTitle ?? 'your listing'}"\n\nPlease review and begin setup when ready.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
           })
           // Confirmation message to advertiser
@@ -807,10 +806,9 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         body: `Printed materials for "${listingTitle ?? 'booking'}" have been shipped${trackingNumber ? ` (tracking: ${trackingNumber})` : ''}.`,
         href: `/dashboard/bookings/${bookingId}`,
       })
-      await supabase.from('messages').insert({
+      await systemMessage({
         booking_id: bookingId,
-        sender_id: advertiserId ?? hostId,
-        recipient_id: hostId,
+        to: 'host',
         content: `📦 Printed materials have been shipped!${trackingNumber ? `\n\nTracking: ${trackingNumber}` : ''}\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
       // Email host
@@ -852,10 +850,9 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         body: `Printed materials for "${listingTitle ?? 'booking'}" have been dropped off.`,
         href: `/dashboard/bookings/${bookingId}`,
       })
-      await supabase.from('messages').insert({
+      await systemMessage({
         booking_id: bookingId,
-        sender_id: advertiserId ?? hostId,
-        recipient_id: hostId,
+        to: 'host',
         content: `📦 Printed materials have been dropped off!\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
       // Email host
@@ -896,10 +893,9 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         body: `Your host has confirmed receipt of materials for "${listingTitle ?? 'booking'}".`,
         href: `/dashboard/bookings/${bookingId}`,
       })
-      await supabase.from('messages').insert({
+      await systemMessage({
         booking_id: bookingId,
-        sender_id: hostId ?? advertiserId,
-        recipient_id: advertiserId,
+        to: 'advertiser',
         content: `✅ Your printed materials have been received! Your host will proceed with installation and submit proof of posting once your ad is live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
       // Email advertiser
@@ -1219,11 +1215,10 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
             ? `\n\n${photoUrls.join('\n')}`
             : ''
 
-          // Message to advertiser — host informs them proof is uploaded
-          await supabase.from('messages').insert({
+          // System message to advertiser — proof is uploaded (neutral, advertiser-only visibility)
+          await systemMessage({
             booking_id: bookingId,
-            sender_id: hostId,
-            recipient_id: advertiserId,
+            to: 'advertiser',
             content: `📸 Your host has confirmed your ad placement is live! Here's the proof. If anything looks wrong, message your host directly.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}${photoText}`,
             image_url: photoUrls[0] ?? null,
           })

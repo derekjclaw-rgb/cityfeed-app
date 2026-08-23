@@ -73,9 +73,11 @@ export async function GET(req: NextRequest) {
             }),
           ])
 
+          // Self-addressed system message (sender==recipient=advertiser) — renders
+          // as a neutral centered note, visible only to the advertiser
           await supabase.from('messages').insert({
             booking_id: booking.id,
-            sender_id: booking.host_id,
+            sender_id: booking.advertiser_id,
             recipient_id: booking.advertiser_id,
             content: 'POP approved! Your ad is now LIVE 🟢',
           })
@@ -122,7 +124,7 @@ export async function GET(req: NextRequest) {
         // Send campaign complete message
         await supabase.from('messages').insert({
           booking_id: bk.id,
-          sender_id: bk.host_id,
+          sender_id: bk.advertiser_id,
           recipient_id: bk.advertiser_id,
           content: 'Campaign complete 🎉 Your booking has wrapped. Thank you for using City Feed!',
         })
