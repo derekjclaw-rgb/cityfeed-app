@@ -58,7 +58,7 @@ function BookPageInner() {
         .from('bookings')
         .select('start_date, end_date')
         .eq('listing_id', listingId)
-        .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review']),
+        .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review', 'completed']),
     ]).then(([listingRes, bookingsRes]) => {
       const { data, error } = listingRes
       if (error || !data) {
@@ -155,7 +155,7 @@ function BookPageInner() {
       .from('bookings')
       .select('id')
       .eq('listing_id', listingId)
-      .in('status', ['pending', 'confirmed', 'active'])
+      .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review', 'completed'])
       .lte('start_date', endDate)
       .gte('end_date', startDate)
 

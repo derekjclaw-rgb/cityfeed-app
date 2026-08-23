@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { computeBookingFinancials } from '@/lib/fees'
+import { computeBookingFinancials, bookingDays } from '@/lib/fees'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
@@ -11,11 +11,19 @@ export async function POST(req: NextRequest) {
   const supabase = getSupabase()
   try {
     const body = await req.json()
-    const { listingId, startDate, endDate, days, total, userId, listingTitle, pricePerDay, host_prints, print_fee } = body
+    const { listingId, startDate, endDate, total, userId, listingTitle, pricePerDay, host_prints, print_fee } = body
 
     if (!listingId || !startDate || !endDate || !userId || !total) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+
+    // SERVER-SIDE DAY COUNT — never trust client-provided `days`.
+    // A tampered payload could send days=1 with a month-long date range and
+    // get the full range stored while paying for one day. Recompute from dates.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate) || endDate < startDate) {
+      return NextResponse.json({ error: 'Invalid dates' }, { status: 400 })
+    }
+    const days = bookingDays(startDate, endDate)
 
     // Check if this is a mock listing (simple numeric ID vs UUID)
     const isMockListing = /^\d+$/.test(listingId)
@@ -34,7 +42,7 @@ export async function POST(req: NextRequest) {
         .from('bookings')
         .select('id')
         .eq('listing_id', listingId)
-        .in('status', ['pending', 'confirmed', 'active', 'completed'])
+        .in('status', ['pending', 'confirmed', 'active', 'pop_pending', 'pop_review', 'completed'])
         .lte('start_date', endDate)
         .gte('end_date', startDate)
         .limit(1)

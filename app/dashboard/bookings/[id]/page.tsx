@@ -472,25 +472,15 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 <p className="text-xs mt-0.5" style={{ color: '#888' }}>Deliver directly to the host</p>
               </div>
             </button>
-            {listing.offers_printing && (
-              <button
-                type="button"
-                onClick={async () => {
-                  const supabase = createClient()
-                  await supabase.from('bookings').update({ delivery_mode: 'host_prints' }).eq('id', bookingId)
-                  onBookingUpdate?.({ delivery_mode: 'host_prints' })
-                }}
-                className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors hover:bg-white flex items-center gap-3"
-                style={{ border: '1px solid var(--border, #e0e0d8)' }}
-              >
-                <Upload className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
-                <div>
-                  <span className="font-medium" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Print my ad for me{listing.print_fee ? ` (+$${Number(listing.print_fee).toFixed(2)})` : ''}</span>
-                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>Upload your digital files and your host will print them</p>
-                </div>
-              </button>
-            )}
           </div>
+          {/* Host printing is a PAID add-on selected at booking time (print fee is charged
+              in checkout). Offering it here would hand it out free — the host would never
+              be compensated. Advertisers who change their mind can arrange it with the host. */}
+          {listing.offers_printing && (
+            <p className="text-xs mt-3" style={{ color: '#888' }}>
+              Prefer your host to print for you? Printing is added at booking time — message your host to arrange it.
+            </p>
+          )}
         </div>
       )}
 
