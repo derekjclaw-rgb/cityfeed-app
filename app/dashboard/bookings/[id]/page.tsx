@@ -406,8 +406,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
 
   return (
     <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Header — wraps on narrow screens so the status pill never clips */}
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <h2 className="text-lg font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
           {isHost ? 'Advertiser Creative Files' : 'Upload Your Creative Files'}
         </h2>
@@ -426,8 +426,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             Preview Optional
           </span>
         ) : (
-          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
-            <Clock className="w-3 h-3" />
+          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
+            <Clock className="w-3 h-3 flex-shrink-0" />
             {isHost ? 'Awaiting Creative Files' : 'Upload Required'}
           </span>
         )}
