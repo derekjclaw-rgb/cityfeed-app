@@ -270,6 +270,18 @@ function BookPageInner() {
                 Print my ad for me (+${Number(listing.print_fee).toFixed(2)})
               </span>
             </label>
+            {!hostPrints && (
+              <p className="text-xs mt-3" style={{ color: '#b45309' }}>
+                Unchecked = you&apos;ll provide the printed materials yourself — ship or drop them off with the host after booking.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Physical placement, host doesn't offer printing — advertiser ALWAYS provides materials */}
+        {listing.requires_print && !(listing.offers_printing && (listing.print_fee ?? 0) > 0) && days > 0 && (
+          <div className="rounded-2xl p-4 mb-6 text-xs" style={{ backgroundColor: '#fef9ec', border: '1px solid #f5e6b8', color: '#b45309' }}>
+            This is a physical placement — you&apos;ll provide the printed materials (ship or drop off with the host after booking).
           </div>
         )}
 
