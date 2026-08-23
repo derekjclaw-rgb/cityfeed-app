@@ -289,7 +289,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ── Main Content ────────────────────────────────────────────────── */}
-      <main className="flex-1 min-h-screen md:ml-[252px]">
+      {/* min-w-0 is CRITICAL: as a flex item, main's default min-width:auto let content
+          min-content width blow the layout out to ~700px on phones — pages rendered
+          cropped at the right edge and LOOKED zoomed (Aug 23, Michael's 'still zoomed'
+          reports). Verified live: min-width:0 collapses body scrollWidth 696 → 384. */}
+      <main className="flex-1 min-w-0 min-h-screen md:ml-[252px]">
         {pathname.startsWith('/dashboard/messages') ? (
           <>
             {/* Mobile top spacer for hamburger clearance */}
