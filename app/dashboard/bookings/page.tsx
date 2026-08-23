@@ -692,13 +692,24 @@ function BookingCard({
           </p>
           <p className="text-xs font-mono font-semibold mt-1" style={{ color: 'var(--mint, #7ecfc0)' }}>{confirmationCode(booking.id)}</p>
         </div>
-        <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
-          style={{ backgroundColor: ds.bg, color: ds.text }}
-        >
-          {isLiveNow && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />}
-          {ds.label}
-        </span>
+        <div className="flex items-center flex-wrap justify-end gap-1.5 flex-shrink-0">
+          {/* Countdown to campaign start — prominent so upcoming work is unmissable */}
+          {['confirmed', 'active'].includes(booking.status) && !windowStarted(booking.start_date) && (() => {
+            const d = Math.ceil((new Date(booking.start_date + 'T00:00:00').getTime() - Date.now()) / 86400000)
+            return (
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 whitespace-nowrap" style={{ backgroundColor: 'var(--gold-light, #f5edda)', color: 'var(--gold-dark, #c9a54e)' }}>
+                ⏱ {d <= 0 ? 'Starts today' : `Starts in ${d} day${d === 1 ? '' : 's'}`}
+              </span>
+            )
+          })()}
+          <span
+            className="text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 whitespace-nowrap"
+            style={{ backgroundColor: ds.bg, color: ds.text }}
+          >
+            {isLiveNow && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />}
+            {ds.label}
+          </span>
+        </div>
       </div>
 
       {/* Dates + Amount */}
