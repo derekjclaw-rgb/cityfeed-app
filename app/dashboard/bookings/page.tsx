@@ -703,9 +703,9 @@ function BookingCard({
       </div>
 
       {/* Dates + Amount */}
-      <div className="flex items-center gap-4 text-xs mt-3" style={{ color: '#888' }}>
-        <span className="flex items-center gap-1">
-          <Clock className="w-3 h-3" />
+      <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs mt-3" style={{ color: '#888' }}>
+        <span className="flex items-center gap-1 whitespace-nowrap">
+          <Clock className="w-3 h-3 flex-shrink-0" />
           {formatBookingDate(booking.start_date, { month: 'short', day: 'numeric' })}
           {' — '}
           {formatBookingDate(booking.end_date, { month: 'short', day: 'numeric', year: 'numeric' })}
