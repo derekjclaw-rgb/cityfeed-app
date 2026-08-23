@@ -888,8 +888,8 @@ export default function ListingDetailPage() {
                   )}
                   {listing.creative_specs.loop_count !== undefined && listing.creative_specs.loop_count !== null && (
                     <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
-                      <span style={{ color: '#888' }}>Loop count</span>
-                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.loop_count === 0 ? 'Infinite' : listing.creative_specs.loop_count}</span>
+                      <span style={{ color: '#888' }}>Plays per day</span>
+                      <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.loop_count === 0 ? 'Continuous rotation' : `${listing.creative_specs.loop_count}/day`}</span>
                     </div>
                   )}
                   {listing.creative_specs.host_prints && (

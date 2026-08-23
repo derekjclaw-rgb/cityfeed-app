@@ -805,7 +805,7 @@ export default function CreateListingPage() {
             <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Ad specs &amp; performance
             </h2>
-            <FormField label="Physical dimensions" hint={isDigitalCat(form.category) ? 'Screen resolution in pixels' : 'Width and height of the ad placement'}>
+            <FormField label="Physical dimensions" hint={isDigitalCat(form.category) ? 'Physical size of the screen — or resolution if you prefer px' : 'Width and height of the ad placement'}>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -832,10 +832,7 @@ export default function CreateListingPage() {
                   className={`${inputClass} cursor-pointer`}
                   style={{ ...inputStyle, maxWidth: 72, paddingLeft: 8, paddingRight: 8 }}
                 >
-                  {isDigitalCat(form.category)
-                    ? [<option key="px" value="px">px</option>]
-                    : ['ft', 'in', 'm'].map(u => <option key={u} value={u}>{u}</option>)
-                  }
+                  {(isDigitalCat(form.category) ? ['px', 'ft', 'in', 'm', 'cm'] : ['ft', 'in', 'm', 'cm', 'px']).map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
             </FormField>
@@ -1147,14 +1144,14 @@ export default function CreateListingPage() {
                     </select>
                   </FormField>
                   <FormField
-                    label="How many times should the video repeat?"
-                    hint="Set to 0 for continuous play"
+                    label="How many times will the ad play per day?"
+                    hint="Daily plays for each advertiser's spot — leave 0 for continuous rotation"
                   >
                     <input
                       type="number"
                       value={form.creative_loop_count}
                       onChange={e => set('creative_loop_count', e.target.value)}
-                      placeholder="0"
+                      placeholder="e.g. 240"
                       min="0"
                       className={inputClass}
                       style={inputStyle}
@@ -1457,7 +1454,7 @@ export default function CreateListingPage() {
                         <>
                           <ReviewRow label="Video duration" value={form.creative_video_duration} />
                           <ReviewRow label="Audio" value={form.creative_audio_allowed ? 'Allowed' : 'Muted'} />
-                          <ReviewRow label="Loop count" value={form.creative_loop_count || 'Continuous'} />
+                          <ReviewRow label="Plays per day" value={form.creative_loop_count && form.creative_loop_count !== '0' ? `${form.creative_loop_count}/day` : 'Continuous rotation'} />
                         </>
                       )}
                     </ReviewSection>

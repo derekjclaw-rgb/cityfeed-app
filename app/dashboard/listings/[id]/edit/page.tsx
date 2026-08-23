@@ -832,13 +832,13 @@ export default function EditListingPage() {
                   onChange={v => set('creative_audio_allowed', v)}
                   label="Audio allowed"
                 />
-                <FormField label="Loop count (leave blank for unlimited)">
+                <FormField label="Plays per day (leave blank for continuous rotation)">
                   <input
                     type="number"
                     value={form.creative_loop_count}
                     onChange={e => set('creative_loop_count', e.target.value)}
-                    placeholder="e.g. 3"
-                    min={1}
+                    placeholder="e.g. 240"
+                    min={0}
                     className={inputClass}
                     style={inputStyle}
                   />
