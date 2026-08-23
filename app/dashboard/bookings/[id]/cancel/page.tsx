@@ -20,11 +20,16 @@ interface BookingInfo {
   advertiser_id: string
 }
 
-function calcRefund(booking: BookingInfo, userId: string): { amount: number; policy: string; label: string; color: string } {
+function calcRefund(booking: BookingInfo, isViewerHost: boolean): { amount: number; policy: string; label: string; color: string } {
   const now = new Date()
   const start = new Date(booking.start_date)
   const daysUntil = (start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
   const total = booking.total_price
+
+  // Host cancellations always fully refund the advertiser — no fee, no tiers.
+  if (isViewerHost) {
+    return { amount: total, policy: 'host_cancelled_full_refund', label: `The advertiser will receive a full refund of $${total.toFixed(2)}`, color: '#b45309' }
+  }
 
   if (now >= start) {
     return { amount: 0, policy: 'no_refund', label: 'No refund — campaign already started', color: '#dc2626' }
@@ -80,7 +85,7 @@ export default function CancelBookingPage() {
         advertiser_id: b.advertiser_id,
       }
       setBooking(info)
-      setRefundInfo(calcRefund(info, user.id))
+      setRefundInfo(calcRefund(info, user.id === info.host_id))
       setLoading(false)
     })
   }, [bookingId, router])
@@ -141,7 +146,9 @@ export default function CancelBookingPage() {
           <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Booking Cancelled</h2>
           {refundInfo && refundInfo.amount > 0 ? (
             <p className="text-sm mb-6" style={{ color: '#888' }}>
-              A refund of <strong>${refundInfo.amount.toFixed(2)}</strong> will appear in 5–10 business days.
+              {booking && userId === booking.host_id
+                ? <>The advertiser will receive a full refund of <strong>${refundInfo.amount.toFixed(2)}</strong> in 5–10 business days.</>
+                : <>A refund of <strong>${refundInfo.amount.toFixed(2)}</strong> will appear in 5–10 business days.</>}
             </p>
           ) : (
             <p className="text-sm mb-6" style={{ color: '#888' }}>
@@ -199,7 +206,7 @@ export default function CancelBookingPage() {
                 </span>
               </div>
               <div className="flex justify-between font-semibold">
-                <span style={{ color: '#888' }}>Total paid</span>
+                <span style={{ color: '#888' }}>{booking && userId === booking.host_id ? 'Advertiser paid' : 'Total paid'}</span>
                 <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>${booking?.total_price?.toFixed(2)}</span>
               </div>
             </div>
@@ -209,8 +216,20 @@ export default function CancelBookingPage() {
           <div className="mb-6">
             <h3 className="font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               <Info className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
-              Refund Policy
+              {booking && userId === booking.host_id ? 'Cancelling as Host' : 'Refund Policy'}
             </h3>
+            {booking && userId === booking.host_id ? (
+              <div className="p-4 rounded-xl" style={{ backgroundColor: '#fef9ec', border: '1px solid #f3e3bd' }}>
+                <p className="text-sm font-semibold mb-1" style={{ color: '#b45309' }}>
+                  The advertiser will be refunded 100% — ${booking.total_price.toFixed(2)}
+                </p>
+                <p className="text-xs" style={{ color: '#888' }}>
+                  When a host cancels, the advertiser always receives a full refund with no fees,
+                  regardless of timing. Frequent cancellations can affect your listing’s standing
+                  on City Feed.
+                </p>
+              </div>
+            ) : (
             <div className="space-y-2">
               {[
                 { condition: '7+ days before start', result: 'Full refund minus 5% processing fee', current: daysUntilStart > 7 },
@@ -234,8 +253,9 @@ export default function CancelBookingPage() {
                 </div>
               ))}
             </div>
+            )}
 
-            {refundInfo && (
+            {refundInfo && !(booking && userId === booking.host_id) && (
               <div className="mt-4 p-4 rounded-xl" style={{ backgroundColor: 'var(--light-gray, #f8f8f5)', border: '1px solid #e8e8e0' }}>
                 <p className="text-sm font-semibold" style={{ color: refundInfo.color }}>
                   Your refund: {refundInfo.amount > 0 ? `$${refundInfo.amount.toFixed(2)}` : 'No refund'}

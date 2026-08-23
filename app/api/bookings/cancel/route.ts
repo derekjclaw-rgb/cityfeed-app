@@ -56,7 +56,15 @@ export async function POST(req: NextRequest) {
     let refundAmountCents = 0
     let refundPolicy = ''
 
-    if (now >= campaignStart) {
+    if (isHost) {
+      // HOST cancellation — always a 100% refund to the advertiser, no processing
+      // fee, regardless of timing. The advertiser did nothing wrong; the buyer
+      // tiers below only ever apply when the ADVERTISER cancels.
+      // (Fixed 2026-08-22: previously buyer tiers applied to host cancellations,
+      //  so a host cancelling after start_date kept the advertiser's money.)
+      refundAmountCents = totalAmountCents
+      refundPolicy = 'host_cancelled_full_refund'
+    } else if (now >= campaignStart) {
       // Campaign already started — no refund
       refundAmountCents = 0
       refundPolicy = 'no_refund'
