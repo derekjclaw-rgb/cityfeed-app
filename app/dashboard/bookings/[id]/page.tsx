@@ -1784,7 +1784,7 @@ export default function BookingDetailPage() {
     !!startD && now < startD
   const isPastComplete = booking.status === 'completed' && !!endD && now >= endD
   const days = booking.start_date && booking.end_date
-    ? Math.ceil((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000)
+    ? Math.max(1, Math.round((new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime()) / 86400000) + 1)
     : 0
 
   const showCollateralSection = ['confirmed', 'completed'].includes(booking.status)

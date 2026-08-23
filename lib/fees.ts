@@ -160,12 +160,17 @@ export function toLocalDateStr(d: Date): string {
 }
 
 /**
- * Canonical day count — matches checkout: ceil((end − start) / 1 day), min 1.
- * Aug 11 → Aug 13 = 2 days. Every surface must agree with what was charged.
+ * Canonical day count — INCLUSIVE of the end date (Michael's call, Aug 23 2026):
+ * campaigns run THROUGH the end date, so Aug 24 → Aug 26 = 3 days.
+ * days = calendar difference + 1, min 1 (same-day booking = 1 day).
+ * Every surface (booking sheet, checkout, receipts, earnings) must agree.
+ * NOTE: legacy bookings were charged under the old exclusive count; their
+ * stored money amounts are untouched — only the displayed day count/day rate
+ * derivation shifts.
  */
 export function bookingDays(start: string, end: string): number {
   const ms = parseBookingDate(end).getTime() - parseBookingDate(start).getTime()
-  return Math.max(1, Math.ceil(ms / 86_400_000))
+  return Math.max(1, Math.round(ms / 86_400_000) + 1)
 }
 
 export function formatBookingDate(

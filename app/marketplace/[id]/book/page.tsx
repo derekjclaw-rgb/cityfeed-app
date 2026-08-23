@@ -105,7 +105,8 @@ function BookPageInner() {
     if (!startDate || !endDate || !listing) return { days: 0, subtotal: 0, buyerFee: 0, total: 0 }
     const start = new Date(startDate)
     const end = new Date(endDate)
-    const days = Math.max(0, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)))
+    // INCLUSIVE day count — campaign runs through the end date (Aug 24→26 = 3 days)
+    const days = Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1)
     const subtotal = days * listing.price_per_day
     const buyerFee = Math.round((subtotal + printFeeAmount) * 0.07 * 100) / 100
     return { days, subtotal, buyerFee, total: subtotal + printFeeAmount + buyerFee }
