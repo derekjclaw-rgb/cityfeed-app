@@ -224,6 +224,7 @@ function DashboardContent() {
   const [recentBookings, setRecentBookings] = useState<Booking[]>([])
   const [timeline, setTimeline] = useState<Notification[]>([])
   const [hostAction, setHostAction] = useState<{ message: string; href: string } | null>(null)
+  const [newBookingBanner, setNewBookingBanner] = useState<{ id: string; title: string; dates: string } | null>(null)
   const [popNeeded, setPopNeeded] = useState(0)
 
   // Finance
@@ -309,7 +310,7 @@ function DashboardContent() {
       const { data: allBookings } = await supabase
         .from('bookings')
         .select(`
-          id, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, status, start_date, end_date, listing_id,
+          id, created_at, total_price, subtotal, buyer_fee, seller_fee, print_fee_charged, payout_amount, status, start_date, end_date, listing_id,
           delivery_mode, shipped_at, received_at, dropped_off_at,
           listings(title, images, requires_print),
           advertiser:profiles!bookings_advertiser_id_fkey(full_name)
@@ -374,6 +375,31 @@ function DashboardContent() {
 
       // ── LIVE campaigns (proof up + window running) ───────────────────────
       setLiveCampaignsCount(bookings.filter(b => isLive(b.status, b.start_date, b.end_date)).length)
+
+      // ── New-booking gold banner (host) — bookings landed in the last 48h,
+      // dismissible per-booking via localStorage ──────────────────────────
+      if (isHost) {
+        try {
+          const seen: string[] = JSON.parse(localStorage.getItem('cf_seen_new_bookings') ?? '[]')
+          const cutoff = Date.now() - 48 * 3600 * 1000
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const fresh = bookings.find((b: any) =>
+            ['pending', 'confirmed'].includes(b.status) &&
+            b.created_at && new Date(b.created_at).getTime() > cutoff &&
+            !seen.includes(b.id)
+          )
+          if (fresh) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const f = fresh as any
+            const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            setNewBookingBanner({ id: f.id, title: f.listings?.title ?? 'your listing', dates: `${fmt(f.start_date)} — ${fmt(f.end_date)}` })
+          } else {
+            setNewBookingBanner(null)
+          }
+        } catch { setNewBookingBanner(null) }
+      } else {
+        setNewBookingBanner(null)
+      }
 
       // ── Saved listings ────────────────────────────────────────────────────
       const { count: savedCount } = await supabase
@@ -610,6 +636,34 @@ function DashboardContent() {
           {/* ═══════════════════════════════════════
                HOST PRIORITY ACTION BAR
                ═══════════════════════════════════════ */}
+          {/* ── NEW BOOKING — unmissable gold banner ── */}
+          {mode === 'host' && newBookingBanner && (
+            <div className="rounded-2xl p-4 mb-4 flex items-center justify-between gap-3" style={{ backgroundColor: 'var(--gold, #debb73)', boxShadow: '0 4px 16px rgba(222,187,115,0.45)' }}>
+              <Link href={`/dashboard/bookings/${newBookingBanner.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                <span className="text-xl">🎉</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold truncate" style={{ color: 'var(--charcoal, #2b2b2b)' }}>New booking — {newBookingBanner.title}</p>
+                  <p className="text-xs" style={{ color: 'rgba(43,43,43,0.7)' }}>{newBookingBanner.dates} · Tap to view</p>
+                </div>
+              </Link>
+              <button
+                type="button"
+                aria-label="Dismiss"
+                onClick={() => {
+                  try {
+                    const seen: string[] = JSON.parse(localStorage.getItem('cf_seen_new_bookings') ?? '[]')
+                    localStorage.setItem('cf_seen_new_bookings', JSON.stringify([...seen, newBookingBanner.id].slice(-100)))
+                  } catch { /* noop */ }
+                  setNewBookingBanner(null)
+                }}
+                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center hover:opacity-70"
+                style={{ backgroundColor: 'rgba(43,43,43,0.12)' }}
+              >
+                <X className="w-4 h-4" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
+              </button>
+            </div>
+          )}
+
           {mode === 'host' && hostAction && (
             <Link href={hostAction.href}>
               <div
