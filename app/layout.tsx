@@ -12,13 +12,14 @@ const geist = Geist({
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'
 
-/* maximumScale: 1 disables iOS Safari's automatic zoom-on-input-focus.
-   Since iOS 10, Safari ignores this for user-initiated pinch zoom,
-   so accessibility (manual zoom) is fully preserved. */
+/* Input-focus auto-zoom is prevented by 16px font-size on mobile form fields
+   (see globals.css). We deliberately do NOT set maximumScale: on devices that
+   retained a zoomed viewport state from before that fix, maximumScale=1 TRAPPED
+   users zoomed-in with no way to pinch back out (Aug 23 "can't even zoom out"
+   report). Users must always be able to pinch to 1×. */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 }
 
 export const metadata: Metadata = {
