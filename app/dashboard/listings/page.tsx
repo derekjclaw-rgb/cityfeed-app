@@ -12,6 +12,7 @@ import { Plus, MapPin, Edit2, Trash2, Loader2, Eye, EyeOff, AlertCircle, MoreVer
 import { createClient } from '@/lib/supabase/client'
 import AvailabilityManager from '@/components/AvailabilityManager'
 import { getCategoryLabel } from '@/lib/design'
+import { todayLocalStr } from '@/lib/fees'
 
 interface Listing {
   id: string
@@ -93,7 +94,7 @@ export default function MyListingsPage() {
   async function handleDelete(id: string) {
     const supabase = createClient()
     // Block deletion if listing has active or upcoming campaigns
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayLocalStr()
     const { data: activeBookings } = await supabase
       .from('bookings')
       .select('id')
@@ -128,7 +129,7 @@ export default function MyListingsPage() {
     setUnpublishErrors(prev => { const n = { ...prev }; delete n[id]; return n })
 
     const supabase = createClient()
-    const today = new Date().toISOString().split('T')[0]
+    const today = todayLocalStr()
 
     // Block unpublish when listing has upcoming or live campaigns
     const { data: activeCampaigns } = await supabase

@@ -7,6 +7,7 @@ import KpiCard from '@/components/admin/KpiCard'
 import StatusBadge from '@/components/admin/StatusBadge'
 import DateRangeFilter, { type DateRange } from '@/components/admin/DateRangeFilter'
 import { formatCurrency, formatDate, shortId, calcFinancials } from '@/lib/admin-finance'
+import { todayLocalStr, toLocalDateStr } from '@/lib/fees'
 
 interface Booking {
   id: string
@@ -45,7 +46,7 @@ export default function AdminFinancialsPage() {
   const bookings = useMemo(() => {
     if (!dateRange.startDate) return allBookings
     const start = dateRange.startDate
-    const end = dateRange.endDate ?? new Date().toISOString().split('T')[0]
+    const end = dateRange.endDate ?? todayLocalStr()
     return allBookings.filter(b => {
       const d = b.created_at.split('T')[0]
       return d >= start && d <= end
@@ -65,7 +66,7 @@ export default function AdminFinancialsPage() {
 
     // This month (always from all bookings regardless of filter)
     const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const monthStart = toLocalDateStr(new Date(now.getFullYear(), now.getMonth(), 1))
     const monthNonCancelled = allBookings.filter(b => b.created_at.split('T')[0] >= monthStart && b.status !== 'cancelled')
     const monthCompleted = allBookings.filter(b => b.created_at.split('T')[0] >= monthStart && b.status === 'completed')
     const monthGross = monthNonCancelled.reduce((s, b) => s + (b.total_price ?? 0), 0)
@@ -99,7 +100,7 @@ export default function AdminFinancialsPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `cityfeed-financials-${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `cityfeed-financials-${todayLocalStr()}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

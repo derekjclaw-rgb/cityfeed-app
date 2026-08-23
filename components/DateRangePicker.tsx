@@ -19,6 +19,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, X } from 'lucide-react'
+import { todayLocalStr } from '@/lib/fees'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -76,7 +77,9 @@ function isInDisabledRange(ds: string, ranges: DisabledRange[]): boolean {
 function CalendarGrid({ year, month, startDate, endDate, hoverDate, minDate, disabledRanges = [], onSelect, onHover }: GridProps) {
   const firstDow = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const today = new Date().toISOString().split('T')[0]
+  // LOCAL today — toISOString() is UTC and marked the WRONG cell as "today" after
+  // 5pm PDT (evening users saw tomorrow ringed as today → off-by-one selections)
+  const today = todayLocalStr()
 
   // Preview range end: hoverDate when we have start but no end yet
   const rangeEnd = startDate && !endDate && hoverDate >= startDate ? hoverDate : endDate
@@ -180,7 +183,7 @@ export default function DateRangePicker({
   placeholder = 'Select dates',
   disabledRanges = [],
 }: DateRangePickerProps) {
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = todayLocalStr()
   const effectiveMin = minDate ?? todayStr
 
   const now = new Date()

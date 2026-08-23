@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Calendar } from 'lucide-react'
+import { toLocalDateStr } from '@/lib/fees'
 
 export type DateRange = {
   label: string
@@ -20,7 +21,7 @@ const PRESETS = [
 
 function getPresetRange(value: string): { start: string | null; end: string | null } {
   const now = new Date()
-  const today = now.toISOString().split('T')[0]
+  const today = toLocalDateStr(now)
 
   switch (value) {
     case 'week': {
@@ -28,21 +29,21 @@ function getPresetRange(value: string): { start: string | null; end: string | nu
       const diff = day === 0 ? 6 : day - 1 // Monday start
       const start = new Date(now)
       start.setDate(now.getDate() - diff)
-      return { start: start.toISOString().split('T')[0], end: today }
+      return { start: toLocalDateStr(start), end: today }
     }
     case 'month': {
       const start = new Date(now.getFullYear(), now.getMonth(), 1)
-      return { start: start.toISOString().split('T')[0], end: today }
+      return { start: toLocalDateStr(start), end: today }
     }
     case '30d': {
       const start = new Date(now)
       start.setDate(now.getDate() - 30)
-      return { start: start.toISOString().split('T')[0], end: today }
+      return { start: toLocalDateStr(start), end: today }
     }
     case '90d': {
       const start = new Date(now)
       start.setDate(now.getDate() - 90)
-      return { start: start.toISOString().split('T')[0], end: today }
+      return { start: toLocalDateStr(start), end: today }
     }
     default:
       return { start: null, end: null }

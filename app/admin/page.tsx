@@ -7,6 +7,7 @@ import KpiCard from '@/components/admin/KpiCard'
 import StatusBadge from '@/components/admin/StatusBadge'
 import DateRangeFilter, { type DateRange } from '@/components/admin/DateRangeFilter'
 import { formatCurrency, formatDate, shortId, calcFinancials } from '@/lib/admin-finance'
+import { todayLocalStr, toLocalDateStr } from '@/lib/fees'
 
 interface Booking {
   id: string
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
 function filterByDate<T extends { created_at: string }>(items: T[], range: DateRange): T[] {
   if (!range.startDate) return items
   const start = range.startDate
-  const end = range.endDate ?? new Date().toISOString().split('T')[0]
+  const end = range.endDate ?? todayLocalStr()
   return items.filter(item => {
     const d = item.created_at.split('T')[0]
     return d >= start && d <= end

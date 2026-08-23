@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react'
 import { X, CalendarOff, Plus, Loader2, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { todayLocalStr } from '@/lib/fees'
 
 interface BlockedRange {
   start: string
@@ -173,7 +174,7 @@ export default function AvailabilityManager({ listingId, listingTitle, onClose }
                       type="date"
                       value={newStart}
                       onChange={e => setNewStart(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={todayLocalStr()}
                       className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                       style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
                     />
@@ -184,7 +185,7 @@ export default function AvailabilityManager({ listingId, listingTitle, onClose }
                       type="date"
                       value={newEnd}
                       onChange={e => setNewEnd(e.target.value)}
-                      min={newStart || new Date().toISOString().split('T')[0]}
+                      min={newStart || todayLocalStr()}
                       className="w-full rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                       style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', color: '#2b2b2b' }}
                     />

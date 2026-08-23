@@ -143,6 +143,23 @@ export function parseBookingDate(d: string): Date {
 }
 
 /**
+ * Today as 'YYYY-MM-DD' in the USER'S LOCAL timezone.
+ * NEVER use `new Date().toISOString().split('T')[0]` for "today" in client code —
+ * after 5pm PDT that returns TOMORROW (UTC has rolled over), which shifted
+ * calendar "today" markers, min-dates, and status buckets by one day
+ * (root cause of the Aug 22 off-by-one booking-dates bug, CF-40237D).
+ */
+export function todayLocalStr(): string {
+  const n = new Date()
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
+}
+
+/** Format any local Date object as 'YYYY-MM-DD' (local parts, never UTC). */
+export function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/**
  * Canonical day count — matches checkout: ceil((end − start) / 1 day), min 1.
  * Aug 11 → Aug 13 = 2 days. Every surface must agree with what was charged.
  */

@@ -74,7 +74,10 @@ function getGreeting(): string {
 
 function formatDate(d: string): string {
   if (!d) return '—'
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  // Date-only strings must parse as LOCAL midnight — naive new Date('YYYY-MM-DD')
+  // is UTC and displayed booking dates a day EARLY (masked the +1 write bug on Aug 22)
+  const safe = d.includes('T') ? d : d + 'T00:00:00'
+  return new Date(safe).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function formatFullDate(): string {
