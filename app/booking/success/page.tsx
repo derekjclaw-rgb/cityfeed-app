@@ -29,6 +29,7 @@ interface ListingSpecs {
   creative_video_duration?: string
   creative_audio_allowed?: boolean
   dimensions?: string
+  requires_print?: boolean
 }
 
 function SuccessPageInner() {
@@ -38,6 +39,7 @@ function SuccessPageInner() {
 
   const [booking, setBooking] = useState<BookingDetails | null>(null)
   const [listingSpecs, setListingSpecs] = useState<ListingSpecs | null>(null)
+  const [selfDeliver, setSelfDeliver] = useState(false)
   const [resolvedBookingId, setResolvedBookingId] = useState<string | null>(
     bookingIdParam && bookingIdParam !== 'pending' ? bookingIdParam : null
   )
@@ -100,21 +102,29 @@ function SuccessPageInner() {
     const supabase = createClient()
     supabase
       .from('bookings')
-      .select('id, start_date, end_date, total_price, status, listing_id, listings(title, city, state)')
+      .select('id, start_date, end_date, total_price, status, listing_id, host_prints, listings(title, city, state)')
       .eq('id', resolvedBookingId)
       .single()
       .then(async ({ data }) => {
         if (data) {
           const bk = data as unknown as BookingDetails
           setBooking(bk)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const paidForHostPrint = !!(data as any).host_prints
           // Fetch listing creative specs
           if (bk.listing_id) {
             const { data: listing } = await supabase
               .from('listings')
-              .select('creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, dimensions')
+              .select('creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, dimensions, requires_print')
               .eq('id', bk.listing_id)
               .single()
-            if (listing) setListingSpecs(listing as unknown as ListingSpecs)
+            if (listing) {
+              setListingSpecs(listing as unknown as ListingSpecs)
+              // Physical placement where the advertiser did NOT pay for host printing
+              // → they provide the printed materials themselves (ship or drop off)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              setSelfDeliver(!!(listing as any).requires_print && !paidForHostPrint)
+            }
           }
         }
         setLoading(false)
@@ -247,6 +257,21 @@ function SuccessPageInner() {
                     <span>After approval, upload your creative files to get started</span>
                   </li>
                 </ol>
+              ) : selfDeliver ? (
+                <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>1</span>
+                    <span>You&apos;re providing the printed materials — prepare them to match the creative specs</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>2</span>
+                    <span>Ship or drop them off, then mark it on your booking page so your host knows</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>3</span>
+                    <span>Your host confirms receipt, posts your ad, and uploads proof of posting</span>
+                  </li>
+                </ol>
               ) : (
                 <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
                   <li className="flex gap-3">
@@ -272,8 +297,8 @@ function SuccessPageInner() {
                   className="flex items-center gap-2 font-semibold px-5 py-3 rounded-xl hover:opacity-90 text-sm"
                   style={{ backgroundColor: '#debb73', color: '#2b2b2b' }}
                 >
-                  {isPending ? null : <Upload className="w-4 h-4" />}
-                  {isPending ? 'View Booking' : 'Upload Creative'}
+                  {isPending || selfDeliver ? null : <Upload className="w-4 h-4" />}
+                  {isPending ? 'View Booking' : selfDeliver ? 'Arrange Delivery' : 'Upload Creative'}
                 </Link>
               ) : (
                 <Link
@@ -295,6 +320,13 @@ function SuccessPageInner() {
                 </Link>
               )}
             </div>
+            {resolvedBookingId && (
+              <div className="mt-4">
+                <Link href={`/dashboard/bookings/${resolvedBookingId}`} className="text-xs hover:underline" style={{ color: '#aaa' }}>
+                  Go to Booking →
+                </Link>
+              </div>
+            )}
           </>
         )}
       </div>
