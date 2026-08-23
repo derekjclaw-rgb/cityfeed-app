@@ -22,7 +22,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Upload, Loader2, CheckCircle, X, AlertCircle, ImageIcon } from 'lucide-react'
+import { ArrowLeft, Upload, Loader2, CheckCircle, X, AlertCircle, ImageIcon, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORY_OPTIONS as CATEGORIES } from '@/lib/design'
 
@@ -75,6 +75,9 @@ interface FormData {
   city: string
   state: string
   zip: string
+  lat: string
+  lng: string
+  no_address: boolean
   dimensions: string
   daily_impressions: string
   illuminated: boolean
@@ -120,6 +123,9 @@ const INITIAL_FORM: FormData = {
   city: '',
   state: '',
   zip: '',
+  lat: '',
+  lng: '',
+  no_address: false,
   dimensions: '',
   dim_width: '',
   dim_height: '',
@@ -149,6 +155,16 @@ const INITIAL_FORM: FormData = {
   offers_printing: false,
   print_fee: '',
   delivery_address: '',
+}
+
+/** Mapbox Geocoding feature (subset we use) */
+interface MapboxFeature {
+  id: string
+  text: string
+  address?: string
+  place_name: string
+  center: [number, number]
+  context?: Array<{ id: string; text: string; short_code?: string }>
 }
 
 function FormField({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
@@ -254,6 +270,86 @@ export default function CreateListingPage() {
   })
   const [showReviewModal, setShowReviewModal] = useState(false)
 
+  // ── Address autocomplete (Mapbox Geocoding) + coordinates mode ──
+  const [addrSuggestions, setAddrSuggestions] = useState<MapboxFeature[]>([])
+  const addrPickedRef = useRef(false)
+  const [geoLocating, setGeoLocating] = useState(false)
+
+  // Debounced address autocomplete — we already pay for Mapbox; typo-proof
+  // addresses also mean reliable geocoding + accurate marketplace map pins.
+  useEffect(() => {
+    if (form.no_address) { setAddrSuggestions([]); return }
+    if (addrPickedRef.current) { addrPickedRef.current = false; return }
+    const q = form.address.trim()
+    if (q.length < 4) { setAddrSuggestions([]); return }
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&autocomplete=true&country=us&types=address&limit=5`
+        )
+        const data = await res.json()
+        setAddrSuggestions(Array.isArray(data.features) ? data.features : [])
+      } catch {
+        setAddrSuggestions([])
+      }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [form.address, form.no_address])
+
+  function pickAddress(f: MapboxFeature) {
+    addrPickedRef.current = true
+    const ctx = f.context ?? []
+    const find = (prefix: string) => ctx.find(c => c.id.startsWith(prefix))
+    const street = `${f.address ?? ''} ${f.text}`.trim()
+    setForm(prev => ({
+      ...prev,
+      address: street || f.place_name,
+      city: find('place')?.text ?? prev.city,
+      state: find('region')?.short_code?.split('-')[1]?.toUpperCase() ?? prev.state,
+      zip: find('postcode')?.text ?? prev.zip,
+      lng: String(f.center[0]),
+      lat: String(f.center[1]),
+    }))
+    setAddrSuggestions([])
+  }
+
+  function useMyLocation() {
+    if (!navigator.geolocation) { setError('Location access is not available in this browser.'); return }
+    setGeoLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const { latitude, longitude } = pos.coords
+        let city = '', state = '', zip = ''
+        try {
+          const res = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&types=address&limit=1`
+          )
+          const data = await res.json()
+          const f: MapboxFeature | undefined = data.features?.[0]
+          const ctx = f?.context ?? []
+          const find = (prefix: string) => ctx.find(c => c.id.startsWith(prefix))
+          city = find('place')?.text ?? ''
+          state = find('region')?.short_code?.split('-')[1]?.toUpperCase() ?? ''
+          zip = find('postcode')?.text ?? ''
+        } catch { /* reverse geocode is best-effort */ }
+        setForm(prev => ({
+          ...prev,
+          lat: latitude.toFixed(6),
+          lng: longitude.toFixed(6),
+          city: city || prev.city,
+          state: state || prev.state,
+          zip: zip || prev.zip,
+        }))
+        setGeoLocating(false)
+      },
+      () => {
+        setGeoLocating(false)
+        setError('Could not get your location — enter coordinates manually.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data }) => {
@@ -352,7 +448,18 @@ export default function CreateListingPage() {
   function handleReview(e: React.FormEvent) {
     e.preventDefault()
     if (!userId) return
-    if (!form.zip.trim()) {
+    if (form.no_address) {
+      const latN = parseFloat(form.lat)
+      const lngN = parseFloat(form.lng)
+      if (!Number.isFinite(latN) || !Number.isFinite(lngN) || Math.abs(latN) > 90 || Math.abs(lngN) > 180) {
+        setError('Valid coordinates are required — enter them or use your current location.')
+        return
+      }
+      if (!form.address.trim()) {
+        setError('Add a short location description (e.g. "Brick wall — 5th & Main, east side").')
+        return
+      }
+    } else if (!form.zip.trim()) {
       setError('ZIP code is required.')
       return
     }
@@ -374,22 +481,25 @@ export default function CreateListingPage() {
       setError(`${failed} photo${failed > 1 ? 's' : ''} failed to upload. The listing will be created with ${imageUrls.length} photo${imageUrls.length !== 1 ? 's' : ''}.`)
     }
 
-    // Geocode
-    let lat: number | null = null
-    let lng: number | null = null
-    const fullAddress = `${form.address}, ${form.city}, ${form.state} ${form.zip}`.trim()
-    try {
-      const geoRes = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(fullAddress)}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
-      )
-      const geoData = await geoRes.json()
-      if (geoData.features && geoData.features.length > 0) {
-        const [lngVal, latVal] = geoData.features[0].center
-        lat = latVal
-        lng = lngVal
+    // Coordinates — prefer exact values from the autocomplete picker / coordinate
+    // entry (no typo-driven geocoding misses); fall back to geocoding the address.
+    let lat: number | null = Number.isFinite(parseFloat(form.lat)) ? parseFloat(form.lat) : null
+    let lng: number | null = Number.isFinite(parseFloat(form.lng)) ? parseFloat(form.lng) : null
+    if (lat == null || lng == null) {
+      const fullAddress = `${form.address}, ${form.city}, ${form.state} ${form.zip}`.trim()
+      try {
+        const geoRes = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(fullAddress)}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}&limit=1`
+        )
+        const geoData = await geoRes.json()
+        if (geoData.features && geoData.features.length > 0) {
+          const [lngVal, latVal] = geoData.features[0].center
+          lat = latVal
+          lng = lngVal
+        }
+      } catch (geoErr) {
+        console.warn('Geocoding failed:', geoErr)
       }
-    } catch (geoErr) {
-      console.warn('Geocoding failed:', geoErr)
     }
 
     const supabase = createClient()
@@ -652,17 +762,76 @@ export default function CreateListingPage() {
             <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Location
             </h2>
-            <FormField label="Street address" required>
-              <input
-                type="text"
-                value={form.address}
-                onChange={e => set('address', e.target.value)}
-                placeholder="123 Main Street"
-                className={inputClass}
-                style={inputStyle}
-                required
-              />
-            </FormField>
+            <Toggle
+              value={form.no_address}
+              onChange={v => setForm(prev => ({ ...prev, no_address: v, lat: '', lng: '' }))}
+              label="No street address — use map coordinates"
+              hint={form.no_address ? 'For walls, underpasses, and other placements without an address' : undefined}
+            />
+            {!form.no_address ? (
+              <FormField label="Street address" required>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={e => { const v = e.target.value; setForm(prev => ({ ...prev, address: v, lat: '', lng: '' })) }}
+                    placeholder="Start typing your address…"
+                    className={inputClass}
+                    style={inputStyle}
+                    autoComplete="off"
+                    required
+                  />
+                  {addrSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden z-20" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                      {addrSuggestions.map(f => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => pickAddress(f)}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--light-gray,#f8f8f5)] transition-colors flex items-center gap-2"
+                          style={{ color: 'var(--charcoal, #2b2b2b)' }}
+                        >
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--mint, #7ecfc0)' }} />
+                          <span className="truncate">{f.place_name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FormField>
+            ) : (
+              <>
+                <FormField label="Location description" required hint='Shown to advertisers instead of an address — e.g. "Brick wall — 5th & Main, east side"'>
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={e => set('address', e.target.value)}
+                    placeholder="Brick wall — 5th & Main, east side"
+                    className={inputClass}
+                    style={inputStyle}
+                    required
+                  />
+                </FormField>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Latitude" required>
+                    <input type="number" step="any" value={form.lat} onChange={e => set('lat', e.target.value)} placeholder="36.1699" className={inputClass} style={inputStyle} required />
+                  </FormField>
+                  <FormField label="Longitude" required>
+                    <input type="number" step="any" value={form.lng} onChange={e => set('lng', e.target.value)} placeholder="-115.1398" className={inputClass} style={inputStyle} required />
+                  </FormField>
+                </div>
+                <button
+                  type="button"
+                  onClick={useMyLocation}
+                  disabled={geoLocating}
+                  className="flex items-center gap-2 text-sm font-medium px-4 py-2.5 rounded-xl hover:opacity-80 transition-opacity disabled:opacity-50"
+                  style={{ border: '1px solid var(--mint, #7ecfc0)', color: 'var(--mint-dark, #5bb8a8)' }}
+                >
+                  {geoLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                  {geoLocating ? 'Locating…' : 'Use my current location'}
+                </button>
+              </>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <FormField label="City" required>
                 <input
@@ -688,7 +857,7 @@ export default function CreateListingPage() {
                 />
               </FormField>
             </div>
-            <FormField label="ZIP code" required>
+            <FormField label="ZIP code" required={!form.no_address}>
               <input
                 type="text"
                 value={form.zip}
@@ -697,9 +866,21 @@ export default function CreateListingPage() {
                 maxLength={10}
                 className={inputClass}
                 style={inputStyle}
-                required
+                required={!form.no_address}
               />
             </FormField>
+            {Number.isFinite(parseFloat(form.lat)) && Number.isFinite(parseFloat(form.lng)) && (
+              <div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+debb73(${form.lng},${form.lat})/${form.lng},${form.lat},14/600x220@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`}
+                  alt="Location preview"
+                  className="w-full rounded-xl"
+                  style={{ border: '1px solid var(--border, #e0e0d8)' }}
+                />
+                <p className="text-xs mt-1.5" style={{ color: '#888' }}>Pin preview — this is where your placement appears on the marketplace map</p>
+              </div>
+            )}
           </div>
 
           {/* Photos */}
