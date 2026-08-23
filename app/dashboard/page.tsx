@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials } from '@/lib/fees'
-import { getBookingDisplayStatus, type BookingStatusInput } from '@/lib/bookingStatus'
+import { getBookingDisplayStatus, hostNeedsAction, advertiserNeedsAction, isLive, type BookingStatusInput } from '@/lib/bookingStatus'
 import {
   Calendar, Camera, FilePlus, MessageSquare, Activity, Bookmark, CheckCircle2,
   ChevronRight, DollarSign, FileText, RotateCcw, Loader2,
@@ -206,6 +206,7 @@ function DashboardContent() {
   // Quick action counts
   const [bookingsNeedAttention, setBookingsNeedAttention] = useState(0)
   const [creativesToUpload, setCreativesToUpload] = useState(0)
+  const [liveCampaignsCount, setLiveCampaignsCount] = useState(0)
   const [unreadMessages, setUnreadMessages] = useState(0)
 
   // Status chips
@@ -327,9 +328,9 @@ function DashboardContent() {
       setUnreadMessages(msgCount ?? 0)
 
       // ── Bookings needing attention ────────────────────────────────────────
-      const attentionStatuses = isHost ? ['pending', 'pop_pending'] : ['pending', 'pop_review']
-      const needAttention = bookings.filter(b => attentionStatuses.includes(b.status)).length
-      setBookingsNeedAttention(needAttention)
+      // (moved below — now uses the shared bookingStatus derivation once the
+      // creative-files map is built; the old status-only filter missed most
+      // actionable states, which is why the tile sat at 0.)
 
       // ── Check creative files for all confirmed bookings ─
       const now = new Date()
@@ -355,6 +356,24 @@ function DashboardContent() {
         }
       }
       setCreativesToUpload(creativesNeeded)
+
+      // ── Bookings needing attention — SAME derivation as the bookings page ────
+      const needAttention = bookings.filter(b => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const listingRel = (b as any).listings
+        const input: BookingStatusInput = {
+          status: b.status, start_date: b.start_date, end_date: b.end_date,
+          delivery_mode: b.delivery_mode, shipped_at: b.shipped_at,
+          received_at: b.received_at, dropped_off_at: b.dropped_off_at,
+          hasCreativeFiles: hasCreativeMap.get(b.id) ?? false,
+          requires_print: listingRel?.requires_print ?? false,
+        }
+        return isHost ? hostNeedsAction(input) : advertiserNeedsAction(input)
+      }).length
+      setBookingsNeedAttention(needAttention)
+
+      // ── LIVE campaigns (proof up + window running) ───────────────────────
+      setLiveCampaignsCount(bookings.filter(b => isLive(b.status, b.start_date, b.end_date)).length)
 
       // ── Saved listings ────────────────────────────────────────────────────
       const { count: savedCount } = await supabase
@@ -646,14 +665,14 @@ function DashboardContent() {
                   {mode === 'host' ? (
                     <Camera className="w-5 h-5" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
                   ) : (
-                    <FilePlus className="w-5 h-5" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
+                    <Activity className="w-5 h-5" style={{ color: 'var(--mint-dark, #5bb8a8)' }} />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[22px] font-extrabold leading-tight tracking-[-0.5px] mb-[2px]">{mode === 'host' ? popNeeded : creativesToUpload}</div>
-                  <div className="text-[13px] font-medium leading-snug" style={{ color: 'var(--text-secondary, #888)' }}>{mode === 'host' ? 'Proof of posting needed' : 'Creative files to upload'}</div>
+                  <div className="text-[22px] font-extrabold leading-tight tracking-[-0.5px] mb-[2px]">{mode === 'host' ? popNeeded : liveCampaignsCount}</div>
+                  <div className="text-[13px] font-medium leading-snug" style={{ color: 'var(--text-secondary, #888)' }}>{mode === 'host' ? 'Proof of posting needed' : 'Live campaigns'}</div>
                   <div className="text-xs font-semibold mt-1.5 flex items-center gap-1" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-                    {mode === 'host' ? 'Upload POP' : 'Upload now'} <ChevronRight className="w-3 h-3" />
+                    {mode === 'host' ? 'Upload POP' : 'View campaigns'} <ChevronRight className="w-3 h-3" />
                   </div>
                 </div>
               </div>
