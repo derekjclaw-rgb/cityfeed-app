@@ -410,6 +410,26 @@ export default function MyListingsPage() {
             ) : (
               <p className="text-xs py-3 text-center" style={{ color: '#888' }}>No bookings yet</p>
             )}
+            {/* Blocked / restricted dates — full availability picture for the host */}
+            {(() => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const av = (listing as any).availability as { blocked?: Array<string | { start: string; end: string }> } | null
+              const blocked = av?.blocked ?? []
+              if (blocked.length === 0) return null
+              const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              return (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: '#888' }}>Blocked dates ({blocked.length})</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {blocked.map((b, i) => (
+                      <span key={i} className="text-[11px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626' }}>
+                        {typeof b === 'string' ? fmt(b) : b.start === b.end ? fmt(b.start) : `${fmt(b.start)} — ${fmt(b.end)}`}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         )}
       </div>
