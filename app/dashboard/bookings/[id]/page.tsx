@@ -1960,6 +1960,12 @@ export default function BookingDetailPage() {
                     <p className="font-medium mt-0.5" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.creative_audio_allowed ? 'Allowed' : 'Not allowed'}</p>
                   </div>
                 )}
+                {typeof listing?.specs?.creative_notes === 'string' && listing.specs.creative_notes && (
+                  <div className="col-span-2">
+                    <p style={{ color: '#aaa' }}>Notes</p>
+                    <p className="font-medium mt-0.5 whitespace-pre-wrap" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{listing.specs.creative_notes}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

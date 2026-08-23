@@ -100,6 +100,7 @@ interface FormData {
   creative_height: string
   creative_unit: string
   creative_max_file_size: string
+  creative_notes: string
   // Video (any category when accepts_video)
   accepts_video: boolean
   creative_video_duration: string
@@ -145,6 +146,7 @@ const INITIAL_FORM: FormData = {
   creative_height: '',
   creative_unit: 'px',
   creative_max_file_size: '25MB',
+  creative_notes: '',
   accepts_video: false,
   creative_video_duration: '15s',
   creative_audio_allowed: false,
@@ -517,8 +519,13 @@ export default function CreateListingPage() {
       dimensions: (form.dim_width && form.dim_height)
         ? `${form.dim_width} × ${form.dim_height} ${form.dim_unit}`
         : form.dimensions || null,
-      specs: (form.dim_width && form.dim_height)
-        ? { dimensions: { width: parseFloat(form.dim_width), height: parseFloat(form.dim_height), unit: form.dim_unit } }
+      specs: (form.dim_width && form.dim_height) || form.creative_notes.trim()
+        ? {
+            ...(form.dim_width && form.dim_height
+              ? { dimensions: { width: parseFloat(form.dim_width), height: parseFloat(form.dim_height), unit: form.dim_unit } }
+              : {}),
+            ...(form.creative_notes.trim() ? { creative_notes: form.creative_notes.trim() } : {}),
+          }
         : null,
       daily_impressions: parseInt(form.daily_impressions) || 0,
       // NOTE: DB migration needed — alter table public.listings add column if not exists illuminated boolean default null;
@@ -1297,6 +1304,17 @@ export default function CreateListingPage() {
                 </select>
               </FormField>
             </div>
+
+            <FormField label="Additional creative notes" hint="Bleed, color profile, file prep — anything advertisers should know">
+              <textarea
+                value={form.creative_notes}
+                onChange={e => set('creative_notes', e.target.value)}
+                placeholder="e.g. Include 0.25in bleed on all sides, CMYK color profile, outline all fonts…"
+                rows={3}
+                className={`${inputClass} resize-none`}
+                style={inputStyle}
+              />
+            </FormField>
 
             {/* Video toggle — hidden for static categories */}
             {!isStaticCat(form.category) && (

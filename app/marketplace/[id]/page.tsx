@@ -34,6 +34,7 @@ interface CreativeSpecs {
   loop_count?: number
   host_prints?: boolean
   print_cost?: number
+  notes?: string
 }
 
 interface ListingData {
@@ -639,7 +640,7 @@ export default function ListingDetailPage() {
           requires_print: row.requires_print ?? false,
           offers_printing: row.offers_printing ?? false,
           print_fee: row.print_fee ?? null,
-          creative_specs: (row.creative_formats || row.creative_dimensions || row.creative_max_file_size) ? {
+          creative_specs: (row.creative_formats || row.creative_dimensions || row.creative_max_file_size || row.specs?.creative_notes) ? {
             formats: row.creative_formats,
             dimensions: row.creative_dimensions,
             max_file_size: row.creative_max_file_size,
@@ -648,6 +649,7 @@ export default function ListingDetailPage() {
             loop_count: row.creative_loop_count,
             host_prints: row.creative_host_prints,
             print_cost: row.creative_print_cost,
+            notes: row.specs?.creative_notes,
           } : undefined,
         }
         setListing(l)
@@ -892,6 +894,12 @@ export default function ListingDetailPage() {
                     <div className="flex justify-between py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
                       <span style={{ color: '#888' }}>Plays per day</span>
                       <span className="font-medium" style={{ color: '#2b2b2b' }}>{listing.creative_specs.loop_count === 0 ? 'Continuous rotation' : `${listing.creative_specs.loop_count}/day`}</span>
+                    </div>
+                  )}
+                  {listing.creative_specs.notes && (
+                    <div className="py-2" style={{ borderBottom: '1px solid #f0f0ec' }}>
+                      <span style={{ color: '#888' }}>Notes</span>
+                      <p className="font-medium mt-1 whitespace-pre-wrap" style={{ color: '#2b2b2b' }}>{listing.creative_specs.notes}</p>
                     </div>
                   )}
                   {listing.creative_specs.host_prints && (
