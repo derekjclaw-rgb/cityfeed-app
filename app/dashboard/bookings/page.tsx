@@ -14,7 +14,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { getBookingFinancials, formatBookingDate } from '@/lib/fees'
 import { notify } from '@/lib/notify'
-import { getBookingDisplayStatus, type BookingStatusInput } from '@/lib/bookingStatus'
+import { getBookingDisplayStatus, windowStarted, type BookingStatusInput } from '@/lib/bookingStatus'
 
 /** Format a full name as 'First L.' for privacy */
 function formatNamePrivacy(fullName: string): string {
@@ -112,44 +112,9 @@ function humanTimeline(b: Booking): string {
   return ''
 }
 
-function getSimpleStatusBadge(status: string, startDate?: string, endDate?: string, hasCreative?: boolean): { label: string; emoji: string; bg: string; text: string } {
-  const now = new Date()
-  const start = startDate ? new Date(startDate + 'T00:00:00') : null
-  const end = endDate ? new Date(endDate + 'T00:00:00') : null
-
-  // Completed (POP submitted) = live until end date, even if before start date
-  if (status === 'completed' && end && now <= end) {
-    return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
-  }
-
-  // Check if currently live (within date range, non-completed statuses)
-  if (['confirmed', 'active'].includes(status) && start && end && now >= start && now < end) {
-    return { label: 'LIVE', emoji: '🟢', bg: '#dcfce7', text: '#15803d' }
-  }
-
-  // Check if future (not started yet) — excludes completed
-  if (['confirmed', 'active', 'pending'].includes(status) && start && now < start) {
-    return { label: 'Confirmed', emoji: '📋', bg: '#eff6ff', text: '#1d4ed8' }
-  }
-
-  // Check if past complete
-  if (status === 'completed' && end && now >= end) {
-    return { label: 'Complete', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' }
-  }
-
-  const map: Record<string, { label: string; emoji: string; bg: string; text: string }> = {
-    pending_payment: { label: 'Awaiting Payment', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
-    pending: { label: 'Pending Review', emoji: '⏳', bg: '#fef9ec', text: '#b45309' },
-    confirmed: hasCreative
-      ? { label: 'Creative Received', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' }
-      : { label: 'Awaiting Creative', emoji: '📂', bg: '#eff6ff', text: '#1d4ed8' },
-    active: { label: 'Upcoming', emoji: '📍', bg: '#f0fdf4', text: '#16a34a' },
-    completed: { label: 'Complete', emoji: '✅', bg: '#f0fdf4', text: '#16a34a' },
-    cancelled: { label: 'Cancelled', emoji: '❌', bg: '#fef2f2', text: '#dc2626' },
-    disputed: { label: 'Disputed', emoji: '⚠️', bg: '#fef2f2', text: '#dc2626' },
-  }
-  return map[status] ?? { label: status, emoji: '•', bg: 'var(--light-gray, #f8f8f5)', text: '#888' }
-}
+// Badge derivation now lives in lib/bookingStatus.ts (getBookingDisplayStatus) —
+// the old local getSimpleStatusBadge was removed 2026-08-22 because it contradicted
+// the shared derivation (e.g. "Awaiting Creative" pill on an ended, unfulfilled booking).
 
 export default function BookingsPage() {
   const router = useRouter()
@@ -626,7 +591,7 @@ export default function BookingsPage() {
               { title: 'UPCOMING', list: confirmed.filter(b => !naIds.has(b.id)), color: '#1d4ed8', zap: false, pulse: false },
               { title: 'IN PROGRESS', list: inProgress.filter(b => !naIds.has(b.id)), color: '#b45309', zap: false, pulse: false },
               { title: 'COMPLETED', list: completed, color: '#888', zap: false, pulse: false },
-              { title: 'EXPIRED', list: expired, color: '#888', zap: false, pulse: false },
+              { title: 'ENDED — NO PROOF', list: expired, color: '#888', zap: false, pulse: false },
             ].map(sec => sec.list.length > 0 && (
               <section key={sec.title}>
                 <h2 className="text-sm font-semibold mb-3 px-1 flex items-center gap-2" style={{ color: sec.color }}>
@@ -683,12 +648,22 @@ function BookingCard({
   actionLoading: string | null
 }) {
   const timeline = humanTimeline(booking)
-  const simpleBadge = getSimpleStatusBadge(booking.status, booking.start_date, booking.end_date, hasCreative)
-  const isLiveNow = simpleBadge.label === 'LIVE'
+  // Single source of truth for the pill — same derivation as the hint below
+  const ds = getBookingDisplayStatus({
+    status: booking.status, start_date: booking.start_date, end_date: booking.end_date,
+    delivery_mode: booking.delivery_mode, shipped_at: booking.shipped_at,
+    received_at: booking.received_at, dropped_off_at: booking.dropped_off_at,
+    hasCreativeFiles: hasCreative, requires_print: booking.requires_print,
+  }, isHost)
+  const isLiveNow = ds.key === 'live'
   const canReview = booking.status === 'completed'
   const showAcceptDecline = isHost && booking.status === 'pending'
   const showPOPPrompt = isHost && booking.status === 'active'
+  // Advertisers can only cancel before the campaign window starts (after that the
+  // refund is $0 — the remedy is the host cancelling / support, not self-cancel).
+  // Hosts can always cancel confirmed/pending — it triggers a 100% advertiser refund.
   const showCancelBtn = ['confirmed', 'pending'].includes(booking.status)
+    && (isHost || !windowStarted(booking.start_date))
   const showReceipt = booking.status === 'completed'
   const showPOPReview = !isHost && (booking.status === 'pop_pending' || booking.status === 'pop_review')
 
@@ -720,10 +695,10 @@ function BookingCard({
         </div>
         <span
           className="text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
-          style={{ backgroundColor: simpleBadge.bg, color: simpleBadge.text }}
+          style={{ backgroundColor: ds.bg, color: ds.text }}
         >
           {isLiveNow && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse inline-block" />}
-          {!isLiveNow && `${simpleBadge.emoji} `}{simpleBadge.label}
+          {ds.label}
         </span>
       </div>
 
@@ -749,24 +724,15 @@ function BookingCard({
         )}
       </div>
 
-      {/* Status hint — shipping-aware via shared derivation */}
-      {(() => {
-        const statusInput: BookingStatusInput = {
-          status: booking.status, start_date: booking.start_date, end_date: booking.end_date,
-          delivery_mode: booking.delivery_mode, shipped_at: booking.shipped_at,
-          received_at: booking.received_at, dropped_off_at: booking.dropped_off_at,
-          hasCreativeFiles: hasCreative, requires_print: booking.requires_print,
-        }
-        const ds = getBookingDisplayStatus(statusInput, isHost)
-        if (!ds.hint || ['cancelled', 'disputed', 'live', 'completed'].includes(ds.key)) return null
-        const Icon = ds.group === 'needs_action' ? Clock : CheckCircle
-        return (
-          <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: ds.bg, color: ds.text }}>
-            <Icon className="w-3 h-3 flex-shrink-0" />
-            {ds.hint}
-          </div>
-        )
-      })()}
+      {/* Status hint — same shared derivation as the pill above */}
+      {ds.hint && !['cancelled', 'disputed', 'live', 'completed'].includes(ds.key) && (
+        <div className="mt-3 px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2" style={{ backgroundColor: ds.bg, color: ds.text }}>
+          {ds.group === 'needs_action'
+            ? <Clock className="w-3 h-3 flex-shrink-0" />
+            : <CheckCircle className="w-3 h-3 flex-shrink-0" />}
+          {ds.hint}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center flex-wrap gap-2 mt-4 overflow-hidden">
