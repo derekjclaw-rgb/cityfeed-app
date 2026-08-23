@@ -56,9 +56,9 @@ function formatDateRange(dates: string): string {
 }
 
 export type EmailEvent =
-  | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
-  | { type: 'new_booking_instant'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean }
-  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean; listingImage?: string }
+  | { type: 'new_booking_request'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean; hostPrints?: boolean }
+  | { type: 'new_booking_instant'; hostEmail: string; listingTitle: string; advertiserName: string; dates: string; total: number; platformFee: number; bookingId?: string; isStatic?: boolean; hostPrints?: boolean }
+  | { type: 'booking_confirmed'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string; isStatic?: boolean; hostPrints?: boolean; listingImage?: string }
   | { type: 'booking_cancelled'; recipientEmail: string; listingTitle: string; dates: string; role: 'host' | 'advertiser'; bookingId?: string }
   | { type: 'booking_request_submitted'; advertiserEmail: string; listingTitle: string; dates: string; total: number; bookingId?: string }
   | { type: 'booking_approved_advertiser'; advertiserEmail: string; listingTitle: string; dates: string; bookingId: string }
@@ -72,6 +72,8 @@ export type EmailEvent =
   | { type: 'listing_published'; hostEmail: string; listingTitle: string; listingId: string; listingImage?: string; pricePerDay?: number }
   | { type: 'materials_shipped'; hostEmail: string; listingTitle: string; advertiserName: string; bookingId: string; trackingNumber?: string; isDropOff?: boolean; dates?: string }
   | { type: 'materials_received'; advertiserEmail: string; listingTitle: string; bookingId: string; dates?: string }
+  | { type: 'materials_shipped_confirm'; advertiserEmail: string; listingTitle: string; bookingId: string; isDropOff?: boolean; trackingNumber?: string; dates?: string }
+  | { type: 'materials_received_host'; hostEmail: string; listingTitle: string; bookingId: string; startDate?: string; dates?: string }
 
 export async function sendEmail(event: EmailEvent): Promise<void> {
   const mailer = getTransporter()
@@ -100,7 +102,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0 0 4px;color:#888">City Feed fee (7%): <strong style="color:#dc2626">-$${sellerFee.toFixed(2)}</strong></p>
               <p style="margin:0;color:#888">Your expected payout: <strong style="color:#16a34a">$${payout.toFixed(2)}</strong></p>
             </div>
-            <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'Once confirmed, creative files will be uploaded by the advertiser.'} Log in to review and accept or decline this booking.</p>
+            <p style="color:#555;margin:0 0 20px">${event.hostPrints ? 'The advertiser paid the print fee — they\u2019ll upload creative files and you\u2019ll print and install.' : event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'Once confirmed, creative files will be uploaded by the advertiser.'} Log in to review and accept or decline this booking.</p>
             <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">Review Booking →</a>
           `),
         })
@@ -127,7 +129,7 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0 0 4px;color:#888">City Feed fee (7%): <strong style="color:#dc2626">-$${sellerFee.toFixed(2)}</strong></p>
               <p style="margin:0;color:#888">Your expected payout: <strong style="color:#16a34a">$${payout.toFixed(2)}</strong></p>
             </div>
-            <p style="color:#555;margin:0 0 20px">${event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload their creative files shortly.'}</p>
+            <p style="color:#555;margin:0 0 20px">${event.hostPrints ? 'The advertiser paid the print fee — they\u2019ll upload creative files and you\u2019ll print and install.' : event.isStatic ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload their creative files shortly.'}</p>
             <a href="${BASE_URL}/dashboard/bookings${event.bookingId ? `/${event.bookingId}` : ''}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })
@@ -150,7 +152,12 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <p style="margin:0;color:#888">Total charged: <strong style="color:#2b2b2b">$${event.total.toLocaleString()}</strong></p>
             </div>
             <p style="color:#555;margin:0 0 8px"><strong>Next steps:</strong></p>
-            ${event.isStatic ? `
+            ${event.hostPrints ? `
+            <ol style="color:#555;margin:0 0 20px;padding-left:20px">
+              <li style="margin-bottom:6px">Upload your creative files — your host will print and install them</li>
+              <li style="margin-bottom:6px">Your print fee is included in the total</li>
+              <li>You'll receive proof of posting when your ad goes live</li>
+            </ol>` : event.isStatic ? `
             <ol style="color:#555;margin:0 0 20px;padding-left:20px">
               <li style="margin-bottom:6px">Prepare your printed materials to match the creative specs</li>
               <li style="margin-bottom:6px">Coordinate delivery timing with your host via messenger</li>
@@ -420,6 +427,48 @@ export async function sendEmail(event: EmailEvent): Promise<void> {
               <li style="margin-bottom:6px">You'll receive proof of posting once your ad is live</li>
               <li>Sit back — your campaign is in good hands</li>
             </ol>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+          `),
+        })
+        break
+
+      case 'materials_shipped_confirm': {
+        const confirmLabel = event.isDropOff ? 'dropped off' : 'shipped'
+        await mailer.sendMail({
+          from: FROM,
+          to: event.advertiserEmail,
+          subject: `Materials marked ${confirmLabel} — "${event.listingTitle}"`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Materials ${event.isDropOff ? 'Dropped Off' : 'Shipped'} 📦</h2>
+            <div style="color:#555;margin:0 0 12px">You marked your printed materials as ${confirmLabel}. Your host has been notified.</div>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <div style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></div>
+              ${event.dates ? `<div style="margin:0 0 4px;color:#888">Dates: ${formatDateRange(event.dates)}</div>` : ''}
+              ${event.trackingNumber ? `<div style="margin:0;color:#888">Tracking: <strong style="color:#2b2b2b">${event.trackingNumber}</strong></div>` : ''}
+            </div>
+            <div style="color:#555;margin:0 0 20px">Your host will confirm receipt when the materials arrive — you'll get an email the moment they do.</div>
+            <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
+          `),
+        })
+        break
+      }
+
+      case 'materials_received_host':
+        await mailer.sendMail({
+          from: FROM,
+          to: event.hostEmail,
+          subject: `Receipt confirmed — next: post the ad ("${event.listingTitle}")`,
+          html: emailTemplate(`
+            <h2 style="color:#2b2b2b;margin:0 0 16px">Receipt Confirmed ✅</h2>
+            <div style="color:#555;margin:0 0 12px">You confirmed the advertiser's materials arrived. One thing left:</div>
+            <div style="background:#fef9ec;border:1px solid #f5edda;border-radius:12px;padding:16px;margin:16px 0">
+              <div style="margin:0 0 4px;color:#2b2b2b"><strong>Post the ad on or before ${event.startDate ?? 'the campaign start date'}</strong></div>
+              <div style="margin:0;color:#888">Then upload proof of posting to get paid — no proof, no payout.</div>
+            </div>
+            <div style="background:#f8f8f5;border-radius:12px;padding:16px;margin:16px 0">
+              <div style="margin:0 0 8px;color:#2b2b2b"><strong>${event.listingTitle}</strong></div>
+              ${event.dates ? `<div style="margin:0;color:#888">Dates: ${formatDateRange(event.dates)}</div>` : ''}
+            </div>
             <a href="${BASE_URL}/dashboard/bookings/${event.bookingId}" style="display:inline-block;background:#debb73;color:#2b2b2b;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none">View Booking →</a>
           `),
         })

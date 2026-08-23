@@ -811,6 +811,12 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         to: 'host',
         content: `📦 Printed materials have been shipped!${trackingNumber ? `\n\nTracking: ${trackingNumber}` : ''}\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
+      // Confirmation variant for the ADVERTISER (acting party sees their action in the thread)
+      await systemMessage({
+        booking_id: bookingId,
+        to: 'advertiser',
+        content: `📦 You marked your materials as shipped${trackingNumber ? ` (tracking: ${trackingNumber})` : ''}. Your host has been notified and will confirm receipt when they arrive.`,
+      })
       // Email host
       try {
         const { data: hostProfile } = await supabase.from('profiles').select('email, full_name').eq('id', hostId).single()
@@ -831,7 +837,24 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
             }),
           })
         }
-      } catch { /* non-fatal */ }
+        // Confirmation email to the ADVERTISER (acting party)
+        const { data: { user: me } } = await supabase.auth.getUser()
+        if (me?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'materials_shipped_confirm',
+              advertiserEmail: me.email,
+              listingTitle: listingTitle ?? 'your listing',
+              bookingId,
+              trackingNumber: trackingNumber || undefined,
+              isDropOff: false,
+              dates: booking.start_date && booking.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+            }),
+          })
+        }
+      } catch (err) { console.error('[markShipped] email error:', err) }
     }
     setSaving(false)
   }
@@ -855,6 +878,12 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         to: 'host',
         content: `📦 Printed materials have been dropped off!\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
+      // Confirmation variant for the ADVERTISER
+      await systemMessage({
+        booking_id: bookingId,
+        to: 'advertiser',
+        content: `📦 You marked your materials as dropped off. Your host has been notified and will confirm receipt.`,
+      })
       // Email host
       try {
         const { data: hostProfile } = await supabase.from('profiles').select('email, full_name').eq('id', hostId).single()
@@ -874,7 +903,23 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
             }),
           })
         }
-      } catch { /* non-fatal */ }
+        // Confirmation email to the ADVERTISER (acting party)
+        const { data: { user: me } } = await supabase.auth.getUser()
+        if (me?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'materials_shipped_confirm',
+              advertiserEmail: me.email,
+              listingTitle: listingTitle ?? 'your listing',
+              bookingId,
+              isDropOff: true,
+              dates: booking.start_date && booking.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+            }),
+          })
+        }
+      } catch (err) { console.error('[markDroppedOff] email error:', err) }
     }
     setSaving(false)
   }
@@ -898,6 +943,12 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         to: 'advertiser',
         content: `✅ Your printed materials have been received! Your host will proceed with installation and submit proof of posting once your ad is live.\n\nView booking: https://www.cityfeed.io/dashboard/bookings/${bookingId}`,
       })
+      // Confirmation variant for the HOST (acting party) — next step + urgency
+      await systemMessage({
+        booking_id: bookingId,
+        to: 'host',
+        content: `✅ You confirmed receipt of the advertiser's materials.\n\nNext step: post the ad on or before ${booking.start_date ? new Date(booking.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'the campaign start date'}, then upload proof of posting to get paid.`,
+      })
       // Email advertiser
       try {
         const { data: advProfile } = await supabase.from('profiles').select('email').eq('id', advertiserId).single()
@@ -914,7 +965,23 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
             }),
           })
         }
-      } catch { /* non-fatal */ }
+        // Confirmation email to the HOST (acting party) — next step + urgency
+        const { data: { user: me } } = await supabase.auth.getUser()
+        if (me?.email) {
+          await fetch('/api/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'materials_received_host',
+              hostEmail: me.email,
+              listingTitle: listingTitle ?? 'your listing',
+              bookingId,
+              startDate: booking.start_date ? new Date(booking.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : undefined,
+              dates: booking.start_date && booking.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+            }),
+          })
+        }
+      } catch (err) { console.error('[markReceived] email error:', err) }
     }
     setSaving(false)
   }

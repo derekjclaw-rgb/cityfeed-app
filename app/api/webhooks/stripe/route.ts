@@ -213,6 +213,8 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   // Determine if this is a static (physical) placement
   const STATIC_CATEGORIES = ['outdoor_static', 'static_billboards', 'billboard', 'storefront', 'window', 'vehicle_wrap']
   const isStaticListing = STATIC_CATEGORIES.includes(listingCategory.toLowerCase())
+  // Host-prints bookings follow the UPLOAD flow (host prints the files) — never "ship materials" copy
+  const hostPrints = !!booking.host_prints
 
   // Send email to advertiser — use correct template based on status
   if (advertiserProfile?.email) {
@@ -234,6 +236,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
         total: booking.total_price,
         bookingId,
         isStatic: isStaticListing,
+        hostPrints,
         listingImage: listingPhoto ?? undefined,
       })
     }
@@ -251,6 +254,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
       platformFee: booking.platform_fee ?? 0,
       bookingId,
       isStatic: isStaticListing,
+      hostPrints,
     })
   }
 
@@ -268,7 +272,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
 
   const systemMessage = isPending
     ? `⏳ Your booking request has been received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nThe host will review your request and respond shortly. You'll be notified once it's approved.\n\nView your booking: ${bookingUrl}\n\nQuestions? Send a message here!`
-    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\n${isStaticListing ? staticNextSteps : digitalNextSteps}`
+    : `🎉 Your booking is confirmed!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\n${isStaticListing && !hostPrints ? staticNextSteps : digitalNextSteps}`
 
   // System message to ADVERTISER
   const msgInsert = await supabase.from('messages').insert({
@@ -283,7 +287,7 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   // System message to HOST
   const hostSystemMessage = isPending
     ? `📥 New booking request received!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nFrom: ${advertiserProfile?.full_name ?? 'An advertiser'}\n\nPlease review and accept or decline this request.\n\nView booking: ${bookingUrl}`
-    : `🎉 New instant booking!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nFrom: ${advertiserProfile?.full_name ?? 'An advertiser'}\n\n${isStaticListing ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload creative files shortly.'}\n\nView booking: ${bookingUrl}`
+    : `🎉 New instant booking!\n\n📍 ${listingTitle}\n📅 ${dates}${priceSummary ? `\n💰 Total: ${priceSummary}` : ''}\n\nFrom: ${advertiserProfile?.full_name ?? 'An advertiser'}\n\n${hostPrints ? 'The advertiser paid the print fee — they\u2019ll upload creative files and you\u2019ll print and install.' : isStaticListing ? 'The advertiser will coordinate material delivery with you.' : 'The advertiser will upload creative files shortly.'}\n\nView booking: ${bookingUrl}`
 
   const hostMsgInsert = await supabase.from('messages').insert({
     booking_id: bookingId,
