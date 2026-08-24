@@ -30,6 +30,7 @@ interface ListingSpecs {
   creative_audio_allowed?: boolean
   dimensions?: string
   requires_print?: boolean
+  delivery_address?: string | null
 }
 
 function SuccessPageInner() {
@@ -115,7 +116,7 @@ function SuccessPageInner() {
           if (bk.listing_id) {
             const { data: listing } = await supabase
               .from('listings')
-              .select('creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, dimensions, requires_print')
+              .select('creative_formats, creative_dimensions, creative_max_file_size, creative_video_duration, creative_audio_allowed, dimensions, requires_print, delivery_address')
               .eq('id', bk.listing_id)
               .single()
             if (listing) {
@@ -258,6 +259,7 @@ function SuccessPageInner() {
                   </li>
                 </ol>
               ) : selfDeliver ? (
+                <>
                 <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
                   <li className="flex gap-3">
                     <span className="font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs flex-shrink-0 mt-0.5" style={{ backgroundColor: '#7ecfc0', color: '#fff' }}>1</span>
@@ -272,6 +274,13 @@ function SuccessPageInner() {
                     <span>Your host confirms receipt, posts your ad, and uploads proof of posting</span>
                   </li>
                 </ol>
+                {listingSpecs?.delivery_address && (
+                  <div className="mt-3 rounded-xl p-3.5 text-sm" style={{ backgroundColor: '#fff', border: '1px solid #d0ede9' }}>
+                    <p className="text-xs font-semibold mb-1 uppercase tracking-wide" style={{ color: '#5bb8a8' }}>Delivery instructions from your host</p>
+                    <p className="leading-relaxed" style={{ color: '#555' }}>{listingSpecs.delivery_address}</p>
+                  </div>
+                )}
+                </>
               ) : (
                 <ol className="space-y-2.5 text-sm" style={{ color: '#555' }}>
                   <li className="flex gap-3">

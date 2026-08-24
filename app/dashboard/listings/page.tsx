@@ -229,8 +229,11 @@ export default function MyListingsPage() {
         // overflow-hidden removed from this card so the absolutely-positioned
         // options menu is not clipped. The image container owns its own
         // overflow-hidden + rounded-t-2xl to keep the image properly masked.
-        className="rounded-2xl transition-all hover:shadow-lg hover:-translate-y-0.5 group"
-        style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}
+        className="relative rounded-2xl transition-all hover:shadow-lg hover:-translate-y-0.5 group"
+        // When this card's ⋮ menu is open, lift the whole card above sibling cards —
+        // each card is its own stacking context (hover transform), so without this the
+        // open menu paints UNDER the next card in the grid and looks "clipped".
+        style={{ backgroundColor: '#fff', border: '1px solid #e0e0d8', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', zIndex: openMenuId === listing.id ? 60 : undefined }}
       >
         {/* Large thumbnail — clipped independently so card overflow can be visible */}
         <div className="relative h-[180px] overflow-hidden rounded-t-2xl cursor-pointer" onClick={() => toggleExpand(listing.id)}>
