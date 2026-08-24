@@ -2049,7 +2049,7 @@ export default function BookingDetailPage() {
                 const isProcessing = !isPaid && !!booking.payout_at
                 // Pre-POP the money isn't "pending" — it's EARNED-ON-PROOF. Label accordingly.
                 const awaitingProof = !isPaid && !isProcessing && !['pop_pending', 'pop_review', 'completed'].includes(booking.status)
-                const payoutStatus = isPaid ? 'Paid' : isProcessing ? 'Processing' : awaitingProof ? 'Paid after proof of posting' : 'Proof under review'
+                const payoutStatus = isPaid ? 'Paid' : isProcessing ? 'Processing' : awaitingProof ? 'Awaiting proof' : 'Proof under review'
                 const statusColor = isPaid ? '#16a34a' : isProcessing ? '#d97706' : '#b45309'
                 return (
                   <div className="space-y-2 text-sm">
