@@ -847,40 +847,6 @@ export default function EditListingPage() {
             )}
             </>
             )}
-            {showStaticFields && (
-              <>
-                <Toggle
-                  value={form.creative_host_prints}
-                  onChange={v => set('creative_host_prints', v)}
-                  label="Host handles printing"
-                  hint="You print and install the creative on behalf of advertisers"
-                />
-                {form.creative_host_prints && (
-                  <FormField label="Print cost ($)" hint="Added to advertiser's total">
-                    <input
-                      type="number"
-                      value={form.creative_print_cost}
-                      onChange={e => set('creative_print_cost', e.target.value)}
-                      placeholder="150"
-                      min={0}
-                      step="0.01"
-                      className={inputClass}
-                      style={inputStyle}
-                    />
-                  </FormField>
-                )}
-                <FormField label="Delivery instructions" hint="How the advertiser should send print files">
-                  <textarea
-                    value={form.delivery_instructions}
-                    onChange={e => set('delivery_instructions', e.target.value)}
-                    rows={2}
-                    placeholder="Send files via WeTransfer to..."
-                    className={`${inputClass} resize-none`}
-                    style={inputStyle}
-                  />
-                </FormField>
-              </>
-            )}
           </div>
 
           {/* Content restrictions */}
@@ -912,33 +878,15 @@ export default function EditListingPage() {
             />
             {form.requires_print && (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#555' }}>
-                    How are printed materials handled?<span className="ml-1" style={{ color: '#dc2626' }}>*</span>
-                  </label>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="print_handling"
-                        checked={form.offers_printing === true}
-                        onChange={() => { set('offers_printing', true); set('delivery_address', '') }}
-                        className="w-4 h-4 accent-[#7ecfc0]"
-                      />
-                      <span className="text-sm" style={{ color: '#555' }}>Host prints &amp; installs</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input
-                        type="radio"
-                        name="print_handling"
-                        checked={form.offers_printing === false}
-                        onChange={() => { set('offers_printing', false); set('print_fee', '') }}
-                        className="w-4 h-4 accent-[#7ecfc0]"
-                      />
-                      <span className="text-sm" style={{ color: '#555' }}>Advertiser ships materials</span>
-                    </label>
-                  </div>
-                </div>
+                <Toggle
+                  value={form.offers_printing}
+                  onChange={v => {
+                    set('offers_printing', v)
+                    if (!v) set('print_fee', '')
+                  }}
+                  label="Do you offer printing?"
+                  hint="Offer the option to print advertiser materials for an added fee"
+                />
                 {form.offers_printing && (
                   <FormField label="Print fee ($)" hint="One-time fee charged to the advertiser for printing">
                     <div className="relative">
@@ -956,18 +904,24 @@ export default function EditListingPage() {
                     </div>
                   </FormField>
                 )}
-                {!form.offers_printing && (
-                  <FormField label="Delivery instructions" hint="Where and how should the advertiser ship printed materials?">
-                    <textarea
-                      value={form.delivery_address}
-                      onChange={e => set('delivery_address', e.target.value)}
-                      placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing"
-                      rows={3}
-                      className={`${inputClass} resize-none`}
-                      style={inputStyle}
-                    />
-                  </FormField>
-                )}
+                <FormField
+                  label="Delivery instructions"
+                  hint="Where and how should the advertiser ship or deliver printed materials if they choose to provide?"
+                  required
+                >
+                  <textarea
+                    value={form.delivery_address}
+                    onChange={e => set('delivery_address', e.target.value)}
+                    placeholder="e.g. 123 Main St, Suite 200, Las Vegas NV 89109. Attn: Marketing. Ring buzzer at loading dock."
+                    rows={3}
+                    className={`${inputClass} resize-none`}
+                    style={inputStyle}
+                    required
+                  />
+                </FormField>
+                <p className="text-xs" style={{ color: '#aaa' }}>
+                  This address is only shown to advertisers after they book — never on the public listing.
+                </p>
               </div>
             )}
           </div>
