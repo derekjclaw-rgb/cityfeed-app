@@ -170,7 +170,7 @@ function timeAgo(dateStr: string): string {
 const HOST_ONLY_TYPES = new Set([
   'new_booking', 'payout_initiated', 'pop_reminder_36h', 'pop_reminder_morning',
   'pop_approved', 'pop_submitted_host', 'collateral_uploaded', 'booking_accepted_host',
-  'materials_shipped', 'account_onboarding', 'pop_reminder',
+  'materials_shipped', 'materials_received_host', 'account_onboarding', 'pop_reminder',
 ])
 const ADVERTISER_ONLY_TYPES = new Set([
   'booking_request_submitted', 'booking_confirmed', 'booking_approved_advertiser',

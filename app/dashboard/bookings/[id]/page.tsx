@@ -961,6 +961,16 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
         body: `Your host has confirmed receipt of materials for "${listingTitle ?? 'booking'}".`,
         href: `/dashboard/bookings/${bookingId}`,
       })
+      // Self-entry for the HOST's activity feed (acting party)
+      if (hostId) {
+        await notify({
+          user_id: hostId,
+          type: 'materials_received_host',
+          title: 'Materials received',
+          body: `You confirmed receipt of materials for "${listingTitle ?? 'booking'}" — post the ad, then upload proof of posting.`,
+          href: `/dashboard/bookings/${bookingId}`,
+        })
+      }
       await systemMessage({
         booking_id: bookingId,
         to: 'advertiser',
@@ -1359,7 +1369,7 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
       try {
         await notify({
           user_id: hostId,
-          type: 'pop_submitted',
+          type: 'pop_submitted_host',
           title: 'Proof of posting submitted',
           body: `Your POP for "${listingTitle ?? 'your booking'}" is confirmed — payout incoming.`,
           href: `/dashboard/bookings/${bookingId}`,
