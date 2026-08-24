@@ -119,7 +119,7 @@ interface FormData {
 const INITIAL_FORM: FormData = {
   title: '',
   description: '',
-  category: 'digital_billboards',
+  category: '',
   address: '',
   city: '',
   state: '',
@@ -450,6 +450,10 @@ export default function CreateListingPage() {
   function handleReview(e: React.FormEvent) {
     e.preventDefault()
     if (!userId) return
+    if (!form.category) {
+      setError('Select a category for your listing.')
+      return
+    }
     if (form.no_address) {
       const latN = parseFloat(form.lat)
       const lngN = parseFloat(form.lng)
@@ -754,7 +758,11 @@ export default function CreateListingPage() {
                 onChange={e => set('category', e.target.value)}
                 className={`${inputClass} cursor-pointer`}
                 style={inputStyle}
+                required
               >
+                <option value="" disabled>
+                  Select an option
+                </option>
                 {CATEGORIES.map(cat => (
                   <option key={cat.value} value={cat.value}>
                     {cat.label}
@@ -1154,7 +1162,6 @@ export default function CreateListingPage() {
                 if (!v) { set('offers_printing', false); set('print_fee', ''); set('delivery_address', '') }
               }}
               label="This placement requires printed materials"
-              hint="The advertiser will need to provide physical prints for this placement"
             />
             {form.requires_print && (
               <div className="space-y-4">
@@ -1165,7 +1172,7 @@ export default function CreateListingPage() {
                     if (!v) set('print_fee', '')
                   }}
                   label="Do you offer printing?"
-                  hint={form.offers_printing ? 'Advertisers can pay you to print their materials' : 'Advertisers will print and ship their own materials'}
+                  hint="Offer the option to print advertiser materials for an added fee"
                 />
                 {form.offers_printing && (
                   <FormField label="Print fee ($)" hint="One-time fee charged to the advertiser for printing">
@@ -1191,7 +1198,7 @@ export default function CreateListingPage() {
                 )}
                 <FormField
                   label="Delivery instructions"
-                  hint="Where and how should the advertiser ship or deliver printed materials?"
+                  hint="Where and how should the advertiser ship or deliver printed materials if they choose to provide?"
                   required
                 >
                   <textarea
