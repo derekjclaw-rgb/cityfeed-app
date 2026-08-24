@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { sendEmail } from '@/lib/email'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' })
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     // Fetch booking
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select('id, status, start_date, total_price, stripe_payment_intent_id, host_id, advertiser_id, listings(title)')
+      .select('id, status, start_date, end_date, total_price, stripe_payment_intent_id, host_id, advertiser_id, listings(title)')
       .eq('id', booking_id)
       .single()
 
@@ -143,6 +144,31 @@ export async function POST(req: NextRequest) {
       })
     }
     await supabase.from('notifications').insert(notifInserts)
+
+    // Email both parties — acting party gets a confirmation, other party gets notice.
+    // (Bug fix Aug 24: this route previously sent in-app notifications only — no
+    // cancellation emails ever went out.)
+    try {
+      const dates = `${booking.start_date} → ${(booking as { end_date?: string }).end_date ?? ''}`
+      const recipientIds = [user_id, otherPartyId].filter(Boolean) as string[]
+      const { data: emailProfiles } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', recipientIds)
+      for (const p of emailProfiles ?? []) {
+        if (!p.email) continue
+        await sendEmail({
+          type: 'booking_cancelled',
+          recipientEmail: p.email,
+          listingTitle,
+          dates,
+          role: p.id === booking.advertiser_id ? 'advertiser' : 'host',
+          bookingId: booking_id,
+        })
+      }
+    } catch (emailErr) {
+      console.error('[Cancel] email error:', emailErr)
+    }
 
     // If host cancelled, flag their profile (hosts who cancel frequently affect their reputation)
     if (isHost) {
