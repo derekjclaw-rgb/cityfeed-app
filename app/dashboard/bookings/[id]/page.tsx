@@ -421,10 +421,29 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
             No Creative Files
           </span>
         ) : isSelfDeliver ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(126,207,192,0.1)', color: '#5bb8a8' }}>
-            <Upload className="w-3 h-3" />
-            Preview Optional
-          </span>
+          isHost ? (
+            booking?.received_at ? (
+              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
+                <CheckCircle className="w-3 h-3" />
+                Materials Received ✅
+              </span>
+            ) : (booking?.shipped_at || booking?.dropped_off_at) ? (
+              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+                <Package className="w-3 h-3" />
+                Materials In Transit
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+                <Clock className="w-3 h-3" />
+                Awaiting Materials
+              </span>
+            )
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(126,207,192,0.1)', color: '#5bb8a8' }}>
+              <Upload className="w-3 h-3" />
+              Preview Optional
+            </span>
+          )
         ) : (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
             <Clock className="w-3 h-3 flex-shrink-0" />
@@ -1604,7 +1623,7 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
 
 // ─── Next Step Callout ─────────────────────────────────────────────────────────
 
-function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string }) {
+function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliveryMode, materialsSent, materialsReceived }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string; deliveryMode?: string | null; materialsSent?: boolean; materialsReceived?: boolean }) {
   let message = ''
   const now = new Date()
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
@@ -1617,6 +1636,12 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
       message = 'Campaign complete \u2014 payout processed'
     } else if (status === 'pop_pending') {
       message = 'Proof submitted \u2014 awaiting review'
+    } else if ((status === 'confirmed' || status === 'active') && materialsReceived) {
+      message = 'Materials received \u2014 post the ad, then upload proof of posting'
+    } else if ((status === 'confirmed' || status === 'active') && materialsSent) {
+      message = 'Materials on the way \u2014 confirm receipt when they arrive'
+    } else if ((status === 'confirmed' || status === 'active') && deliveryMode === 'self_deliver') {
+      message = 'Awaiting materials from your advertiser'
     } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
       message = 'Upload proof of posting to confirm placement'
     } else if (status === 'confirmed') {
@@ -1629,6 +1654,12 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate }: { i
       message = 'Campaign complete \u2014 leave a review'
     } else if (status === 'pop_pending') {
       message = 'Proof of posting submitted \u2014 under review'
+    } else if ((status === 'confirmed' || status === 'active') && materialsReceived) {
+      message = 'Materials received by your host \u2014 awaiting posting'
+    } else if ((status === 'confirmed' || status === 'active') && materialsSent) {
+      message = 'Materials sent \u2014 your host will confirm receipt'
+    } else if ((status === 'confirmed' || status === 'active') && deliveryMode === 'self_deliver') {
+      message = 'Ship or drop off your printed materials to get started'
     } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
       message = 'Creative submitted \u2014 awaiting proof of posting from your host'
     } else if (status === 'confirmed') {
@@ -1862,7 +1893,7 @@ export default function BookingDetailPage() {
           <BookingProgressBar
             status={booking.status}
             endDate={booking.end_date ?? undefined}
-            hasCreative={hasCreativeFiles}
+            hasCreative={hasCreativeFiles || !!booking.received_at}
             hasProof={hasProofFiles}
           />
 
@@ -1873,6 +1904,9 @@ export default function BookingDetailPage() {
             hasCreative={hasCreativeFiles}
             hasProof={hasProofFiles}
             endDate={booking.end_date}
+            deliveryMode={booking.delivery_mode}
+            materialsSent={!!(booking.shipped_at || booking.dropped_off_at)}
+            materialsReceived={!!booking.received_at}
           />
 
           {/* Booking details card */}
