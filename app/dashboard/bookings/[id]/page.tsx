@@ -2058,12 +2058,18 @@ export default function BookingDetailPage() {
                 // Single source of truth — stored itemized amounts (lib/fees.ts)
                 const fin = getBookingFinancials(booking)
                 const payout = fin.hostPayout
-                const isPaid = !!booking.stripe_transfer_id
-                const isProcessing = !isPaid && !!booking.payout_at
+                const transferSent = !!booking.stripe_transfer_id
+                // The Stripe transfer fires on POP approval, but funds land in the host's
+                // bank on Stripe's payout schedule (typically 2-5 business days). Until we
+                // ingest payout.paid webhooks, approximate "landed" as 7 days post-transfer.
+                const sentAtMs = booking.payout_at ? new Date(booking.payout_at).getTime() : null
+                const isPaid = transferSent && sentAtMs != null && Date.now() - sentAtMs > 7 * 24 * 60 * 60 * 1000
+                const isSent = transferSent && !isPaid
+                const isProcessing = !transferSent && !!booking.payout_at
                 // Pre-POP the money isn't "pending" — it's EARNED-ON-PROOF. Label accordingly.
-                const awaitingProof = !isPaid && !isProcessing && !['pop_pending', 'pop_review', 'completed'].includes(booking.status)
-                const payoutStatus = isPaid ? 'Paid' : isProcessing ? 'Processing' : awaitingProof ? 'Awaiting proof' : 'Proof under review'
-                const statusColor = isPaid ? '#16a34a' : isProcessing ? '#d97706' : '#b45309'
+                const awaitingProof = !transferSent && !isProcessing && !['pop_pending', 'pop_review', 'completed'].includes(booking.status)
+                const payoutStatus = isPaid ? 'Paid' : isSent ? 'Payout sent' : isProcessing ? 'Processing' : awaitingProof ? 'Awaiting proof of posting' : 'Proof under review'
+                const statusColor = isPaid ? '#16a34a' : isSent ? '#1d4ed8' : isProcessing ? '#d97706' : '#b45309'
                 return (
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between" style={{ color: '#555' }}>
@@ -2086,10 +2092,15 @@ export default function BookingDetailPage() {
                     </div>
                     <div className="flex justify-between items-center pt-1">
                       <span style={{ color: '#888' }}>Status</span>
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: isPaid ? '#dcfce7' : isProcessing ? '#fef9ec' : '#fef9ec', color: statusColor }}>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: isPaid ? '#dcfce7' : isSent ? '#eff6ff' : '#fef9ec', color: statusColor }}>
                         {payoutStatus}
                       </span>
                     </div>
+                    {isSent && (
+                      <p className="text-xs text-right" style={{ color: '#888' }}>
+                        Arrives in your bank within 2–5 business days
+                      </p>
+                    )}
                   </div>
                 )
               })()}
