@@ -82,6 +82,7 @@ interface Booking {
   platform_fee?: number
   payout_amount?: number
   payout_at?: string
+  paid_out_at?: string | null
   stripe_transfer_id?: string
   created_at: string
   listing_id: string
@@ -2077,7 +2078,8 @@ export default function BookingDetailPage() {
                 // bank on Stripe's payout schedule (typically 2-5 business days). Until we
                 // ingest payout.paid webhooks, approximate "landed" as 7 days post-transfer.
                 const sentAtMs = booking.payout_at ? new Date(booking.payout_at).getTime() : null
-                const isPaid = transferSent && sentAtMs != null && Date.now() - sentAtMs > 7 * 24 * 60 * 60 * 1000
+                // Exact when the payout.paid webhook has stamped it; 7-day approximation as fallback
+                const isPaid = transferSent && (!!booking.paid_out_at || (sentAtMs != null && Date.now() - sentAtMs > 7 * 24 * 60 * 60 * 1000))
                 const isSent = transferSent && !isPaid
                 const isProcessing = !transferSent && !!booking.payout_at
                 // Pre-POP the money isn't "pending" — it's EARNED-ON-PROOF. Label accordingly.
