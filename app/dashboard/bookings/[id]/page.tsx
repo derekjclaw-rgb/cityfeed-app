@@ -409,7 +409,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       {/* Header — wraps on narrow screens so the status pill never clips */}
       <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <h2 className="text-lg font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
-          {isHost ? 'Advertiser Creative Files' : 'Upload Your Creative Files'}
+          {(isSelfDeliver || needsChoice) ? (isHost ? 'Advertiser Materials' : 'Printed Materials') : isHost ? 'Advertiser Creative Files' : 'Upload Your Creative Files'}
         </h2>
         {showSuccessState ? null : hasFiles ? (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
@@ -438,12 +438,27 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 Awaiting Materials
               </span>
             )
+          ) : booking?.received_at ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(22,163,74,0.1)', color: '#16a34a' }}>
+              <CheckCircle className="w-3 h-3" />
+              Materials Received ✅
+            </span>
+          ) : (booking?.shipped_at || booking?.dropped_off_at) ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+              <Package className="w-3 h-3" />
+              Materials In Transit
+            </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(126,207,192,0.1)', color: '#5bb8a8' }}>
-              <Upload className="w-3 h-3" />
-              Preview Optional
+            <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+              <Truck className="w-3 h-3" />
+              Send Your Materials
             </span>
           )
+        ) : needsChoice ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+            <Package className="w-3 h-3 flex-shrink-0" />
+            {isHost ? 'Awaiting Materials' : 'Choose Delivery Method'}
+          </span>
         ) : (
           <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: 'rgba(180,83,9,0.08)', color: '#b45309' }}>
             <Clock className="w-3 h-3 flex-shrink-0" />
@@ -494,11 +509,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
           {/* Host printing is a PAID add-on selected at booking time (print fee is charged
               in checkout). Offering it here would hand it out free — the host would never
               be compensated. Advertisers who change their mind can arrange it with the host. */}
-          {listing.offers_printing && (
-            <p className="text-xs mt-3" style={{ color: '#888' }}>
-              Prefer your host to print for you? Printing is added at booking time — message your host to arrange it.
-            </p>
-          )}
+
         </div>
       )}
 
@@ -507,13 +518,6 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         <p className="text-sm mb-5 leading-relaxed" style={{ color: '#555' }}>
           Please deliver your creative files within the production window listed on this placement.
           Your host will begin setup once received.
-        </p>
-      )}
-
-      {/* Advertiser nudge for ship/drop-off: upload is optional */}
-      {!isHost && isSelfDeliver && !showSuccessState && canUpload && (
-        <p className="text-sm mb-5 leading-relaxed" style={{ color: '#888' }}>
-          Attach a preview so your host knows what&apos;s arriving (optional).
         </p>
       )}
 
@@ -532,12 +536,12 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
       )}
 
       {/* ── SELF-DELIVER VIEW — show host address + shipping actions ── */}
-      {isSelfDeliver && listing?.delivery_address && ['confirmed', 'active', 'completed'].includes(bookingStatus) && (
+      {isSelfDeliver && ['confirmed', 'active', 'completed'].includes(bookingStatus) && (
         <ShippingSection
           bookingId={bookingId}
           isHost={isHost}
           booking={booking!}
-          deliveryAddress={listing.delivery_address}
+          deliveryAddress={listing?.delivery_address ?? ''}
           listingTitle={listingTitle}
           hostId={hostId}
           advertiserId={advertiserId}
@@ -1015,7 +1019,13 @@ function ShippingSection({ bookingId, isHost, booking, deliveryAddress, listingT
           <Package className="w-4 h-4" style={{ color: 'var(--mint, #7ecfc0)' }} />
           <p className="text-sm font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Delivery Details</p>
         </div>
-        <p className="text-sm mb-4 leading-relaxed" style={{ color: '#555' }}>{deliveryAddress}</p>
+        {deliveryAddress ? (
+          <p className="text-sm mb-4 leading-relaxed" style={{ color: '#555' }}>{deliveryAddress}</p>
+        ) : (
+          <p className="text-sm mb-4 leading-relaxed" style={{ color: '#888' }}>
+            Your host hasn&apos;t added a delivery address to this listing yet — message them for delivery details.
+          </p>
+        )}
 
         {alreadySent ? (
           <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.2)' }}>
@@ -1623,7 +1633,7 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
 
 // ─── Next Step Callout ─────────────────────────────────────────────────────────
 
-function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliveryMode, materialsSent, materialsReceived }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string; deliveryMode?: string | null; materialsSent?: boolean; materialsReceived?: boolean }) {
+function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliveryMode, materialsSent, materialsReceived, requiresPrint }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string; deliveryMode?: string | null; materialsSent?: boolean; materialsReceived?: boolean; requiresPrint?: boolean }) {
   let message = ''
   const now = new Date()
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
@@ -1640,7 +1650,7 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliv
       message = 'Materials received \u2014 post the ad, then upload proof of posting'
     } else if ((status === 'confirmed' || status === 'active') && materialsSent) {
       message = 'Materials on the way \u2014 confirm receipt when they arrive'
-    } else if ((status === 'confirmed' || status === 'active') && deliveryMode === 'self_deliver') {
+    } else if ((status === 'confirmed' || status === 'active') && (deliveryMode === 'self_deliver' || (requiresPrint && !deliveryMode))) {
       message = 'Awaiting materials from your advertiser'
     } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
       message = 'Upload proof of posting to confirm placement'
@@ -1660,6 +1670,8 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliv
       message = 'Materials sent \u2014 your host will confirm receipt'
     } else if ((status === 'confirmed' || status === 'active') && deliveryMode === 'self_deliver') {
       message = 'Ship or drop off your printed materials to get started'
+    } else if ((status === 'confirmed' || status === 'active') && requiresPrint && !deliveryMode) {
+      message = 'Choose how your printed materials will get to your host'
     } else if ((status === 'confirmed' || status === 'active') && hasCreative) {
       message = 'Creative submitted \u2014 awaiting proof of posting from your host'
     } else if (status === 'confirmed') {
@@ -1907,6 +1919,7 @@ export default function BookingDetailPage() {
             deliveryMode={booking.delivery_mode}
             materialsSent={!!(booking.shipped_at || booking.dropped_off_at)}
             materialsReceived={!!booking.received_at}
+            requiresPrint={!!listing?.requires_print}
           />
 
           {/* Booking details card */}
