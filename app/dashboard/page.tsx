@@ -55,6 +55,7 @@ interface CampaignCard {
   end_date: string
   step: number
   stepLabel: string
+  stepNote: string
   progressPercent: number
   isLive: boolean
 }
@@ -117,24 +118,24 @@ function getStatusPill(status: string): { label: string; bg: string; color: stri
   }
 }
 
-function campaignStep(status: string, startDate: string, endDate: string, hasCreative?: boolean, booking?: BookingStatusInput | null, isHostMode?: boolean): { step: number; label: string; percent: number; displayStatus: string } {
-  if (isCampaignLive(status, startDate, endDate)) return { step: 5, label: 'Live', percent: 83, displayStatus: 'live' }
-  if (isCampaignComplete(status, endDate)) return { step: 6, label: 'Complete', percent: 100, displayStatus: 'completed' }
+function campaignStep(status: string, startDate: string, endDate: string, hasCreative?: boolean, booking?: BookingStatusInput | null, isHostMode?: boolean): { step: number; label: string; note: string; percent: number; displayStatus: string } {
+  if (isCampaignLive(status, startDate, endDate)) return { step: 5, label: 'Live', note: '', percent: 83, displayStatus: 'live' }
+  if (isCampaignComplete(status, endDate)) return { step: 6, label: 'Complete', note: '', percent: 100, displayStatus: 'completed' }
   // Shipping-aware steps
   if (booking) {
     const ds = getBookingDisplayStatus(booking, !!isHostMode)
-    if (ds.key === 'materials_received') return { step: 4, label: 'Materials Received', percent: 67, displayStatus: 'confirmed' }
-    if (ds.key === 'materials_shipped') return { step: 3, label: ds.label, percent: 55, displayStatus: 'confirmed' }
-    if (ds.key === 'awaiting_materials') return { step: 3, label: 'Ship Materials', percent: 50, displayStatus: 'confirmed' }
+    if (ds.key === 'materials_received') return { step: 4, label: 'Materials Received', note: 'Materials received — awaiting posting', percent: 67, displayStatus: 'confirmed' }
+    if (ds.key === 'materials_shipped') return { step: 3, label: ds.label, note: isHostMode ? 'Materials on the way — confirm receipt' : 'Materials sent — awaiting host receipt', percent: 55, displayStatus: 'confirmed' }
+    if (ds.key === 'awaiting_materials') return { step: 3, label: 'Ship Materials', note: isHostMode ? 'Awaiting materials from advertiser' : 'Ship your materials to the host', percent: 50, displayStatus: 'confirmed' }
   }
-  if (status === 'confirmed' && hasCreative) return { step: 4, label: 'Awaiting Posting', percent: 67, displayStatus: 'confirmed' }
+  if (status === 'confirmed' && hasCreative) return { step: 4, label: 'Awaiting Posting', note: 'Creative received — awaiting posting', percent: 67, displayStatus: 'confirmed' }
   if (isCampaignConfirmed(status, startDate)) {
-    if (status === 'pending') return { step: 2, label: 'Awaiting Approval', percent: 33, displayStatus: 'pending' }
-    return { step: 3, label: 'Creative Upload', percent: 50, displayStatus: 'confirmed' }
+    if (status === 'pending') return { step: 2, label: 'Awaiting Approval', note: 'Awaiting host approval', percent: 33, displayStatus: 'pending' }
+    return { step: 3, label: 'Creative Upload', note: 'Awaiting creative files', percent: 50, displayStatus: 'confirmed' }
   }
-  if (status === 'pending') return { step: 2, label: 'Awaiting Approval', percent: 33, displayStatus: 'pending' }
-  if (status === 'confirmed') return { step: 3, label: 'Creative Upload', percent: 50, displayStatus: 'confirmed' }
-  return { step: 1, label: 'Booked', percent: 17, displayStatus: status }
+  if (status === 'pending') return { step: 2, label: 'Awaiting Approval', note: 'Awaiting host approval', percent: 33, displayStatus: 'pending' }
+  if (status === 'confirmed') return { step: 3, label: 'Creative Upload', note: 'Awaiting creative files', percent: 50, displayStatus: 'confirmed' }
+  return { step: 1, label: 'Booked', note: 'Booking confirmed', percent: 17, displayStatus: status }
 }
 
 function timelineIcon(type: string): { Icon: React.ElementType; dotClass: string } {
@@ -486,6 +487,7 @@ function DashboardContent() {
           end_date: b.end_date,
           step: cs.step,
           stepLabel: cs.label,
+          stepNote: cs.note,
           progressPercent: cs.percent,
           isLive: isCampaignLive(b.status, b.start_date, b.end_date),
         }
@@ -892,10 +894,7 @@ function DashboardContent() {
                           <div className="text-[11px] font-medium mt-1" style={{ color: 'var(--text-tertiary, #9a9a90)' }}>
                             {c.step === 5 ? `Ends ${formatDate(c.end_date)}` :
                              c.step === 6 ? 'Campaign complete' :
-                             c.step === 4 ? 'Creative received — awaiting posting' :
-                             c.step === 3 ? 'Awaiting creative files' :
-                             c.step === 2 ? 'Awaiting host approval' :
-                             'Booking confirmed'}
+                             c.stepNote || 'Booking confirmed'}
                           </div>
                         </div>
                       </div>

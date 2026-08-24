@@ -155,7 +155,7 @@ export function getHostStatus(b: BookingStatusInput): DerivedStatus {
 
   // ── Shipping path (self_deliver) ──
   if (delivery_mode === 'self_deliver') {
-    if (received_at) return { key: 'materials_received', label: 'Materials Received', hint: 'Materials received — begin installation.', bg: '#f0fdf4', text: '#16a34a', group: 'upcoming' }
+    if (received_at) return { key: 'materials_received', label: 'Materials Received', hint: 'Materials received — prep the installation and post on the start date.', bg: '#fef9ec', text: '#b45309', group: 'needs_action' }
     if (shipped_at || dropped_off_at) return { key: 'materials_shipped', label: shipped_at ? 'Materials Shipped' : 'Dropped Off', hint: 'Materials on the way — confirm receipt when they arrive.', bg: '#eff6ff', text: '#1d4ed8', group: 'needs_action' }
     return { key: 'awaiting_materials', label: 'Awaiting Materials', hint: 'Waiting for advertiser to ship or drop off materials.', bg: '#eff6ff', text: '#1d4ed8', group: 'in_progress' }
   }
