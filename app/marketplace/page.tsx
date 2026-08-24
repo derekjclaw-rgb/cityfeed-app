@@ -9,7 +9,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
-  MapPin, Search, Star, X, LayoutGrid, Map, ArrowUpDown,
+  MapPin, Search, Star, X, LayoutGrid, Map, ArrowUpDown, SlidersHorizontal,
   Layers, Monitor, Image, Bus, TreePine, Tv, Store, Calendar,
   Users, Sparkles, MonitorSmartphone, Frame, Lamp, MoreHorizontal,
   ArrowRight,
@@ -298,7 +298,14 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
 }
 
 // ─── Map View ──────────────────────────────────────────────────────────────────
-function MapView({ listings }: { listings: Listing[] }) {
+function MapView({ listings, visible = true, mobileTile = false, selectedId = null, onPinClick, onViewportCount }: {
+  listings: Listing[]
+  visible?: boolean
+  mobileTile?: boolean
+  selectedId?: string | null
+  onPinClick?: (l: Listing | null) => void
+  onViewportCount?: (n: number) => void
+}) {
   const mapContainer = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null)
@@ -306,6 +313,12 @@ function MapView({ listings }: { listings: Listing[] }) {
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null)
   // Track whether a marker was just clicked so map.on('click') doesn't immediately dismiss
   const markerClickedRef = useRef(false)
+  // Refs so marker handlers (bound once per listings change) always see fresh props
+  const markerElsRef = useRef<Record<string, HTMLElement>>({})
+  const onPinClickRef = useRef(onPinClick); onPinClickRef.current = onPinClick
+  const onViewportCountRef = useRef(onViewportCount); onViewportCountRef.current = onViewportCount
+  const mobileTileRef = useRef(mobileTile); mobileTileRef.current = mobileTile
+  const mobileSelectedRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!mapContainer.current) return
@@ -325,7 +338,7 @@ function MapView({ listings }: { listings: Listing[] }) {
       const defaultZoom = hasListings ? 11 : 3.5
       map = new MapGL.Map({
         container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: 'mapbox://styles/mapbox/outdoors-v12',
         center: defaultCenter,
         zoom: defaultZoom,
       })
@@ -334,17 +347,26 @@ function MapView({ listings }: { listings: Listing[] }) {
       function addMarkers() {
         if (markersAdded) return
         markersAdded = true
+        markerElsRef.current = {}
         listings.forEach((listing) => {
           if (listing.lat == null || listing.lng == null) return
           const el = document.createElement('div')
           el.style.cursor = 'pointer'
-          el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;z-index:10;">$${listing.price_per_day}</div>`
+          el.innerHTML = `<div style="background:#7ecfc0;color:#fff;font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 8px rgba(126,207,192,0.5);border:2px solid white;font-family:system-ui,sans-serif;z-index:10;transition:transform 0.15s ease, background 0.15s ease;">$${listing.price_per_day}</div>`
+          markerElsRef.current[listing.id] = el
           const captured = listing
           el.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
             markerClickedRef.current = true
             setTimeout(() => { markerClickedRef.current = false }, 100)
+            if (mobileTileRef.current) {
+              // Mobile: parent renders a docked tile — toggle selection via callback
+              const next = mobileSelectedRef.current === captured.id ? null : captured
+              mobileSelectedRef.current = next?.id ?? null
+              onPinClickRef.current?.(next)
+              return
+            }
             setSelectedListing((prev) => {
               if (prev?.id === captured.id) {
                 setPopupPos(null)
@@ -367,9 +389,14 @@ function MapView({ listings }: { listings: Listing[] }) {
           new MapGL.Marker({ element: el }).setLngLat([listing.lng, listing.lat]).addTo(map)
         })
       }
-      // Dismiss popup when clicking empty map area (but NOT when clicking a marker)
+      // Dismiss popup/tile when clicking empty map area (but NOT when clicking a marker)
       map.on('click', () => {
         if (markerClickedRef.current) return
+        if (mobileTileRef.current) {
+          mobileSelectedRef.current = null
+          onPinClickRef.current?.(null)
+          return
+        }
         setSelectedListing(null)
         setPopupPos(null)
       })
@@ -389,19 +416,49 @@ function MapView({ listings }: { listings: Listing[] }) {
           return current
         })
       }
+      // Viewport-aware result count — the map reads as a live query, not a picture
+      const reportViewport = () => {
+        try {
+          const b = map.getBounds()
+          const n = listings.filter(l => l.lat != null && l.lng != null && b.contains([l.lng, l.lat])).length
+          onViewportCountRef.current?.(n)
+        } catch { /* map not ready yet */ }
+      }
       map.on('move', updatePopupPosition)
       map.on('zoom', updatePopupPosition)
-      map.on('load', addMarkers)
+      map.on('moveend', reportViewport)
+      map.on('load', () => { addMarkers(); reportViewport() })
       map.on('style.load', addMarkers)
       setTimeout(addMarkers, 2000)
     })
     return () => { map?.remove() }
   }, [listings])
 
+  // Gold highlight for the selected pin (mobile tile mode)
+  useEffect(() => {
+    mobileSelectedRef.current = selectedId
+    Object.entries(markerElsRef.current).forEach(([id, el]) => {
+      const pill = el.firstElementChild as HTMLElement | null
+      if (!pill) return
+      const sel = id === selectedId
+      pill.style.background = sel ? '#debb73' : '#7ecfc0'
+      pill.style.boxShadow = sel ? '0 3px 12px rgba(222,187,115,0.6)' : '0 2px 8px rgba(126,207,192,0.5)'
+      pill.style.transform = sel ? 'scale(1.15)' : 'scale(1)'
+    })
+  }, [selectedId])
+
+  // Map stays mounted between grid/map toggles (kept warm) — fix canvas size on show
+  useEffect(() => {
+    if (visible && mapRef.current) {
+      const t = setTimeout(() => mapRef.current?.resize(), 60)
+      return () => clearTimeout(t)
+    }
+  }, [visible])
+
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainer} className="w-full h-full rounded-xl" />
-      {selectedListing && popupPos && typeof document !== 'undefined' && createPortal(
+      <div ref={mapContainer} className="w-full h-full" />
+      {!mobileTile && selectedListing && popupPos && typeof document !== 'undefined' && createPortal(
         <div className="w-72 rounded-2xl shadow-xl overflow-hidden" style={{
           position: 'fixed',
           left: popupPos.x,
@@ -450,6 +507,11 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rating'>('rating')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
+  const [mapHint, setMapHint] = useState(false)
+  const [viewportCount, setViewportCount] = useState<number | null>(null)
+  const [mapSelected, setMapSelected] = useState<Listing | null>(null)
+  const [isMobileVp, setIsMobileVp] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [allListings, setAllListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingRealData, setUsingRealData] = useState(false)
@@ -514,6 +576,15 @@ export default function MarketplacePage() {
     return () => clearTimeout(t)
   }, [fetchListings])
 
+  // Viewport tracking — mobile gets the docked tile, desktop keeps the anchored popup
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1023px)')
+    const update = () => setIsMobileVp(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
   const filtered = useMemo(() => {
     // Always apply client-side filter (handles both real+mock data in merged array)
     return allListings
@@ -558,10 +629,11 @@ export default function MarketplacePage() {
               style={{ color: 'var(--text-secondary, #888888)' }}
             />
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search by location, type..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); if (mapHint) setMapHint(false) }}
               className="w-full py-3 pl-11 pr-10 text-sm focus:outline-none"
               style={{
                 borderRadius: 'var(--radius-sm, 10px)',
@@ -633,7 +705,16 @@ export default function MarketplacePage() {
               Grid
             </button>
             <button
-              onClick={() => setViewMode('map')}
+              onClick={() => {
+                // Search-gated map entry (Airbnb pattern): browse first, map rewards intent
+                if (!search.trim() && selectedCategory === 'all') {
+                  setMapHint(true)
+                  searchInputRef.current?.focus()
+                  setTimeout(() => setMapHint(false), 4000)
+                  return
+                }
+                setViewMode('map')
+              }}
               className="flex items-center gap-1.5 px-[18px] py-3 text-[13px] font-semibold transition-colors border-none cursor-pointer"
               style={{
                 backgroundColor: viewMode === 'map' ? 'var(--gold, #debb73)' : 'transparent',
@@ -646,6 +727,12 @@ export default function MarketplacePage() {
             </button>
           </div>
         </div>
+
+        {mapHint && (
+          <div className="mt-2 text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
+            Search a city or pick a category to explore the map 🗺️
+          </div>
+        )}
 
         {/* ── Category Pills Strip ── */}
         <div className="mt-5">
@@ -721,22 +808,120 @@ export default function MarketplacePage() {
                 </button>
               </div>
             )
-          ) : (
-            /* Map view — stacks vertically on mobile, side-by-side on lg */
-            <div className="flex flex-col lg:flex-row gap-5 lg:h-[680px]">
-              {/* Map first on mobile (full width), sidebar on desktop */}
-              <div className="w-full lg:hidden rounded-2xl overflow-hidden shadow-sm" style={{ height: '320px', border: '1px solid var(--border, #e0e0d8)' }}>
-                <MapView listings={filtered} />
+          ) : null}
+        </div>
+      </div>
+
+      {/* ── FULL-BLEED MAP MODE — kept mounted so the map stays warm between toggles ── */}
+      <div
+        className="fixed left-0 right-0 bottom-0 top-16 z-40"
+        style={{ display: viewMode === 'map' ? 'block' : 'none', backgroundColor: 'var(--cream, #f0f0ec)' }}
+      >
+        <MapView
+          listings={filtered}
+          visible={viewMode === 'map'}
+          mobileTile={isMobileVp}
+          selectedId={mapSelected?.id ?? null}
+          onPinClick={setMapSelected}
+          onViewportCount={setViewportCount}
+        />
+
+        {/* Floating search + category filter (② button — no pill bar in map mode) */}
+        <div className="absolute top-4 left-4 right-4 lg:right-auto lg:w-[420px]">
+          <div className="flex items-center gap-2.5 rounded-full px-4 py-3 shadow-lg" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
+            <Search className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search city or placement"
+              className="flex-1 min-w-0 text-sm focus:outline-none bg-transparent"
+              style={{ color: 'var(--charcoal, #2b2b2b)', fontFamily: 'inherit' }}
+            />
+            <div className="relative flex-shrink-0 flex items-center justify-center w-6 h-6">
+              <SlidersHorizontal className="w-4 h-4" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
+              {selectedCategory !== 'all' && (
+                <span className="absolute -top-1.5 -right-2 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center" style={{ backgroundColor: 'var(--mint, #7ecfc0)', color: '#fff', border: '1.5px solid #fff' }}>1</span>
+              )}
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                aria-label="Filter by category"
+              >
+                {CATEGORIES.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Show list — desktop */}
+        <button
+          onClick={() => setViewMode('grid')}
+          className="hidden lg:flex absolute top-4 right-4 items-center gap-2 rounded-full px-5 py-3 text-[13px] font-bold shadow-lg cursor-pointer"
+          style={{ backgroundColor: '#fff', color: 'var(--charcoal, #2b2b2b)', border: '1px solid var(--border, #e0e0d8)', fontFamily: 'inherit' }}
+        >
+          <LayoutGrid className="w-4 h-4" />
+          Show list
+        </button>
+
+        {/* Results chip — desktop */}
+        <div className="hidden lg:block absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-bold shadow-lg" style={{ backgroundColor: '#fff', color: 'var(--charcoal, #2b2b2b)', border: '1px solid var(--border, #e0e0d8)' }}>
+          {(viewportCount ?? filtered.length)} result{(viewportCount ?? filtered.length) !== 1 ? 's' : ''}
+          {search && <span style={{ color: '#999', fontWeight: 500 }}> · {search}</span>}
+        </div>
+
+        {/* Mobile: docked listing tile (tap a pin) */}
+        {mapSelected && (
+          <div className="lg:hidden absolute left-3 right-3 bottom-[96px] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
+            <div className="relative h-36">
+              {mapSelected.images && mapSelected.images[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={mapSelected.images[0]} alt={mapSelected.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className={`w-full h-full bg-gradient-to-br ${mapSelected.image_placeholder}`} />
+              )}
+              <span className="absolute top-2.5 left-2.5 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide" style={{ backgroundColor: 'rgba(43,43,43,0.82)', color: '#fff' }}>
+                {mapSelected.category}
+              </span>
+              <button onClick={() => setMapSelected(null)} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" style={{ backgroundColor: 'rgba(255,255,255,0.92)', border: 'none' }}>
+                <X className="w-3.5 h-3.5" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
+              </button>
+            </div>
+            <div className="p-3.5">
+              <h3 className="font-bold text-sm leading-snug line-clamp-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{mapSelected.title}</h3>
+              <div className="flex items-center gap-1.5 text-xs mt-0.5 mb-2.5" style={{ color: '#888' }}>
+                <MapPin className="w-3 h-3" />
+                {mapSelected.city}, {mapSelected.state}
+                <span className="flex items-center gap-1 ml-1 font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                  <Star className="w-3 h-3" style={{ color: 'var(--gold, #debb73)', fill: 'var(--gold, #debb73)' }} />
+                  {mapSelected.rating > 0 ? mapSelected.rating : 'New'}
+                </span>
               </div>
-              <div className="w-full lg:w-96 flex-shrink-0 overflow-y-auto space-y-3 pr-1">
-                {filtered.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
-              </div>
-              <div className="hidden lg:block flex-1 rounded-2xl overflow-hidden shadow-sm" style={{ border: '1px solid var(--border, #e0e0d8)' }}>
-                <MapView listings={filtered} />
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-sm" style={{ color: 'var(--gold, #debb73)' }}>${mapSelected.price_per_day}<span className="text-[11px] font-semibold" style={{ color: '#999' }}>/day</span></span>
+                <Link href={`/marketplace/${mapSelected.id}`} className="text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:opacity-90" style={{ backgroundColor: 'var(--gold, #debb73)' }}>
+                  View listing →
+                </Link>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Mobile: results sheet — tap to return to the list */}
+        <button
+          onClick={() => setViewMode('grid')}
+          className="lg:hidden absolute bottom-0 left-0 right-0 rounded-t-2xl pt-2.5 pb-7 text-center cursor-pointer"
+          style={{ backgroundColor: '#fff', boxShadow: '0 -6px 24px rgba(43,43,43,0.14)', fontFamily: 'inherit', border: 'none' }}
+        >
+          <span className="block w-9 h-1 rounded-full mx-auto mb-2.5" style={{ backgroundColor: '#d8d8d0' }} />
+          <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+            {(viewportCount ?? filtered.length)} result{(viewportCount ?? filtered.length) !== 1 ? 's' : ''}
+          </span>
+          <span className="block text-[11px] mt-0.5" style={{ color: '#999' }}>Tap to browse the list</span>
+        </button>
       </div>
     </div>
   )
