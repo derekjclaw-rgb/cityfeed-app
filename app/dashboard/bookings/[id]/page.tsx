@@ -1286,6 +1286,20 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
     // the booking stays here and the daily cron retries every 24h until it succeeds
     await supabase.from('bookings').update({ status: 'pop_pending', updated_at: new Date().toISOString() }).eq('id', bookingId)
 
+    // Self-entry for the HOST's activity feed — fires BEFORE the payout call so the
+    // timeline reads in logical order (POP submitted → payout initiated)
+    if (hostId) {
+      try {
+        await notify({
+          user_id: hostId,
+          type: 'pop_submitted_host',
+          title: 'Proof of posting submitted',
+          body: `Your POP for "${listingTitle ?? 'your booking'}" is confirmed — payout incoming.`,
+          href: `/dashboard/bookings/${bookingId}`,
+        })
+      } catch { /* non-fatal */ }
+    }
+
     // Trigger payout immediately (escrow model — transfer from platform to host)
     // Payout route handles status transition to 'completed' after successful Stripe transfer
     try {
@@ -1362,19 +1376,9 @@ function POPSection({ bookingId, bookingStatus, isHost, advertiserId, hostId, li
         }
       } catch { /* email failure non-fatal */ }
 
-      // Notify host — POP submitted + payout incoming.
-      // NOTE (2026-08-15): host confirmation EMAIL now sends server-side from
-      // /api/stripe/payout with the exact net payout amount — the old client-side
-      // send was unreliable and never arrived. Only the in-app notification fires here.
-      try {
-        await notify({
-          user_id: hostId,
-          type: 'pop_submitted_host',
-          title: 'Proof of posting submitted',
-          body: `Your POP for "${listingTitle ?? 'your booking'}" is confirmed — payout incoming.`,
-          href: `/dashboard/bookings/${bookingId}`,
-        })
-      } catch { /* host notification non-fatal */ }
+      // Host self-notification moved ABOVE the payout call (timeline ordering).
+      // NOTE (2026-08-15): host confirmation EMAIL sends server-side from
+      // /api/stripe/payout with the exact net payout amount.
     }
   }
 
