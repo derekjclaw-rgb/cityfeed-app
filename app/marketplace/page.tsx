@@ -298,13 +298,14 @@ function ListingCard({ listing, compact = false }: { listing: Listing; compact?:
 }
 
 // ─── Map View ──────────────────────────────────────────────────────────────────
-function MapView({ listings, visible = true, mobileTile = false, selectedId = null, onPinClick, onViewportCount }: {
+function MapView({ listings, visible = true, mobileTile = false, selectedId = null, flyTo = null, onPinClick, onViewportIds }: {
   listings: Listing[]
   visible?: boolean
   mobileTile?: boolean
   selectedId?: string | null
+  flyTo?: [number, number] | null
   onPinClick?: (l: Listing | null) => void
-  onViewportCount?: (n: number) => void
+  onViewportIds?: (ids: string[]) => void
 }) {
   const mapContainer = useRef<HTMLDivElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,7 +317,7 @@ function MapView({ listings, visible = true, mobileTile = false, selectedId = nu
   // Refs so marker handlers (bound once per listings change) always see fresh props
   const markerElsRef = useRef<Record<string, HTMLElement>>({})
   const onPinClickRef = useRef(onPinClick); onPinClickRef.current = onPinClick
-  const onViewportCountRef = useRef(onViewportCount); onViewportCountRef.current = onViewportCount
+  const onViewportIdsRef = useRef(onViewportIds); onViewportIdsRef.current = onViewportIds
   const mobileTileRef = useRef(mobileTile); mobileTileRef.current = mobileTile
   const mobileSelectedRef = useRef<string | null>(null)
 
@@ -416,12 +417,14 @@ function MapView({ listings, visible = true, mobileTile = false, selectedId = nu
           return current
         })
       }
-      // Viewport-aware result count — the map reads as a live query, not a picture
+      // Viewport-aware results — the map reads as a live query, not a picture
       const reportViewport = () => {
         try {
           const b = map.getBounds()
-          const n = listings.filter(l => l.lat != null && l.lng != null && b.contains([l.lng, l.lat])).length
-          onViewportCountRef.current?.(n)
+          const ids = listings
+            .filter(l => l.lat != null && l.lng != null && b.contains([l.lng, l.lat]))
+            .map(l => l.id)
+          onViewportIdsRef.current?.(ids)
         } catch { /* map not ready yet */ }
       }
       map.on('move', updatePopupPosition)
@@ -454,6 +457,13 @@ function MapView({ listings, visible = true, mobileTile = false, selectedId = nu
       return () => clearTimeout(t)
     }
   }, [visible])
+
+  // Fly to user location (Airbnb-style "near me" entry)
+  useEffect(() => {
+    if (flyTo && mapRef.current) {
+      mapRef.current.flyTo({ center: flyTo, zoom: 11.5, essential: true })
+    }
+  }, [flyTo])
 
   return (
     <div className="relative w-full h-full">
@@ -508,8 +518,10 @@ export default function MarketplacePage() {
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rating'>('rating')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
   const [mapHint, setMapHint] = useState(false)
-  const [viewportCount, setViewportCount] = useState<number | null>(null)
+  const [viewportIds, setViewportIds] = useState<string[] | null>(null)
   const [mapSelected, setMapSelected] = useState<Listing | null>(null)
+  const [mobileListOpen, setMobileListOpen] = useState(false)
+  const [mapFlyTo, setMapFlyTo] = useState<[number, number] | null>(null)
   const [isMobileVp, setIsMobileVp] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [allListings, setAllListings] = useState<Listing[]>([])
@@ -599,6 +611,12 @@ export default function MarketplacePage() {
         return b.rating - a.rating
       })
   }, [allListings, search, selectedCategory, sortBy])
+
+  // Map-aware results — only listings inside the current map viewport
+  const mapVisible = useMemo(
+    () => (viewportIds ? filtered.filter(l => viewportIds.includes(l.id)) : filtered),
+    [filtered, viewportIds]
+  )
 
   // Suppress unused var warning — usingRealData can be used for UI hints later
   void usingRealData
@@ -706,11 +724,27 @@ export default function MarketplacePage() {
             </button>
             <button
               onClick={() => {
-                // Search-gated map entry (Airbnb pattern): browse first, map rewards intent
+                // Airbnb pattern: with a search/filter → map opens on results.
+                // With nothing → default to the user's location ("near me").
                 if (!search.trim() && selectedCategory === 'all') {
-                  setMapHint(true)
-                  searchInputRef.current?.focus()
-                  setTimeout(() => setMapHint(false), 4000)
+                  if ('geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        setMapFlyTo([pos.coords.longitude, pos.coords.latitude])
+                        setViewMode('map')
+                      },
+                      () => {
+                        setMapHint(true)
+                        searchInputRef.current?.focus()
+                        setTimeout(() => setMapHint(false), 4000)
+                      },
+                      { timeout: 6000 }
+                    )
+                  } else {
+                    setMapHint(true)
+                    searchInputRef.current?.focus()
+                    setTimeout(() => setMapHint(false), 4000)
+                  }
                   return
                 }
                 setViewMode('map')
@@ -730,7 +764,7 @@ export default function MarketplacePage() {
 
         {mapHint && (
           <div className="mt-2 text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-            Search a city or pick a category to explore the map 🗺️
+            Allow location access — or search a city — to explore the map 🗺️
           </div>
         )}
 
@@ -815,19 +849,22 @@ export default function MarketplacePage() {
       {/* ── FULL-BLEED MAP MODE — kept mounted so the map stays warm between toggles ── */}
       <div
         className="fixed left-0 right-0 bottom-0 top-16 z-40"
-        style={{ display: viewMode === 'map' ? 'block' : 'none', backgroundColor: 'var(--cream, #f0f0ec)' }}
+        style={{ display: viewMode === 'map' ? 'flex' : 'none', backgroundColor: 'var(--cream, #f0f0ec)' }}
       >
+        {/* Map area (floating controls live inside) */}
+        <div className="relative flex-1 h-full min-w-0">
         <MapView
           listings={filtered}
           visible={viewMode === 'map'}
           mobileTile={isMobileVp}
           selectedId={mapSelected?.id ?? null}
+          flyTo={mapFlyTo}
           onPinClick={setMapSelected}
-          onViewportCount={setViewportCount}
+          onViewportIds={setViewportIds}
         />
 
         {/* Floating search + category filter (② button — no pill bar in map mode) */}
-        <div className="absolute top-4 left-4 right-4 lg:right-auto lg:w-[420px]">
+        <div className="absolute top-4 left-4 right-[72px] lg:right-auto lg:w-[420px]">
           <div className="flex items-center gap-2.5 rounded-full px-4 py-3 shadow-lg" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
             <Search className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
             <input
@@ -869,9 +906,18 @@ export default function MarketplacePage() {
 
         {/* Results chip — desktop */}
         <div className="hidden lg:block absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-bold shadow-lg" style={{ backgroundColor: '#fff', color: 'var(--charcoal, #2b2b2b)', border: '1px solid var(--border, #e0e0d8)' }}>
-          {(viewportCount ?? filtered.length)} result{(viewportCount ?? filtered.length) !== 1 ? 's' : ''}
+          {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''}
           {search && <span style={{ color: '#999', fontWeight: 500 }}> · {search}</span>}
         </div>
+
+        {/* Mobile: exit map */}
+        <button
+          onClick={() => { setViewMode('grid'); setMobileListOpen(false) }}
+          className="lg:hidden absolute top-4 right-4 w-11 h-11 rounded-full flex items-center justify-center shadow-lg cursor-pointer"
+          style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}
+        >
+          <X className="w-4 h-4" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
+        </button>
 
         {/* Mobile: docked listing tile (tap a pin) */}
         {mapSelected && (
@@ -910,18 +956,60 @@ export default function MarketplacePage() {
           </div>
         )}
 
-        {/* Mobile: results sheet — tap to return to the list */}
+        {/* Mobile: results sheet — tap to open the list over the map */}
         <button
-          onClick={() => setViewMode('grid')}
+          onClick={() => setMobileListOpen(true)}
           className="lg:hidden absolute bottom-0 left-0 right-0 rounded-t-2xl pt-2.5 pb-7 text-center cursor-pointer"
           style={{ backgroundColor: '#fff', boxShadow: '0 -6px 24px rgba(43,43,43,0.14)', fontFamily: 'inherit', border: 'none' }}
         >
           <span className="block w-9 h-1 rounded-full mx-auto mb-2.5" style={{ backgroundColor: '#d8d8d0' }} />
           <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
-            {(viewportCount ?? filtered.length)} result{(viewportCount ?? filtered.length) !== 1 ? 's' : ''}
+            {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''}
           </span>
           <span className="block text-[11px] mt-0.5" style={{ color: '#999' }}>Tap to browse the list</span>
         </button>
+
+        {/* Mobile: slide-up results list (modal over the map) */}
+        {mobileListOpen && (
+          <div className="lg:hidden absolute inset-x-0 bottom-0 top-10 rounded-t-2xl flex flex-col" style={{ backgroundColor: '#fff', boxShadow: '0 -8px 32px rgba(43,43,43,0.2)' }}>
+            <button
+              onClick={() => setMobileListOpen(false)}
+              className="pt-2.5 pb-3 w-full text-center cursor-pointer"
+              style={{ backgroundColor: 'transparent', border: 'none', fontFamily: 'inherit' }}
+            >
+              <span className="block w-9 h-1 rounded-full mx-auto mb-2" style={{ backgroundColor: '#d8d8d0' }} />
+              <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''}
+              </span>
+              <span className="block text-[11px] mt-0.5" style={{ color: '#999' }}>Tap to return to the map</span>
+            </button>
+            <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-3">
+              {mapVisible.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
+              {mapVisible.length === 0 && (
+                <p className="text-center text-sm pt-10" style={{ color: '#888' }}>No placements in this map area — zoom out or pan around.</p>
+              )}
+            </div>
+          </div>
+        )}
+        </div>
+
+        {/* Desktop: results panel — map-aware, updates as you pan */}
+        <div className="hidden lg:flex w-[380px] h-full flex-col flex-shrink-0" style={{ backgroundColor: '#fafaf7', borderLeft: '1px solid var(--border, #e0e0d8)' }}>
+          <div className="px-5 pt-5 pb-3">
+            <h2 className="text-lg font-extrabold" style={{ color: 'var(--charcoal, #2b2b2b)', letterSpacing: '-0.3px' }}>
+              Ad space{search ? ` · ${search}` : ''}
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+              {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''} in view — updates as you move the map
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 pb-8 space-y-3">
+            {mapVisible.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
+            {mapVisible.length === 0 && (
+              <p className="text-center text-sm pt-10" style={{ color: '#888' }}>No placements in this map area — zoom out or pan around.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
