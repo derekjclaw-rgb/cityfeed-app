@@ -869,7 +869,7 @@ export default function MarketplacePage() {
           @media (max-width: 1023px) {
             .mapboxgl-ctrl-bottom-left,
             .mapboxgl-ctrl-bottom-right {
-              bottom: 152px !important;
+              bottom: 92px !important;
             }
           }
         `}</style>
@@ -932,7 +932,7 @@ export default function MarketplacePage() {
 
         {/* Mobile: docked listing tile (tap a pin) — hidden while the sheet is up */}
         {mapSelected && sheetSnap === 'collapsed' && (
-          <div className="lg:hidden absolute left-3 right-3 bottom-[156px] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
+          <div className="lg:hidden absolute left-3 right-3 bottom-[96px] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
             <div className="relative h-36">
               {mapSelected.images && mapSelected.images[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -970,8 +970,8 @@ export default function MarketplacePage() {
         {/* Mobile: draggable results sheet — snaps to peek / half / full */}
         {(() => {
           const heights = {
-            // Tall enough that the first listing card peeks out — invites the swipe
-            collapsed: 148,
+            // Slim peek bar — no card preview (tried it, Michael reverted it Aug 24)
+            collapsed: 88,
             half: mapAreaH > 0 ? Math.round(mapAreaH * 0.5) : 320,
             full: mapAreaH > 0 ? mapAreaH - 36 : 560,
           }
