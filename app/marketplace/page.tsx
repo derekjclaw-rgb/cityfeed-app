@@ -470,7 +470,7 @@ function MapView({ listings, visible = true, mobileTile = false, selectedId = nu
   }, [flyTo])
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative isolate w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
       {!mobileTile && selectedListing && popupPos && typeof document !== 'undefined' && createPortal(
         <div className="w-72 rounded-2xl shadow-xl overflow-hidden" style={{
@@ -864,6 +864,16 @@ export default function MarketplacePage() {
           onViewportIds={setViewportIds}
         />
 
+        {/* Mobile: lift Mapbox logo/ⓘ above the peek bar (sheet covers them when raised) */}
+        <style jsx global>{`
+          @media (max-width: 1023px) {
+            .mapboxgl-ctrl-bottom-left,
+            .mapboxgl-ctrl-bottom-right {
+              bottom: 152px !important;
+            }
+          }
+        `}</style>
+
         {/* Floating search + category filter (② button — no pill bar in map mode) */}
         <div className="absolute top-4 left-4 right-[72px] lg:right-auto lg:w-[420px]">
           <div className="flex items-center gap-2.5 rounded-full px-4 py-3 shadow-lg" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
@@ -922,7 +932,7 @@ export default function MarketplacePage() {
 
         {/* Mobile: docked listing tile (tap a pin) — hidden while the sheet is up */}
         {mapSelected && sheetSnap === 'collapsed' && (
-          <div className="lg:hidden absolute left-3 right-3 bottom-[96px] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
+          <div className="lg:hidden absolute left-3 right-3 bottom-[156px] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
             <div className="relative h-36">
               {mapSelected.images && mapSelected.images[0] ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -960,7 +970,8 @@ export default function MarketplacePage() {
         {/* Mobile: draggable results sheet — snaps to peek / half / full */}
         {(() => {
           const heights = {
-            collapsed: 88,
+            // Tall enough that the first listing card peeks out — invites the swipe
+            collapsed: 148,
             half: mapAreaH > 0 ? Math.round(mapAreaH * 0.5) : 320,
             full: mapAreaH > 0 ? mapAreaH - 36 : 560,
           }
