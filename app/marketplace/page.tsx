@@ -517,13 +517,11 @@ export default function MarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rating'>('rating')
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
-  const [mapHint, setMapHint] = useState(false)
   const [viewportIds, setViewportIds] = useState<string[] | null>(null)
   const [mapSelected, setMapSelected] = useState<Listing | null>(null)
   const [mobileListOpen, setMobileListOpen] = useState(false)
   const [mapFlyTo, setMapFlyTo] = useState<[number, number] | null>(null)
   const [isMobileVp, setIsMobileVp] = useState(false)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const [allListings, setAllListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingRealData, setUsingRealData] = useState(false)
@@ -647,11 +645,10 @@ export default function MarketplacePage() {
               style={{ color: 'var(--text-secondary, #888888)' }}
             />
             <input
-              ref={searchInputRef}
               type="text"
               placeholder="Search by location, type..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); if (mapHint) setMapHint(false) }}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full py-3 pl-11 pr-10 text-sm focus:outline-none"
               style={{
                 borderRadius: 'var(--radius-sm, 10px)',
@@ -724,28 +721,22 @@ export default function MarketplacePage() {
             </button>
             <button
               onClick={() => {
-                // Airbnb pattern: with a search/filter → map opens on results.
-                // With nothing → default to the user's location ("near me").
+                // Map always opens. With no search/filter, center on the densest
+                // market (the city with the most listings — Las Vegas for now).
                 if (!search.trim() && selectedCategory === 'all') {
-                  if ('geolocation' in navigator) {
-                    navigator.geolocation.getCurrentPosition(
-                      (pos) => {
-                        setMapFlyTo([pos.coords.longitude, pos.coords.latitude])
-                        setViewMode('map')
-                      },
-                      () => {
-                        setMapHint(true)
-                        searchInputRef.current?.focus()
-                        setTimeout(() => setMapHint(false), 4000)
-                      },
-                      { timeout: 6000 }
-                    )
-                  } else {
-                    setMapHint(true)
-                    searchInputRef.current?.focus()
-                    setTimeout(() => setMapHint(false), 4000)
+                  const byCity: Record<string, { lats: number[]; lngs: number[] }> = {}
+                  for (const l of filtered) {
+                    if (l.lat == null || l.lng == null) continue
+                    const key = `${l.city}, ${l.state}`
+                    if (!byCity[key]) byCity[key] = { lats: [], lngs: [] }
+                    byCity[key].lats.push(l.lat)
+                    byCity[key].lngs.push(l.lng)
                   }
-                  return
+                  const densest = Object.values(byCity).sort((a, b) => b.lats.length - a.lats.length)[0]
+                  if (densest) {
+                    const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length
+                    setMapFlyTo([avg(densest.lngs), avg(densest.lats)])
+                  }
                 }
                 setViewMode('map')
               }}
@@ -761,12 +752,6 @@ export default function MarketplacePage() {
             </button>
           </div>
         </div>
-
-        {mapHint && (
-          <div className="mt-2 text-[13px] font-medium" style={{ color: 'var(--mint-dark, #5bb8a8)' }}>
-            Allow location access — or search a city — to explore the map 🗺️
-          </div>
-        )}
 
         {/* ── Category Pills Strip ── */}
         <div className="mt-5">
