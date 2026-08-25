@@ -342,7 +342,11 @@ function MapView({ listings, visible = true, mobileTile = false, selectedId = nu
         style: 'mapbox://styles/mapbox/streets-v12',
         center: defaultCenter,
         zoom: defaultZoom,
+        // Smallest legally-permitted branding: attribution collapses to a ⓘ,
+        // logo stays (required by Mapbox ToS on standard plans)
+        attributionControl: false,
       })
+      map.addControl(new mapboxgl.default.AttributionControl({ compact: true }), 'bottom-right')
       mapRef.current = map
       let markersAdded = false
       function addMarkers() {
