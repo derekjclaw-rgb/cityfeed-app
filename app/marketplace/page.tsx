@@ -519,10 +519,13 @@ export default function MarketplacePage() {
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
   const [viewportIds, setViewportIds] = useState<string[] | null>(null)
   const [mapSelected, setMapSelected] = useState<Listing | null>(null)
-  const [mobileListOpen, setMobileListOpen] = useState(false)
+  const [sheetSnap, setSheetSnap] = useState<'collapsed' | 'half' | 'full'>('collapsed')
+  const [sheetDragH, setSheetDragH] = useState<number | null>(null)
+  const [mapAreaH, setMapAreaH] = useState(0)
   const [mapFlyTo, setMapFlyTo] = useState<[number, number] | null>(null)
   const [isMobileVp, setIsMobileVp] = useState(false)
-  const sheetTouchYRef = useRef<number | null>(null)
+  const sheetDragStart = useRef<{ y: number; h: number } | null>(null)
+  const mapAreaRef = useRef<HTMLDivElement>(null)
   const [allListings, setAllListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingRealData, setUsingRealData] = useState(false)
@@ -595,6 +598,14 @@ export default function MarketplacePage() {
     mq.addEventListener('change', update)
     return () => mq.removeEventListener('change', update)
   }, [])
+
+  // Measure the map area — sheet snap points (collapsed / half / full) derive from it
+  useEffect(() => {
+    const measure = () => setMapAreaH(mapAreaRef.current?.getBoundingClientRect().height ?? 0)
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [viewMode])
 
   const filtered = useMemo(() => {
     // Always apply client-side filter (handles both real+mock data in merged array)
@@ -838,7 +849,7 @@ export default function MarketplacePage() {
         style={{ display: viewMode === 'map' ? 'flex' : 'none', backgroundColor: 'var(--cream, #f0f0ec)' }}
       >
         {/* Map area (floating controls live inside) */}
-        <div className="relative flex-1 h-full min-w-0">
+        <div ref={mapAreaRef} className="relative flex-1 h-full min-w-0">
         <MapView
           listings={filtered}
           visible={viewMode === 'map'}
@@ -898,15 +909,15 @@ export default function MarketplacePage() {
 
         {/* Mobile: exit map */}
         <button
-          onClick={() => { setViewMode('grid'); setMobileListOpen(false) }}
+          onClick={() => { setViewMode('grid'); setSheetSnap('collapsed') }}
           className="lg:hidden absolute top-4 right-4 w-11 h-11 rounded-full flex items-center justify-center shadow-lg cursor-pointer"
           style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}
         >
           <X className="w-4 h-4" style={{ color: 'var(--charcoal, #2b2b2b)' }} />
         </button>
 
-        {/* Mobile: docked listing tile (tap a pin) */}
-        {mapSelected && (
+        {/* Mobile: docked listing tile (tap a pin) — hidden while the sheet is up */}
+        {mapSelected && sheetSnap === 'collapsed' && (
           <div className="lg:hidden absolute left-3 right-3 bottom-[96px] rounded-2xl overflow-hidden shadow-2xl" style={{ backgroundColor: '#fff', border: '1px solid var(--border, #e0e0d8)' }}>
             <div className="relative h-36">
               {mapSelected.images && mapSelected.images[0] ? (
@@ -942,57 +953,65 @@ export default function MarketplacePage() {
           </div>
         )}
 
-        {/* Mobile: results sheet — tap or swipe up to open the list over the map */}
-        <button
-          onClick={() => setMobileListOpen(true)}
-          onTouchStart={(e) => { sheetTouchYRef.current = e.touches[0].clientY }}
-          onTouchMove={(e) => {
-            if (sheetTouchYRef.current != null && sheetTouchYRef.current - e.touches[0].clientY > 20) {
-              sheetTouchYRef.current = null
-              setMobileListOpen(true)
-            }
-          }}
-          onTouchEnd={() => { sheetTouchYRef.current = null }}
-          className="lg:hidden absolute bottom-0 left-0 right-0 rounded-t-2xl pt-2.5 pb-7 text-center cursor-pointer"
-          style={{ backgroundColor: '#fff', boxShadow: '0 -6px 24px rgba(43,43,43,0.14)', fontFamily: 'inherit', border: 'none', touchAction: 'none' }}
-        >
-          <span className="block w-9 h-1 rounded-full mx-auto mb-2.5" style={{ backgroundColor: '#d8d8d0' }} />
-          <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
-            {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''}
-          </span>
-          <span className="block text-[11px] mt-0.5" style={{ color: '#999' }}>Tap to browse the list</span>
-        </button>
-
-        {/* Mobile: slide-up results list (modal over the map) */}
-        {mobileListOpen && (
-          <div className="lg:hidden absolute inset-x-0 bottom-0 top-10 rounded-t-2xl flex flex-col" style={{ backgroundColor: '#fff', boxShadow: '0 -8px 32px rgba(43,43,43,0.2)' }}>
-            <button
-              onClick={() => setMobileListOpen(false)}
-              onTouchStart={(e) => { sheetTouchYRef.current = e.touches[0].clientY }}
-              onTouchMove={(e) => {
-                if (sheetTouchYRef.current != null && e.touches[0].clientY - sheetTouchYRef.current > 20) {
-                  sheetTouchYRef.current = null
-                  setMobileListOpen(false)
-                }
+        {/* Mobile: draggable results sheet — snaps to peek / half / full */}
+        {(() => {
+          const heights = {
+            collapsed: 88,
+            half: mapAreaH > 0 ? Math.round(mapAreaH * 0.5) : 320,
+            full: mapAreaH > 0 ? mapAreaH - 36 : 560,
+          }
+          const sheetH = Math.max(72, sheetDragH ?? heights[sheetSnap])
+          const endDrag = () => {
+            const h = sheetDragH
+            sheetDragStart.current = null
+            if (h == null) return
+            const entries: ['collapsed' | 'half' | 'full', number][] = [
+              ['collapsed', heights.collapsed], ['half', heights.half], ['full', heights.full],
+            ]
+            entries.sort((a, b) => Math.abs(a[1] - h) - Math.abs(b[1] - h))
+            setSheetSnap(entries[0][0])
+            setSheetDragH(null)
+          }
+          return (
+            <div
+              className="lg:hidden absolute inset-x-0 bottom-0 rounded-t-2xl flex flex-col overflow-hidden"
+              style={{
+                height: sheetH,
+                backgroundColor: '#fff',
+                boxShadow: '0 -6px 24px rgba(43,43,43,0.16)',
+                transition: sheetDragH == null ? 'height 0.22s ease' : 'none',
               }}
-              onTouchEnd={() => { sheetTouchYRef.current = null }}
-              className="pt-2.5 pb-3 w-full text-center cursor-pointer"
-              style={{ backgroundColor: 'transparent', border: 'none', fontFamily: 'inherit', touchAction: 'none' }}
             >
-              <span className="block w-9 h-1 rounded-full mx-auto mb-2" style={{ backgroundColor: '#d8d8d0' }} />
-              <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
-                {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''}
-              </span>
-              <span className="block text-[11px] mt-0.5" style={{ color: '#999' }}>Tap to return to the map</span>
-            </button>
-            <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-3">
-              {mapVisible.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
-              {mapVisible.length === 0 && (
-                <p className="text-center text-sm pt-10" style={{ color: '#888' }}>No placements in this map area — zoom out or pan around.</p>
-              )}
+              <div
+                onClick={() => setSheetSnap(prev => (prev === 'collapsed' ? 'half' : 'collapsed'))}
+                onTouchStart={(e) => { sheetDragStart.current = { y: e.touches[0].clientY, h: sheetH } }}
+                onTouchMove={(e) => {
+                  const s = sheetDragStart.current
+                  if (!s) return
+                  const dy = s.y - e.touches[0].clientY
+                  setSheetDragH(Math.max(64, Math.min(heights.full, s.h + dy)))
+                }}
+                onTouchEnd={endDrag}
+                className="pt-2.5 pb-3 text-center cursor-pointer select-none flex-shrink-0"
+                style={{ touchAction: 'none' }}
+              >
+                <span className="block w-9 h-1 rounded-full mx-auto mb-2" style={{ backgroundColor: '#d8d8d0' }} />
+                <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                  {mapVisible.length} result{mapVisible.length !== 1 ? 's' : ''}
+                </span>
+                <span className="block text-[11px] mt-0.5" style={{ color: '#999' }}>
+                  {sheetSnap === 'collapsed' ? 'Swipe up to browse the list' : 'Drag to resize — swipe down for the map'}
+                </span>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-3">
+                {mapVisible.map(listing => <ListingCard key={listing.id} listing={listing} compact />)}
+                {mapVisible.length === 0 && (
+                  <p className="text-center text-sm pt-10" style={{ color: '#888' }}>No placements in this map area — zoom out or pan around.</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
         </div>
 
         {/* Desktop: results panel — map-aware, updates as you pan */}
