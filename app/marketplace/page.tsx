@@ -77,10 +77,17 @@ const CATEGORY_ICONS: Record<string, React.ComponentType<React.SVGProps<SVGSVGEl
   'Other': MoreHorizontal,
 }
 
-// Derive marketplace filter from shared CATEGORY_OPTIONS (all 18 active categories)
+// Derive marketplace filter from shared CATEGORY_OPTIONS (all 18 active categories).
+// Flagship categories lead the strip (Michael, Aug 24): Outdoor Digital + Outdoor Static.
+const PRIORITY_CATEGORIES = ['Outdoor Digital', 'Outdoor Static']
 const CATEGORIES = [
   { value: 'all', label: 'All types' },
-  ...CATEGORY_OPTIONS.map(c => ({ value: c.label, label: c.label })),
+  ...PRIORITY_CATEGORIES
+    .filter(label => CATEGORY_OPTIONS.some(c => c.label === label))
+    .map(label => ({ value: label, label })),
+  ...CATEGORY_OPTIONS
+    .filter(c => !PRIORITY_CATEGORIES.includes(c.label))
+    .map(c => ({ value: c.label, label: c.label })),
 ]
 
 const GRADIENT_POOL = [
@@ -692,7 +699,8 @@ export default function MarketplacePage() {
             )}
           </div>
 
-          {/* Sort */}
+          {/* Sort + view toggle — grouped so they share a row on mobile */}
+          <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-secondary, #888888)' }} />
             <select
@@ -773,12 +781,14 @@ export default function MarketplacePage() {
               Map
             </button>
           </div>
+          </div>
         </div>
 
         {/* ── Category Pills Strip ── */}
         <div className="mt-5">
+          {/* Bleeds past the page padding so a pill is visibly cut at the screen edge — signals scrollability */}
           <div
-            className="flex gap-2.5 overflow-x-auto pb-4 pt-1"
+            className="flex gap-2.5 overflow-x-auto pb-4 pt-1 -mx-6 px-6"
             style={{
               WebkitOverflowScrolling: 'touch',
               scrollbarWidth: 'none',
