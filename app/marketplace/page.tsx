@@ -339,7 +339,7 @@ function MapView({ listings, visible = true, mobileTile = false, selectedId = nu
       const defaultZoom = hasListings ? 11 : 3.5
       map = new MapGL.Map({
         container: mapContainer.current!,
-        style: 'mapbox://styles/mapbox/outdoors-v12',
+        style: 'mapbox://styles/mapbox/streets-v12',
         center: defaultCenter,
         zoom: defaultZoom,
       })
