@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createPortal } from 'react-dom'
 import { MapPin, Search, Star, ArrowRight, LayoutGrid, Map, Globe, Zap, Tag, ShieldCheck, Home, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -281,6 +282,7 @@ export default function HomePage() {
   const [endDate, setEndDate] = useState('')
   const showMockData = process.env.NEXT_PUBLIC_SHOW_MOCK_DATA === 'true'
   const [featuredListings, setFeaturedListings] = useState<Listing[]>(showMockData ? MOCK_LISTINGS.slice(0, 6) : [])
+  const router = useRouter()
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
@@ -592,7 +594,8 @@ export default function HomePage() {
                   List
                 </button>
                 <button
-                  onClick={() => setViewMode('map')}
+                  // Old inline HomeMap retired — Map now opens the real full-bleed map view
+                  onClick={() => router.push('/marketplace?view=map')}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                   style={{
                     backgroundColor: viewMode === 'map' ? 'var(--mint)' : 'transparent',

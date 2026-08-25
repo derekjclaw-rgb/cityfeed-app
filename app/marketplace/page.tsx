@@ -611,6 +611,12 @@ export default function MarketplacePage() {
     return () => window.removeEventListener('resize', measure)
   }, [viewMode])
 
+  // Deep link: /marketplace?view=map (homepage Map button lands straight in map mode)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('view') === 'map') setViewMode('map')
+  }, [])
+
   const filtered = useMemo(() => {
     // Always apply client-side filter (handles both real+mock data in merged array)
     return allListings
