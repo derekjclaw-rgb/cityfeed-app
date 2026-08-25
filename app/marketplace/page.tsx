@@ -522,6 +522,7 @@ export default function MarketplacePage() {
   const [mobileListOpen, setMobileListOpen] = useState(false)
   const [mapFlyTo, setMapFlyTo] = useState<[number, number] | null>(null)
   const [isMobileVp, setIsMobileVp] = useState(false)
+  const sheetTouchYRef = useRef<number | null>(null)
   const [allListings, setAllListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [usingRealData, setUsingRealData] = useState(false)
@@ -941,11 +942,19 @@ export default function MarketplacePage() {
           </div>
         )}
 
-        {/* Mobile: results sheet — tap to open the list over the map */}
+        {/* Mobile: results sheet — tap or swipe up to open the list over the map */}
         <button
           onClick={() => setMobileListOpen(true)}
+          onTouchStart={(e) => { sheetTouchYRef.current = e.touches[0].clientY }}
+          onTouchMove={(e) => {
+            if (sheetTouchYRef.current != null && sheetTouchYRef.current - e.touches[0].clientY > 20) {
+              sheetTouchYRef.current = null
+              setMobileListOpen(true)
+            }
+          }}
+          onTouchEnd={() => { sheetTouchYRef.current = null }}
           className="lg:hidden absolute bottom-0 left-0 right-0 rounded-t-2xl pt-2.5 pb-7 text-center cursor-pointer"
-          style={{ backgroundColor: '#fff', boxShadow: '0 -6px 24px rgba(43,43,43,0.14)', fontFamily: 'inherit', border: 'none' }}
+          style={{ backgroundColor: '#fff', boxShadow: '0 -6px 24px rgba(43,43,43,0.14)', fontFamily: 'inherit', border: 'none', touchAction: 'none' }}
         >
           <span className="block w-9 h-1 rounded-full mx-auto mb-2.5" style={{ backgroundColor: '#d8d8d0' }} />
           <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
@@ -959,8 +968,16 @@ export default function MarketplacePage() {
           <div className="lg:hidden absolute inset-x-0 bottom-0 top-10 rounded-t-2xl flex flex-col" style={{ backgroundColor: '#fff', boxShadow: '0 -8px 32px rgba(43,43,43,0.2)' }}>
             <button
               onClick={() => setMobileListOpen(false)}
+              onTouchStart={(e) => { sheetTouchYRef.current = e.touches[0].clientY }}
+              onTouchMove={(e) => {
+                if (sheetTouchYRef.current != null && e.touches[0].clientY - sheetTouchYRef.current > 20) {
+                  sheetTouchYRef.current = null
+                  setMobileListOpen(false)
+                }
+              }}
+              onTouchEnd={() => { sheetTouchYRef.current = null }}
               className="pt-2.5 pb-3 w-full text-center cursor-pointer"
-              style={{ backgroundColor: 'transparent', border: 'none', fontFamily: 'inherit' }}
+              style={{ backgroundColor: 'transparent', border: 'none', fontFamily: 'inherit', touchAction: 'none' }}
             >
               <span className="block w-9 h-1 rounded-full mx-auto mb-2" style={{ backgroundColor: '#d8d8d0' }} />
               <span className="block text-sm font-bold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
