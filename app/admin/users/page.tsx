@@ -10,6 +10,7 @@ interface Profile {
   id: string
   full_name: string
   email: string
+  phone: string | null
   role: string
   avatar_url: string | null
   stripe_account_id: string | null
@@ -213,6 +214,14 @@ export default function AdminUsersPage() {
                   <DetailItem label="Joined" value={formatDate(u.created_at)} />
                   <DetailItem label="Stripe Account" value={u.stripe_account_id || 'Not connected'} />
                   <DetailItem label="Avatar" value={u.avatar_url ? 'Set' : 'None'} />
+                  {u.phone ? (
+                    <div>
+                      <div className="text-[11px] mb-1" style={{ color: '#666' }}>Phone</div>
+                      <a href={`tel:${u.phone}`} className="text-sm hover:underline" style={{ color: '#7ecfc0' }}>{u.phone}</a>
+                    </div>
+                  ) : (
+                    <DetailItem label="Phone" value="—" />
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
