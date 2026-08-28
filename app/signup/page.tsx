@@ -20,17 +20,26 @@ function SignupForm() {
   const [role, setRole] = useState<Role>(defaultRole)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError('')
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    setLoading(true)
 
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
@@ -40,6 +49,7 @@ function SignupForm() {
         data: {
           full_name: fullName,
           role,
+          phone,
           ...(companyName ? { company_name: companyName } : {}),
         },
         emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
@@ -54,7 +64,7 @@ function SignupForm() {
       fetch('/api/auth/welcome', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name: fullName, role }),
+        body: JSON.stringify({ email, name: fullName, role, phone }),
       }).catch(() => { /* non-fatal */ })
 
       // Check if email confirmation is needed
@@ -102,8 +112,7 @@ function SignupForm() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-2" style={{ color: '#2b2b2b' }}>Create your account</h1>
-      <p className="text-sm mb-8" style={{ color: '#888' }}>Free forever. No credit card required.</p>
+      <h1 className="text-2xl font-bold mb-8" style={{ color: '#2b2b2b' }}>Create your account</h1>
 
       {/* Role selector */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -182,6 +191,24 @@ function SignupForm() {
           />
         </div>
 
+        {/* Phone */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="phone">
+            Phone number
+          </label>
+          <input
+            id="phone"
+            type="tel"
+            required
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(702) 555-1234"
+            className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors"
+            style={inputStyle}
+          />
+        </div>
+
         {/* Password */}
         <div>
           <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="password">
@@ -208,6 +235,40 @@ function SignupForm() {
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+        </div>
+
+        {/* Confirm password */}
+        <div>
+          <label className="block text-sm font-medium mb-2" style={{ color: '#555' }} htmlFor="confirmPassword">
+            Confirm password
+          </label>
+          <div className="relative">
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              required
+              minLength={8}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter your password"
+              className="w-full rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none transition-colors"
+              style={{
+                ...inputStyle,
+                ...(confirmPassword && password !== confirmPassword ? { border: '1px solid #fecaca' } : {}),
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70"
+              style={{ color: '#888' }}
+            >
+              {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {confirmPassword && password !== confirmPassword && (
+            <p className="text-xs mt-1.5" style={{ color: '#dc2626' }}>Passwords do not match</p>
+          )}
         </div>
 
         {/* Error */}

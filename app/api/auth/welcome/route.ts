@@ -5,16 +5,31 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://cityfeed.io'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, role } = await req.json()
+    const { email, name, role, phone } = await req.json()
 
     if (!email) {
       return NextResponse.json({ error: 'Missing email' }, { status: 400 })
+    }
+
+    // Save phone to the user's profile (signup trigger doesn't copy it from metadata).
+    // Non-fatal — welcome email still sends if this fails.
+    if (phone && typeof phone === 'string') {
+      try {
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+          process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+        )
+        await supabase.from('profiles').update({ phone: phone.trim() }).eq('email', email)
+      } catch (err) {
+        console.warn('[Welcome] Failed to save phone to profile:', err)
+      }
     }
 
     const firstName = name?.split(' ')[0] || 'there'
