@@ -41,15 +41,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: fetchError.message }, { status: 500 })
     }
 
-    if (!pendingBookings || pendingBookings.length === 0) {
-      return NextResponse.json({ message: 'No pending POPs to auto-approve', count: 0 })
-    }
-
+    // BUG FIX (2026-08-27): this used to early-return when there were no stale POPs,
+    // which skipped EVERY later section (campaign-complete messages, collateral
+    // reminders, 36h reminders, morning-of POP reminders). Since POP upload triggers
+    // instant payout, pop_pending is almost always empty — so on most days the cron
+    // silently did nothing. Michael caught it on CF-344A44 (no POP reminders at all).
     const results: Array<{ booking_id: string; status: string; error?: string }> = []
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://cityfeed-app.vercel.app'
 
-    for (const booking of pendingBookings) {
+    for (const booking of pendingBookings ?? []) {
       try {
         // Direct function call — no HTTP round-trip needed from server-side
         const payoutResult = await processBookingPayout(booking.id)
@@ -396,8 +397,8 @@ export async function GET(req: NextRequest) {
     console.log(`[AutoApprove] Morning POP reminders: ${morningPOPResults.length} sent`)
 
     return NextResponse.json({
-      message: `Auto-approved ${pendingBookings.length} POP booking(s)`,
-      count: pendingBookings.length,
+      message: `Auto-approved ${pendingBookings?.length ?? 0} POP booking(s)`,
+      count: pendingBookings?.length ?? 0,
       results,
       campaign_complete_messages: campaignCompleteResults.length,
       collateral_reminders: collateralReminderResults.length,
