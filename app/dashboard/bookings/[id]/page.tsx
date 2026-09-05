@@ -331,6 +331,7 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 advertiserName: advProfile?.full_name ?? 'The advertiser',
                 bookingId,
                 dates: booking?.start_date && booking?.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+                hostPrints: booking?.delivery_mode === 'host_prints' || !!booking?.host_prints,
               }),
             })
           }
@@ -345,6 +346,8 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 listingTitle: listingTitle ?? 'your listing',
                 bookingId,
                 dates: booking?.start_date && booking?.end_date ? `${booking.start_date} → ${booking.end_date}` : undefined,
+                hostPrints: booking?.delivery_mode === 'host_prints' || !!booking?.host_prints,
+                isStatic: !!listing?.requires_print && booking?.delivery_mode === 'self_deliver',
               }),
             })
           }

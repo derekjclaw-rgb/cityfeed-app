@@ -56,7 +56,7 @@ export default function Footer() {
               <Link href="/about" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 About
               </Link>
-              <a href="mailto:mk@cityfeed.io" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <a href="mailto:hello@cityfeed.io" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 Contact
               </a>
             </div>
@@ -71,7 +71,7 @@ export default function Footer() {
               Support
             </h4>
             <div className="space-y-2.5">
-              <a href="mailto:mk@cityfeed.io" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              <a href="mailto:hello@cityfeed.io" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 Help Center
               </a>
               <Link href="/terms" className="block text-sm transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.6)' }}>

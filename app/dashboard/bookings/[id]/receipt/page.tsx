@@ -217,14 +217,6 @@ export default function ReceiptPage() {
                 <h3 className="font-bold text-base mb-2" style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.listing_title}</h3>
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-sm">
-                    <span style={{ color: '#888' }}>Advertiser</span>
-                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.advertiser_name}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: '#888' }}>Host</span>
-                    <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{receipt.host_name}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
                     <span style={{ color: '#888' }}>Campaign Start</span>
                     <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtDate(receipt.start_date)}</span>
                   </div>
@@ -282,30 +274,11 @@ export default function ReceiptPage() {
                 </div>
               </div>
 
-              {!isHost && receipt.payout_amount && (
-                <>
-                  <hr style={{ borderColor: '#f0f0ea' }} />
-                  <div>
-                    <p className="text-xs font-semibold mb-3" style={{ color: '#aaa' }}>HOST PAYOUT</p>
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: '#888' }}>Amount transferred to host</span>
-                      <span className="font-semibold" style={{ color: '#16a34a' }}>{fmtMoney(receipt.payout_amount)}</span>
-                    </div>
-                    {receipt.payout_at && (
-                      <div className="flex justify-between text-sm mt-1.5">
-                        <span style={{ color: '#888' }}>Payout date</span>
-                        <span style={{ color: 'var(--charcoal, #2b2b2b)' }}>{fmtDate(receipt.payout_at)}</span>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
               <hr style={{ borderColor: '#f0f0ea' }} />
 
               <p className="text-xs text-center" style={{ color: '#aaa' }}>
                 Processed by City Feed. For questions, contact{' '}
-                <a href="mailto:mk@cityfeed.io" style={{ color: 'var(--mint, #7ecfc0)' }}>mk@cityfeed.io</a>
+                <a href="mailto:hello@cityfeed.io" style={{ color: 'var(--mint, #7ecfc0)' }}>hello@cityfeed.io</a>
               </p>
             </div>
           </div>

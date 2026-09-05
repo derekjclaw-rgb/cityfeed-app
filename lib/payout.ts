@@ -50,6 +50,7 @@ export async function processBookingPayout(bookingId: string): Promise<PayoutRes
     .from('bookings')
     .select(`
       id, total_price, platform_fee, subtotal, buyer_fee, seller_fee, print_fee_charged,
+      start_date, end_date,
       status, stripe_payment_intent_id, stripe_transfer_id,
       host_id, advertiser_id,
       host:profiles!bookings_host_id_fkey(stripe_account_id, full_name),
@@ -145,12 +146,14 @@ export async function processBookingPayout(bookingId: string): Promise<PayoutRes
       .from('profiles').select('email').eq('id', booking.host_id).single()
     if (hostProfile?.email) {
       const { sendEmail } = await import('@/lib/email')
+      const bk = booking as Record<string, unknown> & { start_date?: string; end_date?: string }
       await sendEmail({
         type: 'pop_submitted_host',
         hostEmail: hostProfile.email,
         listingTitle,
         bookingId,
         amount: transfer.amount / 100,
+        dates: bk.start_date && bk.end_date ? `${bk.start_date} \u2192 ${bk.end_date}` : undefined,
       })
     }
   } catch (err) {
