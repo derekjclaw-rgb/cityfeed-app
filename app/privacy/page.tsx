@@ -2,7 +2,7 @@
  * Privacy Policy — City Feed Marketplace
  */
 export default function PrivacyPage() {
-  const lastUpdated = 'March 1, 2026'
+  const lastUpdated = 'September 5, 2026'
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-6" style={{ backgroundColor: '#f0f0ec' }}>
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
               <p><strong>Transaction data:</strong> We collect information about bookings, payments, and campaigns conducted through the platform, including amounts, dates, and counterparty information.</p>
               <p><strong>Communications:</strong> Messages sent through City Feed&apos;s in-app messaging system are stored on our servers to facilitate the service and resolve disputes.</p>
               <p><strong>Usage data:</strong> We collect standard log data including IP addresses, browser type, pages visited, and timestamps. This helps us improve the platform and detect abuse.</p>
-              <p><strong>Photos and media:</strong> Listing photos, Proof of Performance images, and profile avatars you upload are stored on our servers.</p>
+              <p><strong>Photos and media:</strong> Listing photos, Proof of Posting images, and profile avatars you upload are stored on our servers.</p>
             </div>
           </section>
 
@@ -66,6 +66,22 @@ export default function PrivacyPage() {
                   <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Mapbox</p>
                   <p>Map rendering for listing locations. Mapbox may collect anonymous location data for map tile requests. Learn more at <span style={{ color: '#7ecfc0' }}>mapbox.com/legal/privacy</span>.</p>
                 </div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
+                  <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Vercel</p>
+                  <p>Website hosting and content delivery. Vercel processes standard request logs (such as IP addresses) to serve and secure the site. Learn more at <span style={{ color: '#7ecfc0' }}>vercel.com/legal/privacy-policy</span>.</p>
+                </div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
+                  <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Google Analytics</p>
+                  <p>Site analytics. We use Google Analytics to understand how visitors use City Feed (pages visited, traffic sources, general location). Data is collected via cookies and similar technologies. Learn more at <span style={{ color: '#7ecfc0' }}>policies.google.com/privacy</span>.</p>
+                </div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
+                  <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Microsoft Clarity</p>
+                  <p>User experience analytics. Clarity captures anonymized session replays, heatmaps, and interaction data to help us improve the product. Learn more at <span style={{ color: '#7ecfc0' }}>privacy.microsoft.com</span>.</p>
+                </div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: '#f8f8f5' }}>
+                  <p className="font-semibold mb-1" style={{ color: '#2b2b2b' }}>Meta (Facebook &amp; Instagram)</p>
+                  <p>Advertising measurement and personalization. We use the Meta Pixel and related tools to measure ad performance and reach relevant audiences. Meta may receive information such as pages visited and actions taken on City Feed. Learn more at <span style={{ color: '#7ecfc0' }}>facebook.com/privacy/policy</span>.</p>
+                </div>
               </div>
             </div>
           </section>
@@ -74,8 +90,13 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-bold mb-4" style={{ color: '#2b2b2b' }}>4. Cookies</h2>
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
-              <p>City Feed uses essential cookies to maintain your authentication session. We do not use advertising cookies or tracking pixels.</p>
-              <p>You can disable cookies in your browser settings, but doing so will prevent you from staying logged in to City Feed.</p>
+              <p>City Feed uses the following categories of cookies and similar technologies:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><strong>Essential cookies:</strong> Required to maintain your authentication session and keep the platform secure. The site cannot function without these.</li>
+                <li><strong>Analytics cookies:</strong> Used by Google Analytics and Microsoft Clarity to help us understand how the platform is used and improve it.</li>
+                <li><strong>Advertising cookies and pixels:</strong> Used by advertising partners such as Meta to measure the performance of our marketing campaigns and show relevant ads for City Feed on other platforms.</li>
+              </ul>
+              <p>You can disable non-essential cookies through your browser settings, browser extensions, or industry opt-out tools such as <span style={{ color: '#7ecfc0' }}>youradchoices.com</span>. Disabling essential cookies will prevent you from staying logged in to City Feed.</p>
             </div>
           </section>
 
@@ -84,6 +105,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-bold mb-4" style={{ color: '#2b2b2b' }}>5. Data Sharing</h2>
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
               <p>When a booking is made, limited profile information (first name, profile photo, role) is shared between the Host and Advertiser to facilitate the transaction. Full contact details are never exposed through the platform.</p>
+              <p><strong>Analytics and advertising partners:</strong> We share limited usage data (such as pages visited and actions taken on the platform) with analytics and advertising partners, including Google, Microsoft, and Meta, to measure performance and market City Feed. This may be considered &quot;sharing&quot; for cross-context behavioral advertising under certain state privacy laws (such as the CCPA/CPRA). We do not sell your personal data for money. You can opt out of this sharing at any time — see Section 6.</p>
               <p>We may share your data with law enforcement or regulators when required by law, or to protect the rights, safety, or property of City Feed or others.</p>
               <p>In the event of a merger, acquisition, or sale of City Feed, user data may be transferred as part of the transaction. We will notify users of any such change.</p>
             </div>
@@ -99,7 +121,8 @@ export default function PrivacyPage() {
                 <li><strong>Correction:</strong> Update inaccurate information through your account settings</li>
                 <li><strong>Deletion:</strong> Request deletion of your account and associated data</li>
                 <li><strong>Portability:</strong> Request an export of your data in a machine-readable format</li>
-                <li><strong>Opt-out:</strong> Unsubscribe from non-transactional emails at any time</li>
+                <li><strong>Opt-out of emails:</strong> Unsubscribe from non-transactional emails at any time</li>
+                <li><strong>Opt-out of targeted advertising:</strong> Request that we stop sharing your data with advertising partners for cross-context behavioral advertising</li>
               </ul>
               <p className="mt-2">To exercise these rights, contact us at <span style={{ color: '#7ecfc0' }}>privacy@cityfeed.io</span>.</p>
             </div>

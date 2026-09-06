@@ -2,7 +2,7 @@
  * Terms of Service — City Feed Marketplace
  */
 export default function TermsPage() {
-  const lastUpdated = 'March 1, 2026'
+  const lastUpdated = 'September 5, 2026'
 
   return (
     <div className="min-h-screen pt-24 pb-16 px-6" style={{ backgroundColor: '#f0f0ec' }}>
@@ -47,11 +47,12 @@ export default function TermsPage() {
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
               <p>City Feed charges a platform fee on each completed transaction:</p>
               <ul className="list-disc pl-5 space-y-1">
-                <li><strong>Advertiser fee: 7%</strong> of the total booking amount (charged at checkout)</li>
-                <li><strong>Host fee: 7%</strong> of the total booking amount (deducted from payout)</li>
+                <li><strong>Advertiser fee: 7%</strong> of the booking subtotal (added at checkout)</li>
+                <li><strong>Host fee: 7%</strong> of the booking subtotal (deducted from payout)</li>
               </ul>
+              <p>Some bookings may include additional itemized charges shown at checkout, such as printing or production fees when the Host produces the advertising materials. These are disclosed before payment and passed through to the Host.</p>
               <p>All payments are processed securely through Stripe. City Feed does not store your credit card information.</p>
-              <p>Payouts to Hosts are processed within 7 business days after Proof of Performance (POP) has been approved by the Advertiser, or 14 days after campaign completion if no dispute is raised.</p>
+              <p>Advertiser payments are held by City Feed until the campaign is fulfilled. Payouts to Hosts are initiated automatically after the Host submits Proof of Posting (POP). Once initiated, funds typically arrive in the Host&apos;s bank account within a few business days, depending on Stripe and bank processing times.</p>
               <p>All fees are non-refundable except as specified in our Cancellation Policy.</p>
             </div>
           </section>
@@ -62,9 +63,9 @@ export default function TermsPage() {
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
               <p><strong>Advertiser cancellations:</strong></p>
               <ul className="list-disc pl-5 space-y-1">
-                <li>More than 7 days before start date: Full refund minus platform fees</li>
-                <li>3–7 days before start date: 50% refund</li>
-                <li>Less than 3 days before start date: No refund</li>
+                <li>More than 7 days before start date: 95% refund (a 5% processing fee is retained)</li>
+                <li>7 days or fewer before start date: 50% refund</li>
+                <li>After the campaign start date: No refund</li>
               </ul>
               <p className="mt-3"><strong>Host cancellations:</strong> Hosts who cancel a confirmed booking within 48 hours of the start date may be subject to penalties, including a reduction in search visibility. Full refunds will be issued to the Advertiser.</p>
             </div>
@@ -72,11 +73,12 @@ export default function TermsPage() {
 
           {/* Section 5 */}
           <section>
-            <h2 className="text-xl font-bold mb-4" style={{ color: '#2b2b2b' }}>5. Proof of Performance</h2>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#2b2b2b' }}>5. Proof of Posting</h2>
             <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#555' }}>
-              <p>After a campaign runs, Hosts are required to submit Proof of Performance (POP) — photographic or documented evidence that the advertising was displayed as agreed.</p>
-              <p>Advertisers have 72 hours to review and approve or dispute the POP after submission. If no action is taken within 72 hours, the POP is automatically approved and payout is initiated.</p>
-              <p>Submitting fraudulent POP (fabricated images, misrepresented dates, etc.) is grounds for immediate account termination and potential legal action.</p>
+              <p>Hosts are required to submit Proof of Posting (POP) — photographic evidence that the advertising was installed and displayed as agreed.</p>
+              <p>Payout to the Host is initiated automatically upon POP submission. Advertisers can view the submitted POP from their booking at any time. City Feed reserves the right to review or audit any POP submission.</p>
+              <p>If an Advertiser believes a POP is inaccurate or a campaign was not fulfilled as agreed, they should contact City Feed support promptly (see Section 6, Dispute Resolution). City Feed may withhold or reverse payouts and issue refunds where a campaign was not fulfilled.</p>
+              <p>Submitting fraudulent POP (fabricated images, misrepresented dates, etc.) is grounds for immediate account termination, payout reversal, and potential legal action.</p>
             </div>
           </section>
 
