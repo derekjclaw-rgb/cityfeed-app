@@ -83,9 +83,6 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
     shortcut: '/favicon-32.png',
   },
-  alternates: {
-    canonical: baseUrl,
-  },
 }
 
 export default function RootLayout({
