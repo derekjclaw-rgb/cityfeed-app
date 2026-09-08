@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Loader2, Megaphone, Building2, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { trackSignUp } from '@/lib/analytics'
 
 type Role = 'advertiser' | 'host'
 
@@ -60,6 +61,9 @@ function SignupForm() {
       setError(error.message)
       setLoading(false)
     } else {
+      // Analytics: signup conversion (dataLayer → GTM → GA4/Meta/TikTok)
+      trackSignUp(role)
+
       // Send welcome email (fire-and-forget — don't block on it)
       fetch('/api/auth/welcome', {
         method: 'POST',

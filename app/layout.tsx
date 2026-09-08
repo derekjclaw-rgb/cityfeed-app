@@ -106,19 +106,8 @@ export default function RootLayout({
             })(window,document,'script','dataLayer','GTM-PJHQG5C6');
           `}
         </Script>
-        {/* Google Analytics (GA4) */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-0TFMJKX9BK"
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-0TFMJKX9BK');
-          `}
-        </Script>
+        {/* GA4 (G-0TFMJKX9BK) is served via GTM — do NOT hardcode it here or
+            pageviews double-count. See GTM container GTM-PJHQG5C6. */}
         {/* Microsoft Clarity */}
         <Script id="clarity-init" strategy="afterInteractive">
           {`

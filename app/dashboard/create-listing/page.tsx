@@ -25,6 +25,7 @@ import Link from 'next/link'
 import { ArrowLeft, Upload, Loader2, CheckCircle, X, AlertCircle, ImageIcon, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORY_OPTIONS as CATEGORIES } from '@/lib/design'
+import { trackPublishListing } from '@/lib/analytics'
 
 const STATIC_CATEGORIES = [
   'outdoor_static',
@@ -607,6 +608,15 @@ export default function CreateListingPage() {
           }).catch(() => {})
         }
       } catch { /* non-fatal */ }
+
+      // Analytics: listing published — supply-side conversion (dataLayer → GTM)
+      trackPublishListing({
+        listing_id: insertedListing?.id ?? '',
+        listing_title: form.title,
+        category: form.category,
+        price_per_day: parseFloat(form.price_per_day) || undefined,
+      })
+
       setSuccess(true)
     }
   }

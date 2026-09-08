@@ -10,6 +10,7 @@ import { ArrowLeft, Shield, Loader2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MOCK_LISTINGS } from '../../page'
 import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicker'
+import { trackBeginCheckout } from '@/lib/analytics'
 
 function BookPageInner() {
   const params = useParams()
@@ -166,6 +167,17 @@ function BookPageInner() {
     }
     setSubmitting(true)
     setError('')
+
+    // Analytics: checkout started (dataLayer → GTM → GA4/Meta/TikTok)
+    trackBeginCheckout({
+      listing: {
+        listing_id: listingId,
+        listing_title: listing.title,
+        price_per_day: listing.price_per_day,
+      },
+      value: total,
+      days,
+    })
 
     try {
       const res = await fetch('/api/checkout', {

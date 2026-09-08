@@ -16,6 +16,7 @@ import DateRangePicker, { type DisabledRange } from '@/components/DateRangePicke
 import FavoriteButton from '@/components/FavoriteButton'
 import { formatNamePublic } from '@/lib/utils'
 import { getCategoryLabel } from '@/lib/design'
+import { trackViewListing } from '@/lib/analytics'
 
 const GRADIENT_POOL = [
   'from-purple-100 to-purple-200',
@@ -653,6 +654,16 @@ export default function ListingDetailPage() {
           } : undefined,
         }
         setListing(l)
+
+        // Analytics: listing view (dataLayer → GTM → GA4/Meta/TikTok)
+        trackViewListing({
+          listing_id: l.id,
+          listing_title: l.title,
+          category: l.category,
+          price_per_day: l.price_per_day,
+          city: l.city,
+          state: l.state,
+        })
 
         // Fetch host profile
         if (row.host_id) {

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { CheckCircle, Clock, Loader2, Upload, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatBookingDate } from '@/lib/fees'
+import { trackPurchase } from '@/lib/analytics'
 
 /** Derive a human-readable confirmation code from a booking UUID */
 function confirmationCode(bookingId: string): string {
@@ -110,6 +111,23 @@ function SuccessPageInner() {
         if (data) {
           const bk = data as unknown as BookingDetails
           setBooking(bk)
+
+          // Analytics: purchase conversion (dataLayer → GTM → GA4/Meta/TikTok).
+          // localStorage guard — success pages get reloaded/revisited; fire once per booking.
+          try {
+            const guardKey = `cf_purchase_tracked_${bk.id}`
+            if (!localStorage.getItem(guardKey)) {
+              trackPurchase({
+                bookingId: bk.id,
+                value: bk.total_price,
+                listing: {
+                  listing_id: bk.listing_id,
+                  listing_title: bk.listings?.title,
+                },
+              })
+              localStorage.setItem(guardKey, '1')
+            }
+          } catch { /* analytics must never break the page */ }
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const paidForHostPrint = !!(data as any).host_prints
           // Fetch listing creative specs
