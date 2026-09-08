@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email'
+import { reportPurchase } from '@/lib/capi'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
@@ -73,7 +74,20 @@ async function handleEvent(event: Stripe.Event) {
       }
 
       console.log(`[Stripe Webhook] Legacy booking ${bookingId} confirmed`)
-      if (booking) await sendBookingNotifications(supabase, booking, bookingId, 'confirmed')
+
+      // CAPI: server-side purchase to Meta + TikTok (fire-and-forget, never throws)
+      if (booking) {
+        await reportPurchase({
+          bookingId,
+          value: Number(booking.total_price) || 0,
+          listingId: booking.listing_id,
+          email: session.customer_details?.email,
+          userId: booking.advertiser_id,
+          clientIp: meta.client_ip,
+          clientUserAgent: meta.client_user_agent,
+        })
+        await sendBookingNotifications(supabase, booking, bookingId, 'confirmed')
+      }
       return
     }
 
@@ -179,6 +193,19 @@ async function handleEvent(event: Stripe.Event) {
 
     const bookingId = booking.id
     console.log(`[Stripe Webhook] Booking ${bookingId} created with status=${initialStatus}`)
+
+    // CAPI: server-side purchase to Meta + TikTok (fire-and-forget, never throws).
+    // Fires for both instant (confirmed) and request (pending) bookings — payment
+    // is captured at checkout either way, matching the browser purchase event.
+    await reportPurchase({
+      bookingId,
+      value: Number(booking.total_price) || 0,
+      listingId: booking.listing_id,
+      email: session.customer_details?.email,
+      userId: booking.advertiser_id,
+      clientIp: meta.client_ip,
+      clientUserAgent: meta.client_user_agent,
+    })
 
     await sendBookingNotifications(supabase, booking, bookingId, initialStatus as 'pending' | 'confirmed')
   }

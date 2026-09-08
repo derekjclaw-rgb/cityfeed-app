@@ -78,6 +78,13 @@ export async function POST(req: NextRequest) {
     // Truncate listing title to stay within Stripe metadata 500-char-per-value limit
     const safeTitleForMeta = (listingTitle ?? '').slice(0, 490)
 
+    // Capture buyer's IP + user agent for server-side conversion reporting (CAPI).
+    // The Stripe webhook has no access to the buyer's browser — this request does.
+    // Stashed in session metadata, read back by the webhook, sent to Meta/TikTok
+    // for event matching (improves attribution quality). 500-char metadata limit.
+    const clientIp = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim()
+    const clientUserAgent = (req.headers.get('user-agent') ?? '').slice(0, 490)
+
     // ESCROW MODEL: Money stays in City Feed's platform account until host uploads
     // Proof of Posting (POP). Only then does /api/stripe/payout transfer funds to host.
     // This protects advertisers — no POP = no payment to host.
@@ -120,6 +127,8 @@ export async function POST(req: NextRequest) {
         is_mock: String(isMockListing),
         host_prints: String(hostPrintsRequested),
         print_fee: String(fin.printFee),
+        client_ip: clientIp,
+        client_user_agent: clientUserAgent,
       },
     })
 
