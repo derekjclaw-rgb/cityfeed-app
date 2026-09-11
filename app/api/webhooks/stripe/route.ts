@@ -238,8 +238,13 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   const listingPhoto = Array.isArray(listingImages) && listingImages.length > 0 ? listingImages[0] : null
 
   // Determine if this is a static (physical) placement
-  const STATIC_CATEGORIES = ['outdoor_static', 'static_billboards', 'billboard', 'storefront', 'window', 'vehicle_wrap']
-  const isStaticListing = STATIC_CATEGORIES.includes(listingCategory.toLowerCase())
+  const STATIC_CATEGORIES = ['outdoor_static', 'indoor_static', 'static_billboards', 'billboard', 'storefront', 'window', 'vehicle_wrap']
+  // Any category containing "static" is physical media (belt-and-suspenders vs. list drift);
+  // booking.delivery_mode === 'self_deliver' is the source of truth when present
+  const isStaticListing =
+    booking.delivery_mode === 'self_deliver' ||
+    STATIC_CATEGORIES.includes(listingCategory.toLowerCase()) ||
+    listingCategory.toLowerCase().includes('static')
   // Host-prints bookings follow the UPLOAD flow (host prints the files) — never "ship materials" copy
   const hostPrints = !!booking.host_prints
 

@@ -36,3 +36,34 @@ Source: 5 annotated screenshots, Telegram, Aug 24 ~1:49 PM.
 Note: 9/10/12 likely regression territory from ed4c34c (booking detail shipping-aware).
 
 ## Result: ALL 13 CLOSED — Aug 24, 8 commits (cc109e2…a8ae94e), all pushed to prod
+
+---
+
+# BATCH — End to End Test 9.11 (Michael's flow test)
+
+Protocol: same as 8.24 — small commits per item, `batch:` prefix, main session.
+Test booking: e20c454a (Athletic Club Lollipop Sign, indoor_static, self_deliver, Sep 12–14).
+
+## Items
+- [x] 1. Webhook emails + chat messages use stale STATIC_CATEGORIES list — indoor_static
+      missing → advertiser got "upload creative files" copy, host got "advertiser will
+      upload" copy, chat auto-messages same. FIX (local, uncommitted): delivery_mode
+      'self_deliver' as source of truth + indoor_static added + includes('static') fallback.
+- [x] 2. Host booking detail: "Creative files haven't been uploaded yet. You'll be notified
+      when they arrive." subtext ignores self-deliver mode — contradicts Material Delivery
+      card below it. Make state-aware: awaiting materials / dropped off / shipped / received.
+- [x] 3. Badge says "Materials In Transit" when dropped_off_at set — wrong for in-person
+      drop-off. Split: shipped_at → "Materials In Transit", dropped_off_at → "Materials
+      Dropped Off" (both host + advertiser views).
+- [ ] 4. Centralize category logic: new lib/categories.ts — canonical STATIC_CATEGORIES +
+      isStaticCat/isDigitalCat helpers. Kill the 3 drifted copies (create-listing,
+      edit-listing, webhook). Audit every call site.
+- [ ] 5. Ambiguous-category delivery question (mock2 approved direction): category with
+      'digital' keyword → auto digital + quiet note; 'static' keyword → auto print flow;
+      ambiguous (transit, street_furniture, storefront, window, event_based, human_based,
+      experiential, unique, other...) → "How do advertisers deliver their ad?" radio
+      (Digital upload / Printed materials). Printed → existing offers-printing + fee +
+      delivery-instructions fields nest under it. Saved answer (requires_print) is the
+      single source of truth downstream. CREATE + EDIT parity required.
+- [x] 6. isDigitalCat bug: 'transit' keyword counts as digital — transit is mostly physical
+      posters. Handled by #5 (transit becomes ambiguous → host answers). Remove keyword.
