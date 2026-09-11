@@ -55,10 +55,10 @@ Test booking: e20c454a (Athletic Club Lollipop Sign, indoor_static, self_deliver
 - [x] 3. Badge says "Materials In Transit" when dropped_off_at set — wrong for in-person
       drop-off. Split: shipped_at → "Materials In Transit", dropped_off_at → "Materials
       Dropped Off" (both host + advertiser views).
-- [ ] 4. Centralize category logic: new lib/categories.ts — canonical STATIC_CATEGORIES +
+- [x] 4. Centralize category logic: new lib/categories.ts — canonical STATIC_CATEGORIES +
       isStaticCat/isDigitalCat helpers. Kill the 3 drifted copies (create-listing,
       edit-listing, webhook). Audit every call site.
-- [ ] 5. Ambiguous-category delivery question (mock2 approved direction): category with
+- [x] 5. Ambiguous-category delivery question (mock2 approved direction): category with
       'digital' keyword → auto digital + quiet note; 'static' keyword → auto print flow;
       ambiguous (transit, street_furniture, storefront, window, event_based, human_based,
       experiential, unique, other...) → "How do advertisers deliver their ad?" radio

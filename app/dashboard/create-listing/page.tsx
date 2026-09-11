@@ -26,16 +26,7 @@ import { ArrowLeft, Upload, Loader2, CheckCircle, X, AlertCircle, ImageIcon, Map
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORY_OPTIONS as CATEGORIES } from '@/lib/design'
 import { trackPublishListing } from '@/lib/analytics'
-
-const STATIC_CATEGORIES = [
-  'outdoor_static',
-  'static_billboards',
-  'billboard',
-  'storefront',
-  'window',
-  'vehicle_wrap',
-  'indoor_static',
-]
+import { isStaticCat, isDigitalCat, classifyCategory, printDefault, resolveRequiresPrint } from '@/lib/categories'
 
 const PRODUCTION_TIMES = [
   'Less than a day',
@@ -49,14 +40,6 @@ const PRODUCTION_TIMES = [
   '21 days',
   '30 days',
 ]
-
-// Category is "digital" if its value contains digital/display
-// (transit removed 9.11 — transit placements are mostly physical posters, not screens)
-const isDigitalCat = (cat: string) =>
-  cat.toLowerCase().includes('digital') ||
-  cat.toLowerCase().includes('display')
-
-const isStaticCat = (cat: string) => STATIC_CATEGORIES.includes(cat)
 
 interface UploadedPhoto {
   file: File
@@ -543,8 +526,8 @@ export default function CreateListingPage() {
       content_restrictions: form.content_restrictions,
       images: imageUrls,
       status: 'active',
-      // Delivery instructions (static categories only)
-      delivery_instructions: isStaticCat(form.category)
+      // Delivery instructions (print-flow listings only)
+      delivery_instructions: resolveRequiresPrint(form.category, form.requires_print)
         ? form.delivery_instructions || null
         : null,
       // Creative specs
@@ -565,8 +548,8 @@ export default function CreateListingPage() {
         : {}),
       // Availability — blocked individual dates
       availability: blockedDates.length > 0 ? { blocked: blockedDates } : null,
-      // Printing (static categories only)
-      ...(isStaticCat(form.category)
+      // Printing (print-flow listings only)
+      ...(resolveRequiresPrint(form.category, form.requires_print)
         ? {
             creative_host_prints: form.creative_host_prints,
             creative_print_cost:
@@ -575,8 +558,9 @@ export default function CreateListingPage() {
                 : null,
           }
         : {}),
-      // Static ads / print flow
-      requires_print: form.requires_print,
+      // Static ads / print flow — digital categories can never require print,
+      // static categories always do, ambiguous uses the host's answer (batch 9.11 #5)
+      requires_print: resolveRequiresPrint(form.category, form.requires_print),
       offers_printing: form.requires_print ? form.offers_printing : false,
       print_fee: form.requires_print && form.offers_printing && form.print_fee
         ? parseFloat(form.print_fee)
@@ -765,7 +749,14 @@ export default function CreateListingPage() {
             <FormField label="Category" required>
               <select
                 value={form.category}
-                onChange={e => set('category', e.target.value)}
+                onChange={e => {
+                  const cat = e.target.value
+                  set('category', cat)
+                  // Sync delivery answer to the category's classification (batch 9.11 #5)
+                  const rp = resolveRequiresPrint(cat, printDefault(cat))
+                  set('requires_print', rp)
+                  if (!rp) { set('offers_printing', false); set('print_fee', ''); set('delivery_address', '') }
+                }}
                 className={`${inputClass} cursor-pointer`}
                 style={inputStyle}
                 required
@@ -1159,20 +1150,47 @@ export default function CreateListingPage() {
             </FormField>
           </div>
 
-          {/* Printed Materials — static categories only */}
-          {isStaticCat(form.category) && (
+          {/* Ad delivery — hidden for digital categories; auto-on for static;
+              delivery question for ambiguous categories (batch 9.11 #5) */}
+          {form.category !== '' && classifyCategory(form.category) !== 'digital' && (
           <div className="rounded-2xl p-6 space-y-5" style={cardStyle}>
             <h2 className="font-semibold" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
               Printed materials
             </h2>
-            <Toggle
-              value={form.requires_print}
-              onChange={v => {
-                set('requires_print', v)
-                if (!v) { set('offers_printing', false); set('print_fee', ''); set('delivery_address', '') }
-              }}
-              label="This placement requires printed materials"
-            />
+            {classifyCategory(form.category) === 'static' ? (
+              <p className="text-sm" style={{ color: '#555' }}>
+                This placement uses printed materials — advertisers will ship or drop off physical media.
+              </p>
+            ) : (
+              <div>
+                <p className="text-sm font-medium mb-1" style={{ color: 'var(--charcoal, #2b2b2b)' }}>
+                  How do advertisers deliver their ad?
+                </p>
+                <p className="text-xs mb-3" style={{ color: '#999' }}>
+                  This decides the delivery flow after a booking is confirmed
+                </p>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => { set('requires_print', false); set('offers_printing', false); set('print_fee', ''); set('delivery_address', '') }}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors"
+                    style={!form.requires_print ? { border: '2px solid var(--mint, #7ecfc0)', backgroundColor: 'rgba(126,207,192,0.05)' } : { border: '1px solid var(--border, #e0e0d8)', backgroundColor: '#fff' }}
+                  >
+                    <span className="font-medium block" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Digital upload</span>
+                    <span className="text-xs block mt-0.5" style={{ color: '#888' }}>Advertisers upload creative files for your placement</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => set('requires_print', true)}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors"
+                    style={form.requires_print ? { border: '2px solid var(--mint, #7ecfc0)', backgroundColor: 'rgba(126,207,192,0.05)' } : { border: '1px solid var(--border, #e0e0d8)', backgroundColor: '#fff' }}
+                  >
+                    <span className="font-medium block" style={{ color: 'var(--charcoal, #2b2b2b)' }}>Printed materials</span>
+                    <span className="text-xs block mt-0.5" style={{ color: '#888' }}>Advertisers ship or drop off physical materials</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {form.requires_print && (
               <div className="space-y-4">
                 <Toggle
