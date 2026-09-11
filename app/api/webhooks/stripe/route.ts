@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '@/lib/email'
 import { reportPurchase } from '@/lib/capi'
+import { isStaticCat } from '@/lib/categories'
 
 function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2026-02-25.clover' }) }
 function getSupabase() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '') }
@@ -237,14 +238,10 @@ async function sendBookingNotifications(supabase: ReturnType<typeof getSupabase>
   const listingImages = listingData?.images as string[] | null | undefined
   const listingPhoto = Array.isArray(listingImages) && listingImages.length > 0 ? listingImages[0] : null
 
-  // Determine if this is a static (physical) placement
-  const STATIC_CATEGORIES = ['outdoor_static', 'indoor_static', 'static_billboards', 'billboard', 'storefront', 'window', 'vehicle_wrap']
-  // Any category containing "static" is physical media (belt-and-suspenders vs. list drift);
-  // booking.delivery_mode === 'self_deliver' is the source of truth when present
-  const isStaticListing =
-    booking.delivery_mode === 'self_deliver' ||
-    STATIC_CATEGORIES.includes(listingCategory.toLowerCase()) ||
-    listingCategory.toLowerCase().includes('static')
+  // Determine if this is a static (physical) placement.
+  // booking.delivery_mode is the source of truth; lib/categories is the single
+  // canonical keyword fallback (batch 9.11 #4 — no more local list drift).
+  const isStaticListing = booking.delivery_mode === 'self_deliver' || isStaticCat(listingCategory)
   // Host-prints bookings follow the UPLOAD flow (host prints the files) — never "ship materials" copy
   const hostPrints = !!booking.host_prints
 
