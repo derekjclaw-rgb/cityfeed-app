@@ -50,11 +50,11 @@ const PRODUCTION_TIMES = [
   '30 days',
 ]
 
-// Category is "digital" if its value contains digital/display/transit
+// Category is "digital" if its value contains digital/display
+// (transit removed 9.11 — transit placements are mostly physical posters, not screens)
 const isDigitalCat = (cat: string) =>
   cat.toLowerCase().includes('digital') ||
-  cat.toLowerCase().includes('display') ||
-  cat.toLowerCase().includes('transit')
+  cat.toLowerCase().includes('display')
 
 const isStaticCat = (cat: string) => STATIC_CATEGORIES.includes(cat)
 
