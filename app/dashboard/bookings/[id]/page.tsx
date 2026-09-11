@@ -431,9 +431,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
                 <CheckCircle className="w-3 h-3" />
                 Materials Received ✅
               </span>
-            ) : (booking?.shipped_at || booking?.dropped_off_at) ? (
+            ) : booking?.dropped_off_at ? (
               <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
                 <Package className="w-3 h-3" />
+                Materials Dropped Off
+              </span>
+            ) : booking?.shipped_at ? (
+              <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+                <Truck className="w-3 h-3" />
                 Materials In Transit
               </span>
             ) : (
@@ -447,9 +452,14 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
               <CheckCircle className="w-3 h-3" />
               Materials Received ✅
             </span>
-          ) : (booking?.shipped_at || booking?.dropped_off_at) ? (
+          ) : booking?.dropped_off_at ? (
             <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
               <Package className="w-3 h-3" />
+              Materials Dropped Off
+            </span>
+          ) : booking?.shipped_at ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+              <Truck className="w-3 h-3" />
               Materials In Transit
             </span>
           ) : (
@@ -525,10 +535,18 @@ function CollateralSection({ bookingId, isHost, bookingStatus, hostId, advertise
         </p>
       )}
 
-      {/* Host note — no files yet */}
-      {isHost && !hasFiles && bookingStatus !== 'completed' && (
+      {/* Host note — state-aware: self-deliver flow gets delivery-status copy, upload flow keeps creative copy */}
+      {isHost && !hasFiles && bookingStatus !== 'completed' && !(isSelfDeliver && booking?.received_at) && (
         <p className="text-sm mb-5" style={{ color: '#888' }}>
-          Creative files haven&apos;t been uploaded yet. You&apos;ll be notified when they arrive.
+          {isSelfDeliver
+            ? booking?.dropped_off_at
+              ? 'The advertiser marked their materials as dropped off — confirm receipt below.'
+              : booking?.shipped_at
+                ? 'Materials are on the way — confirm receipt when they arrive.'
+                : 'The advertiser is sending printed materials — you\u2019ll be notified when they\u2019re on the way.'
+            : needsChoice
+              ? 'The advertiser is choosing how their materials will arrive.'
+              : 'Creative files haven\u2019t been uploaded yet. You\u2019ll be notified when they arrive.'}
         </p>
       )}
 
@@ -1651,7 +1669,7 @@ function BookingProgressBar({ status, endDate, buyNow, hasCreative, hasProof }: 
 
 // ─── Next Step Callout ─────────────────────────────────────────────────────────
 
-function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliveryMode, materialsSent, materialsReceived, requiresPrint }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string; deliveryMode?: string | null; materialsSent?: boolean; materialsReceived?: boolean; requiresPrint?: boolean }) {
+function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliveryMode, materialsSent, materialsDropped, materialsReceived, requiresPrint }: { isHost: boolean; status: string; hasCreative: boolean; hasProof: boolean; endDate?: string; deliveryMode?: string | null; materialsSent?: boolean; materialsDropped?: boolean; materialsReceived?: boolean; requiresPrint?: boolean }) {
   let message = ''
   const now = new Date()
   const end = endDate ? new Date(endDate + 'T00:00:00') : null
@@ -1666,6 +1684,8 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliv
       message = 'Proof submitted \u2014 awaiting review'
     } else if ((status === 'confirmed' || status === 'active') && materialsReceived) {
       message = 'Materials received \u2014 post the ad, then upload proof of posting'
+    } else if ((status === 'confirmed' || status === 'active') && materialsDropped) {
+      message = 'Materials dropped off \u2014 confirm receipt to continue'
     } else if ((status === 'confirmed' || status === 'active') && materialsSent) {
       message = 'Materials on the way \u2014 confirm receipt when they arrive'
     } else if ((status === 'confirmed' || status === 'active') && (deliveryMode === 'self_deliver' || (requiresPrint && !deliveryMode))) {
@@ -1684,6 +1704,8 @@ function NextStepCallout({ isHost, status, hasCreative, hasProof, endDate, deliv
       message = 'Proof of posting submitted \u2014 under review'
     } else if ((status === 'confirmed' || status === 'active') && materialsReceived) {
       message = 'Materials received by your host \u2014 awaiting posting'
+    } else if ((status === 'confirmed' || status === 'active') && materialsDropped) {
+      message = 'Materials dropped off \u2014 your host will confirm receipt'
     } else if ((status === 'confirmed' || status === 'active') && materialsSent) {
       message = 'Materials sent \u2014 your host will confirm receipt'
     } else if ((status === 'confirmed' || status === 'active') && deliveryMode === 'self_deliver') {
@@ -1935,7 +1957,8 @@ export default function BookingDetailPage() {
             hasProof={hasProofFiles}
             endDate={booking.end_date}
             deliveryMode={booking.delivery_mode}
-            materialsSent={!!(booking.shipped_at || booking.dropped_off_at)}
+            materialsSent={!!booking.shipped_at}
+            materialsDropped={!!booking.dropped_off_at}
             materialsReceived={!!booking.received_at}
             requiresPrint={!!listing?.requires_print}
           />
